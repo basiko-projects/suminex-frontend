@@ -10,7 +10,16 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.DashboardComponent) },
-      { path: 'services', loadComponent: () => import('./features/services/services-list').then(m => m.ServicesListComponent) },
+      {
+        path: 'services',
+        loadComponent: () => import('./features/services/services-shell').then(m => m.ServicesShellComponent),
+        canActivate: [authGuard],
+      },
+      {
+        path: 'services/tarifas/:id',
+        loadComponent: () => import('./features/services/tarifa-detail').then(m => m.TarifaDetailComponent),
+        canActivate: [authGuard],
+      },
       { path: 'comparison-history', loadComponent: () => import('./features/comparison-history/comparison-history').then(m => m.ComparisonHistoryComponent) },
       { path: 'supplies', loadComponent: () => import('./features/supplies/supplies').then(m => m.SuppliesComponent) },
       { path: 'users',    loadComponent: () => import('./features/users/users').then(m => m.UsersComponent) },

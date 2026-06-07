@@ -1,35 +1,18 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { ServiceDetail, ServiceFilters, ServiceListItem, ServiceGroupedResponse, CreateServiceDto } from '../models/service.model';
-import { Observable, map } from 'rxjs';
+import { ServiceDetail, ServiceGroup, CreateServiceDto, CreateBoePeriodsDto, CreateOmieDistributionDto } from '../models/service.model';
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class ServicesService {
-  private url     = `${environment.apiUrl}/services`;
+  private url = `${environment.apiUrl}/services`;
 
   constructor(private http: HttpClient) {}
 
-  /** GET /api/services — devuelve agrupado, lo aplanamos internamente */
-  getAll(filters?: ServiceFilters): Observable<ServiceListItem[]> {
-    let params = new HttpParams();
-    // Solo isActive va al servidor; el resto se filtra en cliente
-    if (filters?.isActive !== undefined) params = params.set('isActive', filters.isActive);
-    return this.http.get<ServiceGroupedResponse>(this.url, { params }).pipe(
-      map(r => [
-        ...(r.luz      ?? []).map(s => ({ ...s, serviceType: 'LUZ'      as const })),
-        ...(r.gas      ?? []).map(s => ({ ...s, serviceType: 'GAS'      as const })),
-        ...(r.mobile   ?? []).map(s => ({ ...s, serviceType: 'MOBILE'   as const })),
-        ...(r.internet ?? []).map(s => ({ ...s, serviceType: 'INTERNET' as const })),
-      ])
-    );
-  }
-
-  /** GET /api/services — aplanado con todos los grupos */
-  getGrouped(isActive?: boolean): Observable<ServiceGroupedResponse> {
-    let params = new HttpParams();
-    if (isActive !== undefined) params = params.set('isActive', isActive);
-    return this.http.get<ServiceGroupedResponse>(this.url, { params });
+  /** GET /api/services → array de ServiceGroup (Luz, Gas, Móvil, Internet con sus tarifas) */
+  getServices(): Observable<ServiceGroup[]> {
+    return this.http.get<ServiceGroup[]>(this.url);
   }
 
   getById(id: number): Observable<ServiceDetail> {
@@ -46,5 +29,41 @@ export class ServicesService {
 
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.url}/${id}`);
+  }
+
+  createTariff(dto: { serviceId: string; name: string; code: string | null }): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/tariffs`, dto);
+  }
+
+  createProduct(tariffId: number, dto: any): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/tariffs/${tariffId}/products`, dto);
+  }
+
+  getProductById(tariffId: number, productId: number): Observable<any> {
+    return this.http.get(`${environment.apiUrl}/tariffs/${tariffId}/products/${productId}`);
+  }
+
+  deleteProduct(tariffId: number, productId: number): Observable<any> {
+    return this.http.delete(`${environment.apiUrl}/tariffs/${tariffId}/products/${productId}`);
+  }
+
+  updateProduct(tariffId: number, productId: number, dto: any): Observable<any> {
+    return this.http.put(`${environment.apiUrl}/tariffs/${tariffId}/products/${productId}`, dto);
+  }
+
+  createBoe(id: number, dto: CreateBoePeriodsDto): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/tariffs/${id}/boe-periods`, dto);
+  }
+
+  updateBoe(id: number, dto: CreateBoePeriodsDto): Observable<any> {
+    return this.http.put(`${environment.apiUrl}/tariffs/${id}/boe-periods`, dto);
+  }
+
+  createOmie(id: number, dto: CreateOmieDistributionDto): Observable<any> {
+    return this.http.post(`${environment.apiUrl}/tariffs/${id}/omie-distributions`, dto);
+  }
+
+  updateOmieDistribution(tariffId: number, distributionId: number, dto: any): Observable<any> {
+    return this.http.put(`${environment.apiUrl}/tariffs/${tariffId}/omie-distributions/${distributionId}`, dto);
   }
 }

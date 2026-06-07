@@ -222,15 +222,16 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     forkJoin({
-      services:    this.services.getAll(),
+      services:    this.services.getServices(),
       supplies:    this.supplies.getAll({ pageSize: 1 }),
       comparisons: this.comparisons.getAll({ pageSize: 1 }),
     }).pipe(finalize(() => this.loading.set(false))).subscribe({
       next: (data) => {
+        const totalTarifas = data.services.reduce((acc, g) => acc + (g.tariffs?.length ?? 0), 0);
         this.statCards = [
-          { title: 'Ofertas activas',   value: data.services.filter(s => s.isActive).length, icon: 'pi-bolt',       trend: '+5%', trendUp: true,  colorClass: 'purple', route: '/services' },
-          { title: 'Suministros',       value: data.supplies.data?.total ?? 0,               icon: 'pi-file-check', trend: '+8%', trendUp: true,  colorClass: 'green',  route: '/supplies' },
-          { title: 'Comparaciones',     value: data.comparisons.data?.total ?? 0,            icon: 'pi-chart-bar',  trend: '-3%', trendUp: false, colorClass: 'amber',  route: '/comparison-history' },
+          { title: 'Tarifas',           value: totalTarifas,                                 icon: 'pi-bolt',       trend: '+5%', trendUp: true,  colorClass: 'purple', route: '/services' },
+          { title: 'Suministros',       value: data.supplies.totalCount ?? 0,               icon: 'pi-file-check', trend: '+8%', trendUp: true,  colorClass: 'green',  route: '/supplies' },
+          { title: 'Comparaciones',     value: data.comparisons.totalCount ?? 0,             icon: 'pi-chart-bar',  trend: '-3%', trendUp: false, colorClass: 'amber',  route: '/comparison-history' },
         ];
       },
       error: () => {}

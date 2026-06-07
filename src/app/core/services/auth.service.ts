@@ -30,6 +30,7 @@ export class AuthService {
   isLoggedIn  = signal(!!this.getCookie(this.TOKEN_KEY));
   currentUser = signal<{ email: string; name: string } | null>(this.getStoredUser());
   userId      = signal<string | null>(this.getCookie(this.USERID_KEY));
+  userRole    = signal<string | null>(this.decodeRoleFromToken());
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -67,6 +68,7 @@ export class AuthService {
 
           this.isLoggedIn.set(true);
           this.currentUser.set({ email, name: res.fullName });
+          this.userRole.set(this.decodeRoleFromToken());
         })
       );
   }
@@ -79,7 +81,16 @@ export class AuthService {
     this.isLoggedIn.set(false);
     this.currentUser.set(null);
     this.userId.set(null);
+    this.userRole.set(null);
     this.router.navigate(['/login']);
+  }
+
+  getRole(): string | null {
+    return this.userRole();
+  }
+
+  isAdmin(): boolean {
+    return this.getRole() === 'Admin';
   }
 
   getToken(): string | null {
@@ -97,6 +108,17 @@ export class AuthService {
       const id = payload.sub ?? payload.userId ?? payload.nameid ?? null;
       if (id) this.userId.set(id);
       return id;
+    } catch { return null; }
+  }
+
+  private decodeRoleFromToken(): string | null {
+    try {
+      const token = this.getCookie(this.TOKEN_KEY);
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+        ?? payload['role']
+        ?? null;
     } catch { return null; }
   }
 

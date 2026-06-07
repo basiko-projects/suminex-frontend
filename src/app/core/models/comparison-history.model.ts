@@ -1,25 +1,32 @@
 export interface ComparisonHistoryItem {
-  id: number;
-  userId: string;
-  userEmail: string;
-  ocrDocumentId: string | null;
-  supplyId: string | null;
-  serviceId: number;
-  cups: string;
-  estimatedSavings: number;
-  contracted: boolean;
-  contractedAt: string | null;
-  calculatedAt: string;
+  id:                string;
+  userId:            string;
+  userFullName:      string;
+  userEmail:         string;
+  cups:              string;
+  productName:       string;
+  providerName:      string;
+  annualConsumption: number;
+  annualSavings:     number;
+  monthlySavings:    number;
+  savingsPercent:    number;
+  commissionAmount:  number;
+  commissionPercent: number;
+  energyCommission:  number;
+  energyFee:         number;
+  powerFee:          number;
+  willCloseContract: boolean;
+  contractedAt:      string | null;
+  resultData:        any;
+  createdAt:         string;
 }
 
-export interface ComparisonHistoryFilters {
-  userId?: string;
-  serviceId?: number;
-  contracted?: boolean;
-  from?: string;
-  to?: string;
-  page?: number;
-  pageSize?: number;
+export interface ComparisonHistoryResponse {
+  items:      ComparisonHistoryItem[];
+  totalCount: number;
+  page:       number;
+  pageSize:   number;
+  totalPages: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -30,4 +37,12 @@ export interface PaginatedResponse<T> {
     page: number;
     pageSize: number;
   };
+}
+
+export interface ComparisonHistoryFilters {
+  page?:             number;
+  pageSize?:         number;
+  willCloseContract?: boolean;
+  from?:             string;
+  to?:               string;
 }

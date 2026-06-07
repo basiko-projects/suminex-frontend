@@ -1,5 +1,71 @@
 export type ServiceType = 'LUZ' | 'GAS' | 'MOBILE' | 'INTERNET';
 
+/* ── New API format: GET /api/services ── */
+export interface ServiceTariffPricing {
+  serviceType:        string;
+  productType?:       string | null;
+  gasProductType?:    string | null;
+  priceMinKwh?:       number | null;
+  priceMaxKwh?:       number | null;
+  priceKwh?:          number | null;
+  omieMarginKwh?:     number | null;
+  indexMargin?:       number | null;
+  fixedTermMonthly?:  number | null;
+  productsCount?:     number | null;
+  monthlyFee?:        number | null;
+  dataGb?:            number | null;
+  voiceMinutes?:      number | null;
+  network?:           string | null;
+  permanenceMonths?:  number | null;
+  cancellationFee?:   number | null;
+  speedDownMbps?:     number | null;
+  speedUpMbps?:       number | null;
+  technology?:        string | null;
+  routerIncluded?:    boolean | null;
+  includesTv?:        boolean | null;
+}
+
+export interface ServiceTariffProduct {
+  id:       number;
+  name:     string;
+  type:     string;
+  isActive: boolean;
+}
+
+export interface ServiceTariffBoePeriod {
+  period:     string;
+  priceKwDay: number;
+  validFrom:  string;
+  validUntil?: string | null;
+}
+
+export interface ServiceTariffOmieDistribution {
+  id:         number;
+  name:       string;
+  isActive:   boolean;
+  validFrom:  string;
+  validUntil?: string | null;
+  margin?:    number | null;
+  periods:    { period: string; factor: number }[];
+}
+
+export interface ServiceTariff {
+  id:                 number;
+  name:               string;
+  code:               string | null;
+  pricing?:           ServiceTariffPricing;
+  products?:          ServiceTariffProduct[];
+  boePeriods?:        ServiceTariffBoePeriod[];
+  omieDistributions?: ServiceTariffOmieDistribution[];
+}
+
+export interface ServiceGroup {
+  id:          string;
+  name:        string;
+  serviceType: string;
+  tariffs:     ServiceTariff[];
+}
+
 export interface ServiceListItem {
   id: number;
   providerId: number;
@@ -29,16 +95,17 @@ export interface ServiceGroupedResponse {
 
 export interface EnergyPeriodDto {
   period:    string;
-  priceKwh:  number;
+  priceKwh:  number | null;
   baseValue: number | null;
 }
 
 export interface PowerPeriodDto {
-  period:    string;
-  priceKwDay: number;
+  period:     string;
+  priceKwDay: number | null;
 }
 
 export interface ProductDto {
+  id?:                 number;         // requerido en PUT, omitido en POST
   name:                string;
   productType:         'INDEXED' | 'FIXED';
   commissionEnergyPct: number | null;
@@ -102,11 +169,50 @@ export interface CreateServiceDto {
   internetDetail?: InternetDetailDto;
 }
 
+/* ── BOE / OMIE ── */
+export interface BoePeriodItem {
+  period:     string;
+  priceKwDay: number;
+  validFrom:  string;
+  validUntil: string | null;
+}
+
+export interface OmiePeriodItem {
+  period: string;
+  factor: number;
+}
+
+export interface OmieDistribution {
+  id:         number;
+  name:       string;
+  margin:     number | null;
+  isActive:   boolean;
+  validFrom:  string;
+  validUntil: string | null;
+  periods:    OmiePeriodItem[];
+}
+
+export interface CreateBoePeriodsDto {
+  validFrom:  string;
+  validUntil: string | null;
+  periods:    { period: string; value: number }[];
+}
+
+export interface CreateOmieDistributionDto {
+  name:       string;
+  margin:     number | null;
+  validFrom:  string;
+  validUntil: string | null;
+  periods:    OmiePeriodItem[];
+}
+
 /* ── Detail (for GET by id, edit) ── */
 export interface ServiceDetail extends ServiceListItem {
-  tariffCode:    string | null;
-  products?:     ProductDto[];
-  gasDetail?:    GasDetailDto;
-  mobileDetail?: MobileDetailDto;
-  internetDetail?: InternetDetailDto;
+  tariffCode:         string | null;
+  products?:          ProductDto[];
+  boePeriods?:        BoePeriodItem[];
+  omieDistributions?: OmieDistribution[];
+  gasDetail?:         GasDetailDto;
+  mobileDetail?:      MobileDetailDto;
+  internetDetail?:    InternetDetailDto;
 }
