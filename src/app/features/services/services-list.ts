@@ -11,6 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ServiceFormComponent } from './service-form';
+import { ServiceDetailComponent } from './service-detail';
 
 interface TypeTab {
   label: string;
@@ -26,7 +27,7 @@ interface TypeTab {
   imports: [
     DatePipe,
     ButtonModule, TagModule, ToastModule, ConfirmDialogModule, TooltipModule,
-    SkeletonModule, ServiceFormComponent,
+    SkeletonModule, ServiceFormComponent, ServiceDetailComponent,
   ],
   providers: [MessageService, ConfirmationService],
   template: `
@@ -129,6 +130,9 @@ interface TypeTab {
             </div>
             <!-- Actions -->
             <div class="col-right row-actions">
+              <button class="icon-btn" (click)="view(s)" pTooltip="Ver detalle">
+                <i class="pi pi-eye"></i>
+              </button>
               <button class="icon-btn" (click)="edit(s)" pTooltip="Editar">
                 <i class="pi pi-pencil"></i>
               </button>
@@ -140,6 +144,10 @@ interface TypeTab {
         }
       }
     </div>
+
+    @if (detailVisible && viewItem) {
+      <app-service-detail [item]="viewItem" (closed)="detailVisible = false" />
+    }
 
     @if (formVisible) {
       <app-service-form
@@ -211,7 +219,7 @@ interface TypeTab {
 
     .list-header {
       display: grid;
-      grid-template-columns: 3fr 1.5fr 1fr 2fr 100px 90px;
+      grid-template-columns: 3fr 1.5fr 1fr 2fr 100px 110px;
       gap: 0.5rem; padding: 0.6rem 1.25rem;
       background: var(--sx-surface-2);
       border-bottom: 1px solid var(--sx-border);
@@ -223,7 +231,7 @@ interface TypeTab {
 
     .list-row {
       display: grid;
-      grid-template-columns: 3fr 1.5fr 1fr 2fr 100px 90px;
+      grid-template-columns: 3fr 1.5fr 1fr 2fr 100px 110px;
       gap: 0.5rem; padding: 0.75rem 1.25rem;
       border-bottom: 1px solid var(--sx-border);
       align-items: center; transition: background 120ms;
@@ -312,13 +320,18 @@ export class ServicesListComponent implements OnInit {
     this.loading.set(true);
     this.loadError = '';
     const isActive = this.activeStatus !== null ? this.activeStatus : undefined;
-    this.svc.getAll({ isActive }).pipe(finalize(() => this.loading.set(false))).subscribe({
-      next: d => {
-        this.allServices = d;
+    this.svc.getServices().pipe(finalize(() => this.loading.set(false))).subscribe({
+      next: groups => {
+        const all = groups.flatMap(g => (g.tariffs ?? []).map(t => ({
+          id: t.id, name: t.name, tariffCode: t.code,
+          serviceType: g.serviceType as any, isActive: true,
+          validFrom: null, validUntil: null, providerId: 0, providerName: '',
+        })));
+        this.allServices = all as any;
         this.buildCounts();
         this.applyFilters();
       },
-      error: e => {
+      error: (e: any) => {
         this.loadError = e?.status === 401
           ? 'Sin autorización. Verifica tu sesión.'
           : 'Error al cargar los servicios. Inténtalo de nuevo.';
@@ -361,6 +374,10 @@ export class ServicesListComponent implements OnInit {
     return m[t] ?? 'var(--sx-surface-2)';
   }
 
+  viewItem:    ServiceListItem | null = null;
+  detailVisible = false;
+
+  view(s: ServiceListItem) { this.viewItem = s; this.detailVisible = true; }
   openNew()                { this.editId = null; this.editItem = null; this.formVisible = true; }
   edit(s: ServiceListItem) { this.editId = s.id; this.editItem = s;   this.formVisible = true; }
 

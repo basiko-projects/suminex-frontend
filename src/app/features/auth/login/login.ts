@@ -1,190 +1,166 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { InputTextModule } from 'primeng/inputtext';
-import { PasswordModule } from 'primeng/password';
-import { ButtonModule } from 'primeng/button';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, InputTextModule, PasswordModule, ButtonModule, IconFieldModule, InputIconModule],
+  imports: [FormsModule],
   template: `
     <div class="login-bg">
-
-      <!-- Glow effects -->
-      <div class="glow glow-1"></div>
-      <div class="glow glow-2"></div>
-
       <div class="login-card">
 
-        <!-- Logo -->
-        <div class="login-logo">
-          <div class="logo-icon">
-            <i class="pi pi-bolt"></i>
-          </div>
-          <h1 class="logo-text">SUMINE<span class="logo-x">X</span></h1>
-          <p class="logo-sub">Portal de Administración</p>
+        <!-- Brand -->
+        <div class="brand">
+          <h1 class="brand-name">SUMINE<span class="brand-x">X</span></h1>
+          <p class="brand-sub">Portal de Administración</p>
         </div>
 
         <!-- Form -->
-        <div class="login-form">
-          <div class="field">
-            <label>Correo electrónico</label>
-            <p-iconfield>
-              <p-inputicon class="pi pi-envelope" />
-              <input pInputText [(ngModel)]="email" type="email"
-                     placeholder="admin@suminex.es" class="w-full"
-                     (keyup.enter)="login()" />
-            </p-iconfield>
+        <form class="login-form" (submit)="$event.preventDefault(); login()">
+
+          <div class="field" [class.invalid]="submitted && !email">
+            <label>CORREO ELECTRÓNICO</label>
+            <div class="input-wrap">
+              <i class="pi pi-envelope input-icon"></i>
+              <input type="email" [(ngModel)]="email" name="email"
+                     placeholder="admin@suminex.es" autocomplete="email" />
+            </div>
+            @if (submitted && !email) {
+              <span class="field-error">Este campo es obligatorio</span>
+            }
           </div>
 
-          <div class="field">
-            <label>Contraseña</label>
-            <p-password [(ngModel)]="password" [feedback]="false" [toggleMask]="true"
-                        class="w-full" inputStyleClass="w-full"
-                        placeholder="••••••••"
-                        (keyup.enter)="login()" />
+          <div class="field" [class.invalid]="submitted && !password">
+            <label>CONTRASEÑA</label>
+            <div class="input-wrap">
+              <i class="pi pi-lock input-icon"></i>
+              <input [type]="showPwd() ? 'text' : 'password'"
+                     [(ngModel)]="password" name="password"
+                     placeholder="••••••••" autocomplete="current-password" />
+              <button class="pwd-toggle" type="button" (click)="showPwd.set(!showPwd())">
+                <i [class]="'pi ' + (showPwd() ? 'pi-eye-slash' : 'pi-eye')"></i>
+              </button>
+            </div>
+            @if (submitted && !password) {
+              <span class="field-error">Este campo es obligatorio</span>
+            }
           </div>
 
           @if (error) {
-            <div class="error-msg">
+            <div class="login-error">
               <i class="pi pi-exclamation-circle"></i>
               <span>{{ error }}</span>
             </div>
           }
 
-          <p-button label="Iniciar sesión" icon="pi pi-sign-in"
-                    styleClass="w-full login-btn"
-                    [loading]="loading" (onClick)="login()" />
-        </div>
+          <button class="login-btn" type="submit" [disabled]="loading">
+            @if (loading) {
+              <i class="pi pi-spin pi-spinner"></i> Verificando...
+            } @else {
+              Iniciar sesión <i class="pi pi-arrow-right"></i>
+            }
+          </button>
+        </form>
 
-        <p class="login-footer">Acceso exclusivo para administradores</p>
-
+        <p class="login-footer">
+          Acceso exclusivo para administradores y agentes autorizados
+        </p>
       </div>
     </div>
   `,
   styles: [`
     .login-bg {
       min-height: 100vh;
-      background: var(--sx-bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Background glow blobs */
-    .glow {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      pointer-events: none;
-    }
-    .glow-1 {
-      width: 500px; height: 500px;
-      background: rgba(61,142,255,0.18);
-      top: -150px; left: -150px;
-    }
-    .glow-2 {
-      width: 400px; height: 400px;
-      background: rgba(61,142,255,0.08);
-      bottom: -100px; right: -100px;
-    }
-
-    /* Card */
-    .login-card {
-      position: relative;
-      background: var(--sx-surface);
-      border: 1px solid var(--sx-border-2);
-      border-radius: 24px;
-      padding: 2.75rem;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: var(--sx-shadow-lg), 0 0 0 1px var(--sx-border);
-    }
-
-    /* Top blue line */
-    .login-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 10%; right: 10%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--sx-primary), transparent);
-    }
-
-    /* Logo */
-    .login-logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 2.25rem;
-      gap: 0.5rem;
-    }
-    .logo-icon {
-      width: 56px; height: 56px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--sx-primary-btn), var(--sx-primary));
+      background: linear-gradient(160deg, #E8EBF4 0%, #EEF0F6 50%, #E4E8F2 100%);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 30px rgba(61,142,255,0.18);
-      margin-bottom: 0.25rem;
+      font-family: Inter, system-ui, sans-serif;
     }
-    .logo-icon .pi { font-size: 1.4rem; color: #fff; }
-    .logo-text {
-      font-size: 1.75rem;
-      font-weight: 900;
-      letter-spacing: 4px;
-      color: var(--sx-text);
-      margin: 0;
-    }
-    .logo-x { color: var(--sx-primary); }
-    .logo-sub {
-      font-size: 0.78rem;
-      color: var(--sx-text-2);
-      font-weight: 500;
-      letter-spacing: 0.05em;
+    .dark .login-bg { background: linear-gradient(160deg, #0D0F1A 0%, #111420 100%); }
+
+    .login-card {
+      background: var(--bg-surface, #fff);
+      border: 1px solid var(--border-color, #D5D9E8);
+      border-radius: var(--radius-xl, 16px);
+      padding: 32px;
+      width: 380px;
+      box-shadow: var(--shadow-lg);
     }
 
-    /* Error */
-    .error-msg {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--sx-red-bg);
-      border: 1px solid rgba(248,113,113,0.25);
-      color: var(--sx-red);
-      font-size: 0.82rem;
-      padding: 0.65rem 0.875rem;
-      border-radius: 10px;
+    /* Brand */
+    .brand { text-align: center; margin-bottom: 24px; }
+    .brand-name {
+      font-size: 26px; font-weight: 800; letter-spacing: 4px;
+      color: var(--text-primary, #1C2033); margin: 0 0 4px;
     }
-    .error-msg .pi { font-size: 0.85rem; flex-shrink: 0; }
+    .brand-x { color: var(--accent, #4F46E5); }
+    .brand-sub { font-size: var(--font-xs, 11px); color: var(--text-muted, #9299B8); margin: 0; letter-spacing: 0.05em; }
 
     /* Form */
-    .login-form { display: flex; flex-direction: column; gap: 1.25rem; }
-    .field { display: flex; flex-direction: column; gap: 0.5rem; }
-    label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--sx-text-2);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
+    .login-form { display: flex; flex-direction: column; gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: var(--font-xs, 11px); font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text-secondary, #5A6180);
     }
+    .input-wrap {
+      position: relative; display: flex; align-items: center;
+    }
+    .input-icon {
+      position: absolute; left: 12px; font-size: 13px;
+      color: var(--text-muted, #9299B8); pointer-events: none;
+    }
+    .input-wrap input {
+      width: 100%; padding: 10px 12px 10px 36px;
+      background: var(--bg-input, #F5F6FA);
+      border: 1.5px solid var(--border-color, #D5D9E8);
+      border-radius: var(--radius-md, 8px);
+      font-size: var(--font-base, 13px); color: var(--text-primary, #1C2033);
+      outline: none; transition: border-color 150ms, box-shadow 150ms;
+      font-family: inherit;
+    }
+    .input-wrap input::placeholder { color: var(--text-muted, #9299B8); }
+    .input-wrap input:focus {
+      border-color: var(--accent, #4F46E5);
+      box-shadow: 0 0 0 3px var(--accent-light, #EEF2FF);
+    }
+    .field.invalid .input-wrap input { border-color: var(--danger, #DC2626); }
+    .field-error { font-size: var(--font-xs, 11px); color: var(--danger, #DC2626); }
 
-    :host ::ng-deep .login-btn {
-      height: 44px;
-      font-size: 0.9rem !important;
-      letter-spacing: 0.02em;
+    .pwd-toggle {
+      position: absolute; right: 10px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted, #9299B8); padding: 4px;
+      display: flex; align-items: center;
     }
+    .pwd-toggle:hover { color: var(--text-secondary, #5A6180); }
+    .pwd-toggle .pi { font-size: 14px; }
+
+    .login-error {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: var(--radius-md, 8px);
+      background: var(--danger-bg, #FEF2F2); border: 1px solid var(--danger-border, #FECACA);
+      color: var(--danger, #DC2626); font-size: var(--font-sm, 12px);
+    }
+    .login-error .pi { font-size: 13px; flex-shrink: 0; }
+
+    .login-btn {
+      width: 100%; padding: 11px 16px; margin-top: 4px;
+      background: var(--accent, #4F46E5); color: #fff;
+      border: none; border-radius: var(--radius-md, 8px);
+      font-size: var(--font-md, 14px); font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 150ms; font-family: inherit;
+    }
+    .login-btn:hover:not(:disabled) { background: var(--accent-hover, #4338CA); }
+    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .login-btn .pi { font-size: 13px; }
 
     .login-footer {
-      text-align: center;
-      font-size: 0.72rem;
-      color: var(--sx-text-3);
-      margin-top: 1.5rem;
+      text-align: center; margin-top: 20px; margin-bottom: 0;
+      font-size: var(--font-xs, 11px); color: var(--text-muted, #9299B8);
+      line-height: 1.5;
     }
   `]
 })
@@ -196,21 +172,20 @@ export class LoginComponent {
   password = '';
   loading  = false;
   error    = '';
-
-  onKeyUp(e: KeyboardEvent) {
-    if (e.key === 'Enter') this.login();
-  }
+  submitted = false;
+  showPwd = signal(false);
 
   login() {
-    if (!this.email || !this.password) {
-      this.error = 'Por favor, completa todos los campos.';
-      return;
-    }
+    this.submitted = true;
+    if (!this.email || !this.password) return;
     this.loading = true;
     this.error   = '';
     this.auth.login(this.email, this.password).subscribe({
       next:  () => this.router.navigate(['/dashboard']),
-      error: (e) => { this.error = e?.error?.message ?? 'Credenciales incorrectas. Inténtalo de nuevo.'; this.loading = false; },
+      error: (e) => {
+        this.error   = e?.error?.error ?? e?.error?.message ?? 'Credenciales incorrectas.';
+        this.loading = false;
+      },
     });
   }
 }

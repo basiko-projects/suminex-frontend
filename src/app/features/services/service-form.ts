@@ -5,7 +5,9 @@ import { AuthService } from '../../core/services/auth.service';
 import {
   ServiceType, CreateServiceDto, ServiceListItem,
   ProductDto, GasDetailDto, GasTierDto, MobileDetailDto, InternetDetailDto,
+  BoePeriodItem, OmieDistribution, CreateBoePeriodsDto, CreateOmieDistributionDto,
 } from '../../core/models/service.model';
+import { SlicePipe } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -14,6 +16,8 @@ import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
+import { TabsModule } from 'primeng/tabs';
+import { TagModule } from 'primeng/tag';
 
 const PERIODS = ['P1','P2','P3','P4','P5','P6'];
 
@@ -22,8 +26,8 @@ function emptyProduct(): ProductDto {
     name: '', productType: 'INDEXED',
     commissionEnergyPct: null, commissionPowerPct: null,
     validFrom: '', validUntil: null,
-    energyPeriods: PERIODS.map(p => ({ period: p, priceKwh: 0, baseValue: null })),
-    powerPeriods:  PERIODS.map(p => ({ period: p, priceKwDay: 0 })),
+    energyPeriods: PERIODS.map(p => ({ period: p, priceKwh: null, baseValue: null })),
+    powerPeriods:  PERIODS.map(p => ({ period: p, priceKwDay: null })),
   };
 }
 
@@ -36,18 +40,27 @@ function emptyGasTier(order: number): GasTierDto {
   standalone: true,
   imports: [
     FormsModule,
+    SlicePipe,
     DialogModule, ButtonModule, InputTextModule, InputNumberModule,
     SelectModule, DatePickerModule, ToggleSwitchModule, TooltipModule,
+    TabsModule, TagModule,
   ],
   template: `
     <p-dialog [visible]="true"
               [header]="dialogTitle"
               [modal]="true"
-              [style]="editId ? {width:'500px'} : {width:'780px', maxHeight:'92vh'}"
+              [style]="{width:'780px', maxHeight:'92vh'}"
               [draggable]="false" [closable]="true"
               (onHide)="cancelled.emit()">
 
       <div class="dialog-subtitle">{{ dialogSubtitle }}</div>
+
+      @if (loadingEdit()) {
+        <div class="edit-loading">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Cargando datos…</span>
+        </div>
+      } @else {
 
       <div class="form-body">
 
@@ -55,14 +68,240 @@ function emptyGasTier(order: number): GasTierDto {
           <div class="api-error"><i class="pi pi-exclamation-circle"></i><span>{{ apiError }}</span></div>
         }
 
-        <!-- ══ MODO EDICIÓN: solo nombre, estado y fechas ══ -->
+        <!-- ══ Estado (solo edición) ══ -->
         @if (editId) {
-
-          <div class="field mb">
-            <label>NOMBRE DE LA OFERTA <span class="req">*</span></label>
-            <input pInputText [(ngModel)]="dto.name" class="w-full" />
+          <div class="status-bar" [class.status-active]="isActiveEdit" [class.status-inactive]="!isActiveEdit">
+            <div class="status-info">
+              <i [class]="'pi ' + (isActiveEdit ? 'pi-check-circle' : 'pi-pause-circle')"></i>
+              <span>{{ isActiveEdit ? 'Oferta activa' : 'Oferta inactiva' }}</span>
+              @if (activationHint) {
+                <span class="activation-hint">{{ activationHint }}</span>
+              }
+            </div>
+            <div class="toggle-wrap">
+              <p-toggleswitch [(ngModel)]="isActiveEdit" (onChange)="onActiveToggle()" />
+            </div>
           </div>
+        }
 
+        <!-- ══ LUZ ══ -->
+        @if (dto.serviceType === 'LUZ') {
+          <p-tabs [(value)]="luzTab">
+            <p-tablist>
+              <p-tab value="tarifa">Tarifa</p-tab>
+              <p-tab value="boe">Potencia BOE</p-tab>
+              <p-tab value="omie">Reparto OMIE</p-tab>
+            </p-tablist>
+            <p-tabpanels>
+
+            <!-- ── Tab: Tarifa ── -->
+            <p-tabpanel value="tarifa">
+              <div class="tab-content">
+                <div class="top-row">
+                  <div class="field">
+                    <label>TARIFA</label>
+                    <p-select [options]="tariffOpts" [(ngModel)]="dto.tariffCode"
+                              optionLabel="label" optionValue="value"
+                              placeholder="Seleccionar tarifa" class="w-full"
+                              (onChange)="onTariffChange()" [disabled]="!!editId" />
+                  </div>
+                  <div class="field">
+                    <label>TIPO DE PRODUCTO</label>
+                    <p-select [options]="productTypeOpts" [(ngModel)]="product.productType"
+                              optionLabel="label" optionValue="value" class="w-full" />
+                  </div>
+                  <div class="field">
+                    <label>NOMBRE DEL PRODUCTO <span class="req">*</span></label>
+                    <input pInputText [(ngModel)]="product.name" placeholder="Ej: Index Base" class="w-full" />
+                  </div>
+                </div>
+                <div class="row-3 mb">
+                  <div class="field">
+                    <label>NOMBRE DE LA OFERTA <span class="req">*</span></label>
+                    <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Tarifa Luz Plana 2.0TD" class="w-full" />
+                  </div>
+                  <div class="field">
+                    <label>VÁLIDO DESDE</label>
+                    <p-datepicker [(ngModel)]="validFromDate" dateFormat="dd/mm/yy" [showIcon]="true" class="w-full" />
+                  </div>
+                  <div class="field">
+                    <label>VÁLIDO HASTA <span class="optional-label">(opcional)</span></label>
+                    <p-datepicker [(ngModel)]="validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" />
+                  </div>
+                </div>
+                <div class="period-card">
+                  <div class="period-card-header">
+                    <div class="period-card-left">
+                      <div class="period-card-title"><i class="pi pi-bolt" style="color:#FACC15"></i> Precios de energía (€/kWh)</div>
+                      <div class="commission-inline">
+                        <span class="commission-label">Comisión %</span>
+                        <input type="number" class="commission-input" [(ngModel)]="product.commissionEnergyPct" placeholder="—" step="0.01" />
+                      </div>
+                    </div>
+                    <div class="period-card-actions">
+                      <input type="number" class="common-input" [(ngModel)]="energyCommon" placeholder="Valor común" step="0.000001" />
+                      <button class="apply-btn" (click)="applyEnergyCommon()">Aplicar a todos</button>
+                    </div>
+                  </div>
+                  <div class="periods-grid-3">
+                    @for (ep of visibleEnergyPeriods; track ep.period) {
+                      <div class="period-field">
+                        <label class="period-label">{{ ep.period }}</label>
+                        <input type="number" class="period-input" [(ngModel)]="ep.priceKwh" step="0.000001" placeholder="0.000000" />
+                      </div>
+                    }
+                  </div>
+                </div>
+                <div class="period-card">
+                  <div class="period-card-header">
+                    <div class="period-card-left">
+                      <div class="period-card-title"><i class="pi pi-circle" style="color:#60A5FA"></i> Precios de potencia (€/kW·día)</div>
+                    </div>
+                    <div class="period-card-actions">
+                      <div class="commission-inline">
+                        <span class="commission-label">Comisión %</span>
+                        <input type="number" class="commission-input" [(ngModel)]="product.commissionPowerPct" placeholder="—" step="0.01" />
+                      </div>
+                      <input type="number" class="common-input" [(ngModel)]="powerCommon" placeholder="Valor común" step="0.00000001" />
+                      <button class="apply-btn" (click)="applyPowerCommon()">Aplicar a todos</button>
+                    </div>
+                  </div>
+                  <div class="periods-grid-3">
+                    @for (pp of visiblePowerPeriods; track pp.period) {
+                      <div class="period-field">
+                        <label class="period-label">{{ pp.period }}</label>
+                        <input type="number" class="period-input" [(ngModel)]="pp.priceKwDay" step="0.00000001" placeholder="0.00000000" />
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </p-tabpanel>
+
+            <!-- ── Tab: Potencia BOE ── -->
+            <p-tabpanel value="boe">
+              <div class="tab-content">
+                @if (existingBoe.length) {
+                  <div class="existing-section">
+                    <div class="existing-title">BOE actual</div>
+                    <div class="periods-grid-3">
+                      @for (b of existingBoe; track b.period) {
+                        <div class="period-card-sm">
+                          <span class="period-lbl-sm">{{ b.period }}</span>
+                          <span class="period-val-sm">{{ b.priceKwDay }}</span>
+                          <span class="period-date-sm">desde {{ b.validFrom | slice:0:10 }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+                <div class="section-label mt-sm">{{ existingBoe.length ? 'Reemplazar períodos BOE' : 'Registrar períodos BOE' }}</div>
+                <div class="row-2 mb">
+                  <div class="field">
+                    <label>VÁLIDO DESDE <span class="req">*</span></label>
+                    <p-datepicker [(ngModel)]="boe.validFromDate" dateFormat="dd/mm/yy" [showIcon]="true" class="w-full" />
+                  </div>
+                  <div class="field">
+                    <label>VÁLIDO HASTA <span class="optional-label">(opcional)</span></label>
+                    <p-datepicker [(ngModel)]="boe.validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" />
+                  </div>
+                </div>
+                <div class="period-card">
+                  <div class="period-card-header">
+                    <div class="period-card-title"><i class="pi pi-bolt" style="color:#60A5FA"></i> Valores BOE (€/kW·día)</div>
+                  </div>
+                  <div class="periods-grid-3">
+                    @for (p of visibleBoePeriods; track p.period) {
+                      <div class="period-field">
+                        <label class="period-label">{{ p.period }}</label>
+                        <input type="number" class="period-input" [(ngModel)]="p.value" step="0.000001" placeholder="0.000000" />
+                      </div>
+                    }
+                  </div>
+                </div>
+                @if (boeError) { <div class="api-error mt-sm"><i class="pi pi-exclamation-circle"></i><span>{{ boeError }}</span></div> }
+                <button class="save-tab-btn" [disabled]="boeSaving()" (click)="saveBoe()">
+                  @if (boeSaving()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-check"></i> }
+                  Guardar BOE
+                </button>
+              </div>
+            </p-tabpanel>
+
+            <!-- ── Tab: Reparto OMIE ── -->
+            <p-tabpanel value="omie">
+              <div class="tab-content">
+                @if (existingOmie.length) {
+                  <div class="existing-section">
+                    <div class="existing-title">Distribuciones registradas</div>
+                    @for (o of existingOmie; track o.id) {
+                      <div class="omie-row">
+                        <div class="omie-info">
+                          <span class="omie-name">{{ o.name }}</span>
+                          <span class="omie-dates">{{ o.validFrom | slice:0:10 }}{{ o.validUntil ? ' → ' + (o.validUntil | slice:0:10) : '' }}</span>
+                        </div>
+                        <p-tag [value]="o.isActive ? 'Activa' : 'Inactiva'" [severity]="o.isActive ? 'success' : 'secondary'" />
+                      </div>
+                    }
+                  </div>
+                }
+                <div class="section-label mt-sm">Nueva distribución OMIE</div>
+                <div class="row-2 mb">
+                  <div class="field">
+                    <label>NOMBRE <span class="req">*</span></label>
+                    <input pInputText [(ngModel)]="omie.name" placeholder="Ej: Reparto OMIE 2026" class="w-full" />
+                  </div>
+                  <div class="field">
+                    <label>MARGEN</label>
+                    <p-inputnumber [(ngModel)]="omie.margin" [minFractionDigits]="4" [maxFractionDigits]="6" placeholder="—" class="w-full" />
+                  </div>
+                </div>
+                <div class="row-2 mb">
+                  <div class="field">
+                    <label>VÁLIDO DESDE <span class="req">*</span></label>
+                    <p-datepicker [(ngModel)]="omie.validFromDate" dateFormat="dd/mm/yy" [showIcon]="true" class="w-full" />
+                  </div>
+                  <div class="field">
+                    <label>VÁLIDO HASTA <span class="optional-label">(opcional)</span></label>
+                    <p-datepicker [(ngModel)]="omie.validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" />
+                  </div>
+                </div>
+                <div class="period-card">
+                  <div class="period-card-header">
+                    <div class="period-card-title"><i class="pi pi-chart-line" style="color:#A78BFA"></i> Factores OMIE</div>
+                  </div>
+                  <div class="periods-grid-3">
+                    @for (p of visibleOmiePeriods; track p.period) {
+                      <div class="period-field">
+                        <label class="period-label">{{ p.period }}</label>
+                        <input type="number" class="period-input" [(ngModel)]="p.factor" step="0.0001" placeholder="1.0000" />
+                      </div>
+                    }
+                  </div>
+                </div>
+                @if (omieError) { <div class="api-error mt-sm"><i class="pi pi-exclamation-circle"></i><span>{{ omieError }}</span></div> }
+                <button class="save-tab-btn save-tab-purple" [disabled]="omieSaving()" (click)="saveOmie()">
+                  @if (omieSaving()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-plus"></i> }
+                  Crear distribución
+                </button>
+              </div>
+            </p-tabpanel>
+
+            </p-tabpanels>
+          </p-tabs>
+        }
+
+        <!-- ══ GAS ══ -->
+        @if (dto.serviceType === 'GAS') {
+          <div class="top-row mb">
+            <div class="field span-2">
+              <label>NOMBRE <span class="req">*</span></label>
+              <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Tarifa Gas Fijo RL1" class="w-full" />
+            </div>
+            <div class="field">
+              <label>CÓDIGO TARIFA</label>
+              <input pInputText [(ngModel)]="dto.tariffCode" placeholder="Ej: RL.1" class="w-full" [disabled]="!!editId" />
+            </div>
+          </div>
           <div class="row-2 mb">
             <div class="field">
               <label>VÁLIDO DESDE</label>
@@ -73,189 +312,87 @@ function emptyGasTier(order: number): GasTierDto {
               <p-datepicker [(ngModel)]="validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" />
             </div>
           </div>
-
-          <div class="field toggle-inline mb">
-            <label>ESTADO</label>
-            <p-toggleswitch [(ngModel)]="isActiveEdit" />
-            <span class="toggle-val">{{ isActiveEdit ? 'Activo' : 'Inactivo' }}</span>
+          <div class="period-card">
+            <div class="period-card-header">
+              <div class="period-card-title"><i class="pi pi-fire" style="color:#FB923C"></i> Detalle gas</div>
+            </div>
+            <div class="row-3">
+              <div class="field"><label>Tipo</label><p-select [options]="gasTypeOpts" [(ngModel)]="gas.productType" optionLabel="label" optionValue="value" class="w-full" /></div>
+              <div class="field"><label>Término fijo (€/día)</label><p-inputnumber [(ngModel)]="gas.fixedTermDay" [minFractionDigits]="3" [maxFractionDigits]="5" class="w-full" /></div>
+              <div class="field"><label>Margen (€/kWh)</label><p-inputnumber [(ngModel)]="gas.marginKwh" [minFractionDigits]="4" [maxFractionDigits]="6" class="w-full" /></div>
+            </div>
           </div>
-
+          <div class="section-label mt-sm">Tramos <button class="add-btn" (click)="addTier()"><i class="pi pi-plus"></i> Añadir</button></div>
+          <div class="tiers-header"><span>Orden</span><span>Desde (kWh)</span><span>Hasta (kWh)</span><span>Precio (€/kWh)</span><span></span></div>
+          @for (tier of gas.tiers; track $index) {
+            <div class="tier-row">
+              <span class="tier-order">{{ tier.tierOrder }}</span>
+              <p-inputnumber [(ngModel)]="tier.minKwh" [min]="0" class="w-full" />
+              <p-inputnumber [(ngModel)]="tier.maxKwh" [min]="0" placeholder="Sin límite" class="w-full" />
+              <p-inputnumber [(ngModel)]="tier.priceKwh" [minFractionDigits]="3" [maxFractionDigits]="5" class="w-full" />
+              @if (gas.tiers.length > 1) {
+                <button class="del-btn" (click)="removeTier($index)"><i class="pi pi-trash"></i></button>
+              }
+            </div>
+          }
         }
 
-        <!-- ══ MODO CREACIÓN: formulario completo ══ -->
-        @if (!editId) {
+        <!-- ══ MOBILE ══ -->
+        @if (dto.serviceType === 'MOBILE') {
+          <div class="top-row mb">
+            <div class="field span-2"><label>NOMBRE <span class="req">*</span></label>
+              <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Tarifa Mobile 50GB" class="w-full" /></div>
+            <div class="field"><label>RED</label>
+              <p-select [options]="networkOpts" [(ngModel)]="mobile.network" optionLabel="label" optionValue="value" class="w-full" /></div>
+          </div>
+          <div class="row-2 mb">
+            <div class="field"><label>VÁLIDO DESDE</label><p-datepicker [(ngModel)]="validFromDate" dateFormat="dd/mm/yy" [showIcon]="true" class="w-full" /></div>
+            <div class="field"><label>VÁLIDO HASTA <span class="optional-label">(opcional)</span></label><p-datepicker [(ngModel)]="validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" /></div>
+          </div>
+          <div class="period-card">
+            <div class="period-card-header"><div class="period-card-title"><i class="pi pi-mobile" style="color:#A78BFA"></i> Detalle móvil</div></div>
+            <div class="row-3">
+              <div class="field"><label>Cuota mensual (€) <span class="req">*</span></label><p-inputnumber [(ngModel)]="mobile.monthlyFee" [minFractionDigits]="2" class="w-full" /></div>
+              <div class="field"><label>Datos (GB)</label><p-inputnumber [(ngModel)]="mobile.dataGb" [min]="0" class="w-full" /></div>
+              <div class="field"><label>Minutos voz</label><p-inputnumber [(ngModel)]="mobile.voiceMinutes" [min]="0" placeholder="Ilimitado" class="w-full" /></div>
+            </div>
+            <div class="row-3">
+              <div class="field"><label>Extra GB (€)</label><p-inputnumber [(ngModel)]="mobile.extraGbPrice" [minFractionDigits]="2" class="w-full" /></div>
+              <div class="field"><label>Permanencia (meses)</label><p-inputnumber [(ngModel)]="mobile.permanenceMonths" [min]="0" class="w-full" /></div>
+              <div class="field"><label>Penalización (€)</label><p-inputnumber [(ngModel)]="mobile.cancellationFee" [minFractionDigits]="2" class="w-full" /></div>
+            </div>
+          </div>
+        }
 
-          <!-- LUZ -->
-          @if (dto.serviceType === 'LUZ') {
-            <div class="top-row">
-              <div class="field">
-                <label>TARIFA</label>
-                <p-select [options]="tariffOpts" [(ngModel)]="dto.tariffCode"
-                          optionLabel="label" optionValue="value"
-                          placeholder="Seleccionar tarifa" class="w-full" />
-              </div>
-              <div class="field">
-                <label>TIPO DE PRODUCTO</label>
-                <p-select [options]="productTypeOpts" [(ngModel)]="product.productType"
-                          optionLabel="label" optionValue="value" class="w-full" />
-              </div>
-              <div class="field">
-                <label>NOMBRE DEL PRODUCTO <span class="req">*</span></label>
-                <input pInputText [(ngModel)]="product.name" placeholder="Ej: Index Base" class="w-full" />
-              </div>
+        <!-- ══ INTERNET ══ -->
+        @if (dto.serviceType === 'INTERNET') {
+          <div class="top-row mb">
+            <div class="field span-2"><label>NOMBRE <span class="req">*</span></label>
+              <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Fibra 600MB Simétrica" class="w-full" /></div>
+            <div class="field"><label>TECNOLOGÍA</label>
+              <p-select [options]="techOpts" [(ngModel)]="internet.technology" optionLabel="label" optionValue="value" class="w-full" /></div>
+          </div>
+          <div class="row-2 mb">
+            <div class="field"><label>VÁLIDO DESDE</label><p-datepicker [(ngModel)]="validFromDate" dateFormat="dd/mm/yy" [showIcon]="true" class="w-full" /></div>
+            <div class="field"><label>VÁLIDO HASTA <span class="optional-label">(opcional)</span></label><p-datepicker [(ngModel)]="validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" /></div>
+          </div>
+          <div class="period-card">
+            <div class="period-card-header"><div class="period-card-title"><i class="pi pi-wifi" style="color:#60A5FA"></i> Detalle internet</div></div>
+            <div class="row-3">
+              <div class="field"><label>Cuota mensual (€) <span class="req">*</span></label><p-inputnumber [(ngModel)]="internet.monthlyFee" [minFractionDigits]="2" class="w-full" /></div>
+              <div class="field"><label>Bajada (Mbps)</label><p-inputnumber [(ngModel)]="internet.speedDownMbps" [min]="0" class="w-full" /></div>
+              <div class="field"><label>Subida (Mbps)</label><p-inputnumber [(ngModel)]="internet.speedUpMbps" [min]="0" class="w-full" /></div>
             </div>
-            <div class="row-3 mb">
-              <div class="field">
-                <label>NOMBRE DE LA OFERTA <span class="req">*</span></label>
-                <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Tarifa Luz Plana 2.0TD" class="w-full" />
-              </div>
-              <div class="field">
-                <label>VÁLIDO DESDE</label>
-                <p-datepicker [(ngModel)]="validFromDate" dateFormat="dd/mm/yy" [showIcon]="true" class="w-full" />
-              </div>
-              <div class="field">
-                <label>VÁLIDO HASTA <span class="optional-label">(opcional)</span></label>
-                <p-datepicker [(ngModel)]="validUntilDate" dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" class="w-full" />
-              </div>
+            <div class="row-3">
+              <div class="field"><label>Permanencia (meses)</label><p-inputnumber [(ngModel)]="internet.permanenceMonths" [min]="0" class="w-full" /></div>
+              <div class="field"><label>Penalización (€)</label><p-inputnumber [(ngModel)]="internet.cancellationFee" [minFractionDigits]="2" class="w-full" /></div>
+              <div class="field toggle-inline"><label>Router incluido</label><p-toggleswitch [(ngModel)]="internet.routerIncluded" /></div>
             </div>
-            <div class="period-card">
-              <div class="period-card-header">
-                <div class="period-card-left">
-                  <div class="period-card-title"><i class="pi pi-bolt" style="color:#FACC15"></i> Precios de energía (€/kWh)</div>
-                  <div class="commission-inline">
-                    <span class="commission-label">Comisión %</span>
-                    <input type="number" class="commission-input" [(ngModel)]="product.commissionEnergyPct" placeholder="—" step="0.01" />
-                  </div>
-                </div>
-                <div class="period-card-actions">
-                  <input type="number" class="common-input" [(ngModel)]="energyCommon" placeholder="Valor común" step="0.000001" />
-                  <button class="apply-btn" (click)="applyEnergyCommon()">Aplicar a todos</button>
-                </div>
-              </div>
-              <div class="periods-grid-3">
-                @for (ep of product.energyPeriods; track ep.period) {
-                  <div class="period-field">
-                    <label class="period-label">{{ ep.period }}</label>
-                    <input type="number" class="period-input" [(ngModel)]="ep.priceKwh" step="0.000001" placeholder="0.000000" />
-                  </div>
-                }
-              </div>
-            </div>
-            <div class="period-card">
-              <div class="period-card-header">
-                <div class="period-card-left">
-                  <div class="period-card-title"><i class="pi pi-circle" style="color:#60A5FA"></i> Precios de potencia (€/kW·día)</div>
-                </div>
-                <div class="period-card-actions">
-                  <span class="boe-link" (click)="loadBoe()">Cargar BOE</span>
-                  <div class="commission-inline">
-                    <span class="commission-label">Comisión %</span>
-                    <input type="number" class="commission-input" [(ngModel)]="product.commissionPowerPct" placeholder="—" step="0.01" />
-                  </div>
-                  <input type="number" class="common-input" [(ngModel)]="powerCommon" placeholder="Valor común" step="0.00000001" />
-                  <button class="apply-btn" (click)="applyPowerCommon()">Aplicar a todos</button>
-                </div>
-              </div>
-              <div class="periods-grid-3">
-                @for (pp of product.powerPeriods; track pp.period) {
-                  <div class="period-field">
-                    <label class="period-label">{{ pp.period }}</label>
-                    <input type="number" class="period-input" [(ngModel)]="pp.priceKwDay" step="0.00000001" placeholder="0.00000000" />
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- GAS -->
-          @if (dto.serviceType === 'GAS') {
-            <div class="top-row mb">
-              <div class="field span-2">
-                <label>NOMBRE <span class="req">*</span></label>
-                <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Tarifa Gas Fijo RL1" class="w-full" />
-              </div>
-              <div class="field">
-                <label>CÓDIGO TARIFA</label>
-                <input pInputText [(ngModel)]="dto.tariffCode" placeholder="Ej: RL.1" class="w-full" />
-              </div>
-            </div>
-            <div class="period-card">
-              <div class="period-card-header">
-                <div class="period-card-title"><i class="pi pi-fire" style="color:#FB923C"></i> Detalle gas</div>
-              </div>
-              <div class="row-3">
-                <div class="field"><label>Tipo</label>
-                  <p-select [options]="gasTypeOpts" [(ngModel)]="gas.productType" optionLabel="label" optionValue="value" class="w-full" /></div>
-                <div class="field"><label>Término fijo (€/día)</label>
-                  <p-inputnumber [(ngModel)]="gas.fixedTermDay" [minFractionDigits]="3" [maxFractionDigits]="5" class="w-full" /></div>
-                <div class="field"><label>Margen (€/kWh)</label>
-                  <p-inputnumber [(ngModel)]="gas.marginKwh" [minFractionDigits]="4" [maxFractionDigits]="6" class="w-full" /></div>
-              </div>
-            </div>
-            <div class="section-label mt-sm">Tramos <button class="add-btn" (click)="addTier()"><i class="pi pi-plus"></i> Añadir</button></div>
-            <div class="tiers-header"><span>Orden</span><span>Desde (kWh)</span><span>Hasta (kWh)</span><span>Precio (€/kWh)</span><span></span></div>
-            @for (tier of gas.tiers; track $index) {
-              <div class="tier-row">
-                <span class="tier-order">{{ tier.tierOrder }}</span>
-                <p-inputnumber [(ngModel)]="tier.minKwh" [min]="0" class="w-full" />
-                <p-inputnumber [(ngModel)]="tier.maxKwh" [min]="0" placeholder="Sin límite" class="w-full" />
-                <p-inputnumber [(ngModel)]="tier.priceKwh" [minFractionDigits]="3" [maxFractionDigits]="5" class="w-full" />
-                @if (gas.tiers.length > 1) {
-                  <button class="del-btn" (click)="removeTier($index)"><i class="pi pi-trash"></i></button>
-                }
-              </div>
-            }
-          }
-
-          <!-- MOBILE -->
-          @if (dto.serviceType === 'MOBILE') {
-            <div class="top-row mb">
-              <div class="field span-2"><label>NOMBRE <span class="req">*</span></label>
-                <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Tarifa Mobile 50GB" class="w-full" /></div>
-              <div class="field"><label>RED</label>
-                <p-select [options]="networkOpts" [(ngModel)]="mobile.network" optionLabel="label" optionValue="value" class="w-full" /></div>
-            </div>
-            <div class="period-card">
-              <div class="period-card-header"><div class="period-card-title"><i class="pi pi-mobile" style="color:#A78BFA"></i> Detalle móvil</div></div>
-              <div class="row-3">
-                <div class="field"><label>Cuota mensual (€) <span class="req">*</span></label><p-inputnumber [(ngModel)]="mobile.monthlyFee" [minFractionDigits]="2" class="w-full" /></div>
-                <div class="field"><label>Datos (GB)</label><p-inputnumber [(ngModel)]="mobile.dataGb" [min]="0" class="w-full" /></div>
-                <div class="field"><label>Minutos voz</label><p-inputnumber [(ngModel)]="mobile.voiceMinutes" [min]="0" placeholder="Ilimitado" class="w-full" /></div>
-              </div>
-              <div class="row-3">
-                <div class="field"><label>Extra GB (€)</label><p-inputnumber [(ngModel)]="mobile.extraGbPrice" [minFractionDigits]="2" class="w-full" /></div>
-                <div class="field"><label>Permanencia (meses)</label><p-inputnumber [(ngModel)]="mobile.permanenceMonths" [min]="0" class="w-full" /></div>
-                <div class="field"><label>Penalización (€)</label><p-inputnumber [(ngModel)]="mobile.cancellationFee" [minFractionDigits]="2" class="w-full" /></div>
-              </div>
-            </div>
-          }
-
-          <!-- INTERNET -->
-          @if (dto.serviceType === 'INTERNET') {
-            <div class="top-row mb">
-              <div class="field span-2"><label>NOMBRE <span class="req">*</span></label>
-                <input pInputText [(ngModel)]="dto.name" placeholder="Ej: Fibra 600MB Simétrica" class="w-full" /></div>
-              <div class="field"><label>TECNOLOGÍA</label>
-                <p-select [options]="techOpts" [(ngModel)]="internet.technology" optionLabel="label" optionValue="value" class="w-full" /></div>
-            </div>
-            <div class="period-card">
-              <div class="period-card-header"><div class="period-card-title"><i class="pi pi-wifi" style="color:#60A5FA"></i> Detalle internet</div></div>
-              <div class="row-3">
-                <div class="field"><label>Cuota mensual (€) <span class="req">*</span></label><p-inputnumber [(ngModel)]="internet.monthlyFee" [minFractionDigits]="2" class="w-full" /></div>
-                <div class="field"><label>Bajada (Mbps)</label><p-inputnumber [(ngModel)]="internet.speedDownMbps" [min]="0" class="w-full" /></div>
-                <div class="field"><label>Subida (Mbps)</label><p-inputnumber [(ngModel)]="internet.speedUpMbps" [min]="0" class="w-full" /></div>
-              </div>
-              <div class="row-3">
-                <div class="field"><label>Permanencia (meses)</label><p-inputnumber [(ngModel)]="internet.permanenceMonths" [min]="0" class="w-full" /></div>
-                <div class="field"><label>Penalización (€)</label><p-inputnumber [(ngModel)]="internet.cancellationFee" [minFractionDigits]="2" class="w-full" /></div>
-                <div class="field toggle-inline"><label>Router incluido</label><p-toggleswitch [(ngModel)]="internet.routerIncluded" /></div>
-              </div>
-            </div>
-          }
-
-        } <!-- end @if !editId -->
+          </div>
+        }
 
       </div>
+      } <!-- end @else loadingEdit -->
 
       <!-- Type chips — solo en creación -->
       @if (!editId) {
@@ -294,6 +431,29 @@ function emptyGasTier(order: number): GasTierDto {
     .edit-loading .pi { font-size: 1.25rem; color: var(--sx-primary); }
 
     .form-body { display: flex; flex-direction: column; gap: 0; }
+
+    /* Status bar (edit mode) */
+    .status-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.7rem 0.875rem; border-radius: 10px; margin-bottom: 1rem;
+      border: 1px solid; gap: 1rem;
+    }
+    .status-bar.status-active   { background: rgba(22,163,74,0.08);  border-color: rgba(22,163,74,0.25); }
+    .status-bar.status-inactive { background: rgba(148,163,184,0.08); border-color: var(--sx-border); }
+    .status-info { display: flex; align-items: center; gap: 0.6rem; font-size: 0.83rem; font-weight: 600; flex: 1; }
+    .status-active   .status-info { color: var(--sx-green); }
+    .status-inactive .status-info { color: var(--sx-text-3); }
+    .status-info .pi { font-size: 0.9rem; flex-shrink: 0; }
+    .activation-hint {
+      font-size: 0.75rem; font-weight: 400; color: var(--sx-text-2);
+      background: var(--sx-surface-2); border: 1px solid var(--sx-border);
+      border-radius: 6px; padding: 2px 8px;
+    }
+    .toggle-wrap {
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      padding: 2px;
+    }
 
     .top-row {
       display: grid; grid-template-columns: 1fr 1fr 1fr;
@@ -458,6 +618,50 @@ function emptyGasTier(order: number): GasTierDto {
       color: #fff; font-weight: 600;
     }
 
+    /* Tabs */
+    .tab-content { padding: 0.875rem 0 0; }
+
+    /* Existing BOE/OMIE section */
+    .existing-section { margin-bottom: 1rem; }
+    .existing-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--sx-text-3);
+      margin-bottom: 0.5rem;
+    }
+    .period-card-sm {
+      background: var(--sx-surface-2); border: 1px solid var(--sx-border);
+      border-radius: 8px; padding: 0.5rem 0.75rem;
+      display: flex; flex-direction: column; gap: 0.1rem;
+    }
+    .period-lbl-sm  { font-size: 0.7rem; font-weight: 700; color: var(--sx-text-3); }
+    .period-val-sm  { font-size: 0.88rem; font-weight: 700; color: var(--sx-text); font-variant-numeric: tabular-nums; }
+    .period-date-sm { font-size: 0.68rem; color: var(--sx-text-3); }
+
+    /* OMIE list row */
+    .omie-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 0.75rem; border-radius: 8px;
+      border: 1px solid var(--sx-border); background: var(--sx-surface-2);
+      margin-bottom: 0.4rem;
+    }
+    .omie-info { display: flex; flex-direction: column; gap: 0.1rem; }
+    .omie-name  { font-size: 0.83rem; font-weight: 600; color: var(--sx-text); }
+    .omie-dates { font-size: 0.72rem; color: var(--sx-text-3); }
+
+    /* Save tab button */
+    .save-tab-btn {
+      margin-top: 0.75rem;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.25rem; border-radius: 8px;
+      background: var(--sx-primary); color: #fff;
+      border: none; font-size: 0.83rem; font-weight: 600;
+      cursor: pointer; transition: background 140ms;
+    }
+    .save-tab-btn:hover:not(:disabled) { background: var(--sx-primary-btn); }
+    .save-tab-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .save-tab-purple { background: #7C3AED; }
+    .save-tab-purple:hover:not(:disabled) { background: #6D28D9; }
+
     .api-error {
       display: flex; align-items: center; gap: 0.5rem;
       background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
@@ -478,7 +682,9 @@ export class ServiceFormComponent implements OnInit {
   saving      = signal(false);
   loadingEdit = signal(false);
   apiError    = '';
-  isActiveEdit = true;
+  isActiveEdit    = true;
+  activationHint  = '';
+  private wasActive = true;
 
   validFromDate:  Date | null = null;
   validUntilDate: Date | null = null;
@@ -496,6 +702,31 @@ export class ServiceFormComponent implements OnInit {
 
   energyCommon: number | null = null;
   powerCommon:  number | null = null;
+
+  // Tabs LUZ
+  luzTab = 'tarifa';
+
+  // BOE
+  existingBoe: BoePeriodItem[] = [];
+  boeError  = '';
+  boeSaving = signal(false);
+  boe = {
+    validFromDate:  null as Date | null,
+    validUntilDate: null as Date | null,
+    periods: PERIODS.map(p => ({ period: p, value: null as number | null })),
+  };
+
+  // OMIE
+  existingOmie: OmieDistribution[] = [];
+  omieError  = '';
+  omieSaving = signal(false);
+  omie = {
+    name:           '',
+    margin:         null as number | null,
+    validFromDate:  null as Date | null,
+    validUntilDate: null as Date | null,
+    periods: PERIODS.map(p => ({ period: p, factor: null as number | null })),
+  };
 
   get dialogTitle(): string {
     const map: Record<string, string> = { LUZ: 'Nueva oferta de Luz', GAS: 'Nueva oferta de Gas', MOBILE: 'Nueva oferta Móvil', INTERNET: 'Nueva oferta Internet' };
@@ -543,6 +774,7 @@ export class ServiceFormComponent implements OnInit {
       this.dto.name        = this.editItem.name;
       this.dto.tariffCode  = this.editItem.tariffCode ?? null;
       this.isActiveEdit    = this.editItem.isActive;
+      this.wasActive       = this.editItem.isActive;
       if (this.editItem.validFrom)  this.validFromDate  = new Date(this.editItem.validFrom);
       if (this.editItem.validUntil) this.validUntilDate = new Date(this.editItem.validUntil);
     }
@@ -565,18 +797,22 @@ export class ServiceFormComponent implements OnInit {
         if (rawType === 'LUZ' && d.products?.length) {
           const p = d.products[0];
           this.product = {
+            id:                  p.id,
             name:                p.name ?? '',
             productType:         p.productType ?? 'INDEXED',
             commissionEnergyPct: p.commissionEnergyPct ?? null,
             commissionPowerPct:  p.commissionPowerPct  ?? null,
             validFrom:           p.validFrom  ?? '',
             validUntil:          p.validUntil ?? null,
-            energyPeriods: p.energyPeriods?.length
-              ? p.energyPeriods
-              : PERIODS.map(per => ({ period: per, priceKwh: 0, baseValue: null })),
-            powerPeriods: p.powerPeriods?.length
-              ? p.powerPeriods
-              : PERIODS.map(per => ({ period: per, priceKwDay: 0 })),
+            // Merge API periods with full P1-P6 set, null for missing ones
+            energyPeriods: PERIODS.map(per => {
+              const found = p.energyPeriods?.find(ep => ep.period === per);
+              return { period: per, priceKwh: found?.priceKwh ?? null, baseValue: found?.baseValue ?? null };
+            }),
+            powerPeriods: PERIODS.map(per => {
+              const found = p.powerPeriods?.find(pp => pp.period === per);
+              return { period: per, priceKwDay: found?.priceKwDay ?? null };
+            }),
           };
         }
 
@@ -605,6 +841,20 @@ export class ServiceFormComponent implements OnInit {
           };
         }
 
+        if (rawType === 'LUZ') {
+          this.existingBoe  = d.boePeriods          ?? [];
+          this.existingOmie = d.omieDistributions   ?? [];
+          // Pre-fill BOE inputs with existing values
+          if (d.boePeriods?.length) {
+            this.boe.periods = PERIODS.map(p => {
+              const found = d.boePeriods!.find(b => b.period === p);
+              return { period: p, value: found?.priceKwDay ?? null };
+            });
+            if (d.boePeriods[0]?.validFrom)  this.boe.validFromDate  = new Date(d.boePeriods[0].validFrom);
+            if (d.boePeriods[0]?.validUntil) this.boe.validUntilDate = new Date(d.boePeriods[0].validUntil!);
+          }
+        }
+
         if (rawType === 'INTERNET' && d.internetDetail) {
           this.internet = {
             monthlyFee:       d.internetDetail.monthlyFee       ?? 0,
@@ -626,8 +876,52 @@ export class ServiceFormComponent implements OnInit {
     });
   }
 
+  get periodCount(): number {
+    return this.dto.tariffCode === '2.0TD' ? 3 : 6;
+  }
+
+  get visibleEnergyPeriods() {
+    return this.product.energyPeriods.slice(0, this.periodCount);
+  }
+
+  get visiblePowerPeriods() {
+    return this.product.powerPeriods.slice(0, this.periodCount);
+  }
+
+  get visibleBoePeriods() {
+    return this.boe.periods.slice(0, this.periodCount);
+  }
+
+  get visibleOmiePeriods() {
+    return this.omie.periods.slice(0, this.periodCount);
+  }
+
   onTypeChange() {
     this.product = emptyProduct();
+  }
+
+  onActiveToggle() {
+    if (this.isActiveEdit && !this.wasActive) {
+      // Activating a previously inactive service → auto-set 1 month validity
+      const today     = new Date();
+      const nextMonth = new Date(today);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      this.validFromDate  = today;
+      this.validUntilDate = nextMonth;
+      this.activationHint = `Vigencia automática: hoy → ${nextMonth.toLocaleDateString('es-ES')}`;
+    } else if (!this.isActiveEdit) {
+      this.activationHint = '';
+    }
+    this.wasActive = this.isActiveEdit;
+  }
+
+  onTariffChange() {
+    // Trim/expand periods when tariff changes
+    const n = this.periodCount;
+    if (this.product.energyPeriods.length !== n) {
+      this.product.energyPeriods = PERIODS.slice(0, n).map(p => ({ period: p, priceKwh: null, baseValue: null }));
+      this.product.powerPeriods  = PERIODS.slice(0, n).map(p => ({ period: p, priceKwDay: null }));
+    }
   }
 
   applyEnergyCommon() {
@@ -651,6 +945,51 @@ export class ServiceFormComponent implements OnInit {
     return d ? d.toISOString().split('T')[0] : null;
   }
 
+  saveBoe() {
+    if (!this.editId) return;
+    this.boeError = '';
+    if (!this.boe.validFromDate) { this.boeError = 'La fecha de inicio es obligatoria.'; return; }
+    const dto: CreateBoePeriodsDto = {
+      validFrom:  this.toIso(this.boe.validFromDate)!,
+      validUntil: this.toIso(this.boe.validUntilDate),
+      periods:    this.boe.periods
+        .filter(p => p.value !== null)
+        .map(p => ({ period: p.period, value: p.value! })),
+    };
+    if (!dto.periods.length) { this.boeError = 'Introduce al menos un período BOE.'; return; }
+    this.boeSaving.set(true);
+    this.svc.createBoe(this.editId, dto).subscribe({
+      next:  () => { this.boeSaving.set(false); this.existingBoe = dto.periods.map(p => ({ period: p.period, priceKwDay: p.value, validFrom: dto.validFrom, validUntil: dto.validUntil })); },
+      error: e  => { this.boeSaving.set(false); this.boeError = e?.error?.error ?? 'Error al guardar BOE.'; },
+    });
+  }
+
+  saveOmie() {
+    if (!this.editId) return;
+    this.omieError = '';
+    if (!this.omie.name)          { this.omieError = 'El nombre es obligatorio.'; return; }
+    if (!this.omie.validFromDate) { this.omieError = 'La fecha de inicio es obligatoria.'; return; }
+    const dto: CreateOmieDistributionDto = {
+      name:       this.omie.name,
+      margin:     this.omie.margin,
+      validFrom:  this.toIso(this.omie.validFromDate)!,
+      validUntil: this.toIso(this.omie.validUntilDate),
+      periods:    this.omie.periods
+        .filter(p => p.factor !== null)
+        .map(p => ({ period: p.period, factor: p.factor! })),
+    };
+    if (!dto.periods.length) { this.omieError = 'Introduce al menos un factor OMIE.'; return; }
+    this.omieSaving.set(true);
+    this.svc.createOmie(this.editId, dto).subscribe({
+      next:  () => {
+        this.omieSaving.set(false);
+        this.existingOmie = [...this.existingOmie, { id: Date.now(), name: dto.name, margin: dto.margin, isActive: true, validFrom: dto.validFrom, validUntil: dto.validUntil, periods: dto.periods }];
+        this.omie = { name: '', margin: null, validFromDate: null, validUntilDate: null, periods: PERIODS.map(p => ({ period: p, factor: null })) };
+      },
+      error: e => { this.omieSaving.set(false); this.omieError = e?.error?.error ?? 'Error al crear distribución OMIE.'; },
+    });
+  }
+
   submit() {
     this.apiError = '';
     if (!this.dto.name) { this.apiError = 'El nombre de la oferta es obligatorio.'; return; }
@@ -661,13 +1000,33 @@ export class ServiceFormComponent implements OnInit {
     let payload: any;
 
     if (this.editId) {
-      // PUT: solo campos editables según la API
-      payload = {
-        name:      this.dto.name,
-        isActive:  this.isActiveEdit,
-        validFrom: this.dto.validFrom,
-        validUntil: this.dto.validUntil,
-      };
+      // PUT PATCH-like: solo se actualiza lo que se manda
+      payload = {} as any;
+
+      if (this.dto.name)                  payload.name      = this.dto.name;
+      if (this.dto.validFrom)             payload.validFrom = this.dto.validFrom;
+      // validUntil puede ser null (quitar fecha fin) o una fecha — siempre la mandamos
+      payload.validUntil = this.dto.validUntil;
+      payload.isActive   = this.isActiveEdit;
+
+      if (this.dto.serviceType === 'LUZ' && this.product.id) {
+        this.product.validFrom = this.dto.validFrom ?? '';
+        this.product.validUntil = this.dto.validUntil;
+        payload.products = [{
+          id:                  this.product.id,
+          name:                this.product.name || undefined,
+          productType:         this.product.productType,
+          commissionEnergyPct: this.product.commissionEnergyPct,
+          commissionPowerPct:  this.product.commissionPowerPct,
+          validFrom:           this.product.validFrom || undefined,
+          validUntil:          this.product.validUntil,
+          energyPeriods:       this.product.energyPeriods,
+          powerPeriods:        this.product.powerPeriods,
+        }];
+      }
+      if (this.dto.serviceType === 'GAS')      payload.gasDetail      = this.gas;
+      if (this.dto.serviceType === 'MOBILE')   payload.mobileDetail   = this.mobile;
+      if (this.dto.serviceType === 'INTERNET') payload.internetDetail = this.internet;
     } else {
       // POST: payload completo por tipo
       if (this.dto.serviceType === 'LUZ' && !this.product.name) {
