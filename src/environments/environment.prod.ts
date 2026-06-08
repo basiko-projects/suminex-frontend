@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.suminex.es/api/admin',
+  apiUrl: 'https://api.apoloenergies.es/suminex/api',
 };
