@@ -1,0 +1,14 @@
+<svg width="60" height="72" viewBox="0 0 20 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M19.7675 23.3536H16.1151C14.9995 23.3536 13.9679 22.7757 13.3872 21.8251L9.88759 16.1217L7.15207 11.6654L0 0H3.68301C4.79861 0 5.8378 0.577947 6.41852 1.52852L9.88759 7.19393L12.6231 11.6578L19.7675 23.3536Z"
+        fill="#1A1A1A" stroke="#1A1A1A" stroke-width="0.4"
+        stroke-dasharray="65.07" stroke-dashoffset="65.07" fill-opacity="0">
+    <animate attributeName="stroke-dashoffset" values="65.07;0;0;0;65.07" keyTimes="0;0.45;0.55;0.85;1" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="fill-opacity" values="0;0;1;1;0" keyTimes="0;0.45;0.55;0.85;1" dur="2s" repeatCount="indefinite"/>
+  </path>
+  <path d="M5.86837 13.7643L0 23.3536H3.81291C4.82918 23.3536 5.76903 22.8289 6.29627 21.962L8.59624 18.213L5.86837 13.7643ZM13.4331 1.39164L11.1636 5.10267L13.8992 9.57416L19.7675 0H15.9241C14.9078 0 13.9679 0.53232 13.4331 1.39164Z"
+        fill="#227CFF" stroke="#227CFF" stroke-width="0.4"
+        stroke-dasharray="55.29" stroke-dashoffset="55.29" fill-opacity="0">
+    <animate attributeName="stroke-dashoffset" values="55.29;0;0;0;55.29" keyTimes="0;0.45;0.55;0.85;1" dur="2s" begin="0.15s" repeatCount="indefinite"/>
+    <animate attributeName="fill-opacity" values="0;0;1;1;0" keyTimes="0;0.45;0.55;0.85;1" dur="2s" begin="0.15s" repeatCount="indefinite"/>
+  </path>
+</svg>

@@ -2,30 +2,30 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { SuminexLoaderComponent } from '../../../shared/components/suminex-loader';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SuminexLoaderComponent],
   template: `
     <div class="login-bg">
       <div class="login-card">
 
         <!-- Brand -->
         <div class="brand">
-          <h1 class="brand-name">SUMINE<span class="brand-x">X</span></h1>
-          <p class="brand-sub">Portal de Administración</p>
+          <img src="/logo_suminex.svg" alt="Suminex" class="brand-logo" />
+          <h1 class="brand-title">Iniciar sesión</h1>
         </div>
 
         <!-- Form -->
         <form class="login-form" (submit)="$event.preventDefault(); login()">
 
           <div class="field" [class.invalid]="submitted && !email">
-            <label>CORREO ELECTRÓNICO</label>
             <div class="input-wrap">
               <i class="pi pi-envelope input-icon"></i>
               <input type="email" [(ngModel)]="email" name="email"
-                     placeholder="admin@suminex.es" autocomplete="email" />
+                     placeholder="Correo" autocomplete="email" />
             </div>
             @if (submitted && !email) {
               <span class="field-error">Este campo es obligatorio</span>
@@ -33,12 +33,11 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
 
           <div class="field" [class.invalid]="submitted && !password">
-            <label>CONTRASEÑA</label>
             <div class="input-wrap">
               <i class="pi pi-lock input-icon"></i>
               <input [type]="showPwd() ? 'text' : 'password'"
                      [(ngModel)]="password" name="password"
-                     placeholder="••••••••" autocomplete="current-password" />
+                     placeholder="Contraseña" autocomplete="current-password" />
               <button class="pwd-toggle" type="button" (click)="showPwd.set(!showPwd())">
                 <i [class]="'pi ' + (showPwd() ? 'pi-eye-slash' : 'pi-eye')"></i>
               </button>
@@ -48,24 +47,25 @@ import { AuthService } from '../../../core/services/auth.service';
             }
           </div>
 
-          @if (error) {
+          @if (error()) {
             <div class="login-error">
               <i class="pi pi-exclamation-circle"></i>
-              <span>{{ error }}</span>
+              <span>{{ error() }}</span>
             </div>
           }
 
-          <button class="login-btn" type="submit" [disabled]="loading">
-            @if (loading) {
-              <i class="pi pi-spin pi-spinner"></i> Verificando...
+          <button class="login-btn" type="submit" [disabled]="loading()">
+            @if (loading()) {
+              <app-suminex-loader [size]="16" /> Verificando...
             } @else {
-              Iniciar sesión <i class="pi pi-arrow-right"></i>
+              Iniciar sesión
             }
           </button>
         </form>
 
         <p class="login-footer">
-          Acceso exclusivo para administradores y agentes autorizados
+          ¿Necesitas acceso?
+          <a href="mailto:soporte@suminex.es" class="footer-link">Contacta con soporte</a>
         </p>
       </div>
     </div>
@@ -73,95 +73,111 @@ import { AuthService } from '../../../core/services/auth.service';
   styles: [`
     .login-bg {
       min-height: 100vh;
-      background: linear-gradient(160deg, #E8EBF4 0%, #EEF0F6 50%, #E4E8F2 100%);
+      background: linear-gradient(180deg, #227CFF 0%, #1255CC 30%, #071230 65%, #030810 100%);
       display: flex; align-items: center; justify-content: center;
-      font-family: Inter, system-ui, sans-serif;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      padding: 1.5rem;
     }
-    .dark .login-bg { background: linear-gradient(160deg, #0D0F1A 0%, #111420 100%); }
 
     .login-card {
-      background: var(--bg-surface, #fff);
-      border: 1px solid var(--border-color, #D5D9E8);
-      border-radius: var(--radius-xl, 16px);
-      padding: 32px;
-      width: 380px;
-      box-shadow: var(--shadow-lg);
+      background: #161616;
+      border-radius: 20px;
+      padding: 44px 36px 36px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.55);
     }
 
     /* Brand */
-    .brand { text-align: center; margin-bottom: 24px; }
-    .brand-name {
-      font-size: 26px; font-weight: 800; letter-spacing: 4px;
-      color: var(--text-primary, #1C2033); margin: 0 0 4px;
+    .brand { margin-bottom: 36px; text-align: center; }
+    .brand-logo {
+      height: 30px; width: auto;
+      display: block; margin: 0 auto 16px;
     }
-    .brand-x { color: var(--accent, #4F46E5); }
-    .brand-sub { font-size: var(--font-xs, 11px); color: var(--text-muted, #9299B8); margin: 0; letter-spacing: 0.05em; }
+    .brand-title {
+      font-size: 28px; font-weight: 700;
+      color: #FFFFFF; margin: 0;
+      letter-spacing: -0.02em; line-height: 1.2;
+    }
 
     /* Form */
-    .login-form { display: flex; flex-direction: column; gap: 14px; }
-    .field { display: flex; flex-direction: column; gap: 5px; }
-    .field label {
-      font-size: var(--font-xs, 11px); font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.08em; color: var(--text-secondary, #5A6180);
-    }
+    .login-form { display: flex; flex-direction: column; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
     .input-wrap {
       position: relative; display: flex; align-items: center;
     }
     .input-icon {
-      position: absolute; left: 12px; font-size: 13px;
-      color: var(--text-muted, #9299B8); pointer-events: none;
+      position: absolute; left: 14px; font-size: 14px;
+      color: rgba(255,255,255,0.30); pointer-events: none;
     }
     .input-wrap input {
-      width: 100%; padding: 10px 12px 10px 36px;
-      background: var(--bg-input, #F5F6FA);
-      border: 1.5px solid var(--border-color, #D5D9E8);
-      border-radius: var(--radius-md, 8px);
-      font-size: var(--font-base, 13px); color: var(--text-primary, #1C2033);
+      width: 100%; padding: 10px 14px 10px 40px;
+      background: #252525;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      font-size: 14px; color: #FFFFFF;
       outline: none; transition: border-color 150ms, box-shadow 150ms;
       font-family: inherit;
+      box-sizing: border-box;
     }
-    .input-wrap input::placeholder { color: var(--text-muted, #9299B8); }
+    .input-wrap input::placeholder { color: rgba(255,255,255,0.30); }
     .input-wrap input:focus {
-      border-color: var(--accent, #4F46E5);
-      box-shadow: 0 0 0 3px var(--accent-light, #EEF2FF);
+      border-color: #227CFF;
+      box-shadow: 0 0 0 3px rgba(34,124,255,0.20);
     }
-    .field.invalid .input-wrap input { border-color: var(--danger, #DC2626); }
-    .field-error { font-size: var(--font-xs, 11px); color: var(--danger, #DC2626); }
+    .input-wrap input:-webkit-autofill,
+    .input-wrap input:-webkit-autofill:hover,
+    .input-wrap input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px #252525 inset !important;
+      -webkit-text-fill-color: #FFFFFF !important;
+      caret-color: #FFFFFF;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+    .field.invalid .input-wrap input { border-color: #EF4444; }
+    .field-error { font-size: 11px; color: #F87171; padding-left: 2px; }
 
     .pwd-toggle {
-      position: absolute; right: 10px;
+      position: absolute; right: 12px;
       background: none; border: none; cursor: pointer;
-      color: var(--text-muted, #9299B8); padding: 4px;
+      color: rgba(255,255,255,0.30); padding: 4px;
       display: flex; align-items: center;
     }
-    .pwd-toggle:hover { color: var(--text-secondary, #5A6180); }
-    .pwd-toggle .pi { font-size: 14px; }
+    .pwd-toggle:hover { color: rgba(255,255,255,0.65); }
+    .pwd-toggle .pi { font-size: 15px; }
 
     .login-error {
       display: flex; align-items: center; gap: 8px;
-      padding: 10px 12px; border-radius: var(--radius-md, 8px);
-      background: var(--danger-bg, #FEF2F2); border: 1px solid var(--danger-border, #FECACA);
-      color: var(--danger, #DC2626); font-size: var(--font-sm, 12px);
+      padding: 10px 12px; border-radius: 8px;
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35);
+      color: #F87171; font-size: 12px;
     }
     .login-error .pi { font-size: 13px; flex-shrink: 0; }
 
     .login-btn {
-      width: 100%; padding: 11px 16px; margin-top: 4px;
-      background: var(--accent, #4F46E5); color: #fff;
-      border: none; border-radius: var(--radius-md, 8px);
-      font-size: var(--font-md, 14px); font-weight: 600;
+      width: 100%; padding: 13px 16px; margin-top: 8px;
+      background: #227CFF; color: #fff;
+      border: 1.5px solid #227CFF;
+      border-radius: 10px;
+      font-size: 14px; font-weight: 600;
       cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: background 150ms; font-family: inherit;
+      transition: all 150ms; font-family: inherit;
     }
-    .login-btn:hover:not(:disabled) { background: var(--accent-hover, #4338CA); }
-    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .login-btn:hover:not(:disabled) {
+      background: #1A6FE8;
+      border-color: #1A6FE8;
+    }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .login-btn .pi { font-size: 13px; }
 
     .login-footer {
-      text-align: center; margin-top: 20px; margin-bottom: 0;
-      font-size: var(--font-xs, 11px); color: var(--text-muted, #9299B8);
+      text-align: center; margin-top: 28px; margin-bottom: 0;
+      font-size: 12px; color: rgba(255,255,255,0.35);
       line-height: 1.5;
     }
+    .footer-link {
+      color: #227CFF; text-decoration: none; font-weight: 500;
+    }
+    .footer-link:hover { text-decoration: underline; }
   `]
 })
 export class LoginComponent {
@@ -170,21 +186,21 @@ export class LoginComponent {
 
   email    = '';
   password = '';
-  loading  = false;
-  error    = '';
+  loading  = signal(false);
+  error    = signal('');
   submitted = false;
   showPwd = signal(false);
 
   login() {
     this.submitted = true;
     if (!this.email || !this.password) return;
-    this.loading = true;
-    this.error   = '';
+    this.loading.set(true);
+    this.error.set('');
     this.auth.login(this.email, this.password).subscribe({
       next:  () => this.router.navigate(['/dashboard']),
       error: (e) => {
-        this.error   = e?.error?.error ?? e?.error?.message ?? 'Credenciales incorrectas.';
-        this.loading = false;
+        this.error.set(e?.error?.error ?? e?.error?.message ?? 'Credenciales incorrectas.');
+        this.loading.set(false);
       },
     });
   }

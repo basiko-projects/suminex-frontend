@@ -1,10 +1,9 @@
-import { Component, OnInit, inject, ViewChild, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProvidersService } from '../../core/services/providers.service';
 import { Provider, ProviderForm } from '../../core/models/provider.model';
-import { TableModule, Table } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,31 +11,23 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
 import { MessageService, ConfirmationService } from 'primeng/api';
+import { SuminexLoaderComponent } from '../../shared/components/suminex-loader';
+import { DataTableComponent, DataTableColumn } from '../../shared/data-table/data-table';
 
 @Component({
   selector: 'app-providers',
   standalone: true,
   imports: [
     DatePipe, FormsModule,
-    TableModule, ButtonModule, DialogModule, InputTextModule,
+    ButtonModule, DialogModule, InputTextModule,
     ToggleSwitchModule, TagModule, ToastModule, ConfirmDialogModule,
-    IconFieldModule, InputIconModule,
+    SuminexLoaderComponent, DataTableComponent,
   ],
   providers: [MessageService, ConfirmationService],
   template: `
     <p-toast />
     <p-confirmDialog />
-
-    <div class="page-header">
-      <div>
-        <h1>Proveedores</h1>
-        <p class="page-subtitle">Gestiona las compañías proveedoras de servicios energéticos</p>
-      </div>
-      <p-button label="Nuevo proveedor" icon="pi pi-plus" (onClick)="openNew()" />
-    </div>
 
     @if (loadError) {
       <div class="load-error-banner">
@@ -46,82 +37,52 @@ import { MessageService, ConfirmationService } from 'primeng/api';
       </div>
     }
 
-    <div class="table-card">
-      <div class="table-toolbar">
-        <p-iconfield>
-          <p-inputicon class="pi pi-search" />
-          <input pInputText [(ngModel)]="globalFilter"
-                 (input)="dt.filterGlobal(globalFilter, 'contains')"
-                 placeholder="Buscar proveedor..." />
-        </p-iconfield>
-        <span class="record-count">{{ providers.length }} registros</span>
-      </div>
+    <!-- Shared table -->
+    <app-data-table
+      title="Proveedores"
+      subtitle="Gestiona las compañías proveedoras de servicios energéticos"
+      [columns]="tableColumns"
+      [rows]="pagedRows()"
+      [total]="filteredTotal()"
+      [page]="page()"
+      [pageSize]="pageSize()"
+      [loading]="loading()"
+      [rowTemplate]="rowTpl"
+      emptyMessage="No hay proveedores registrados"
+      (searchChange)="onSearchChange($event)"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)">
+      <p-button dtActions label="Nuevo proveedor" icon="pi pi-plus" size="small" (onClick)="openNew()" />
+    </app-data-table>
 
-      <p-table
-        #dt
-        [value]="providers"
-        [loading]="loading()"
-        [paginator]="true"
-        [rows]="10"
-        [showCurrentPageReport]="true"
-        currentPageReportTemplate="Página {currentPage} de {totalPages} — Total: {totalRecords}"
-        [rowsPerPageOptions]="[10, 20, 50]"
-        class="p-datatable-sm"
-        [globalFilterFields]="['name','cif']"
-      >
-        <ng-template pTemplate="header">
-          <tr>
-            <th pSortableColumn="name">Nombre <p-sortIcon field="name" /></th>
-            <th>CIF</th>
-            <th pSortableColumn="serviceCount" style="text-align:center">Servicios <p-sortIcon field="serviceCount" /></th>
-            <th pSortableColumn="createdAt">Alta <p-sortIcon field="createdAt" /></th>
-            <th style="text-align:center">Estado</th>
-            <th style="text-align:right">Acciones</th>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="body" let-p>
-          <tr>
-            <td>
-              <div class="provider-name-cell">
-                <div class="provider-avatar">{{ p.name.charAt(0) }}</div>
-                <span class="fw-600">{{ p.name }}</span>
-              </div>
-            </td>
-            <td><code>{{ p.cif }}</code></td>
-            <td style="text-align:center">
-              <span class="count-pill">{{ p.serviceCount }}</span>
-            </td>
-            <td class="text-muted text-sm">{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
-            <td style="text-align:center">
-              <p-tag [value]="p.isActive ? 'Activo' : 'Inactivo'"
-                     [severity]="p.isActive ? 'success' : 'danger'" />
-            </td>
-            <td>
-              <div class="row-actions" style="justify-content:flex-end">
-                <button class="icon-btn" (click)="edit(p)" title="Editar">
-                  <i class="pi pi-pencil"></i>
-                </button>
-                <button class="icon-btn icon-btn-danger" (click)="confirmDelete(p)" title="Desactivar">
-                  <i class="pi pi-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="6">
-              <div class="empty-state">
-                <i class="pi pi-building"></i>
-                <span>No hay proveedores registrados</span>
-              </div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
+    <!-- Row template -->
+    <ng-template #rowTpl let-p>
+      <td>
+        <div class="provider-name-cell">
+          <div class="provider-avatar">{{ p.name.charAt(0) }}</div>
+          <span class="fw-600">{{ p.name }}</span>
+        </div>
+      </td>
+      <td><code>{{ p.cif }}</code></td>
+      <td style="text-align:center">
+        <span class="count-pill">{{ p.serviceCount }}</span>
+      </td>
+      <td class="text-muted text-sm">{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
+      <td style="text-align:center">
+        <p-tag [value]="p.isActive ? 'Activo' : 'Inactivo'"
+               [severity]="p.isActive ? 'success' : 'danger'" />
+      </td>
+      <td style="text-align:center">
+        <div class="row-actions">
+          <button class="icon-btn" (click)="edit(p)" title="Editar">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button class="icon-btn icon-btn-danger" (click)="confirmDelete(p)" title="Desactivar">
+            <i class="pi pi-trash"></i>
+          </button>
+        </div>
+      </td>
+    </ng-template>
 
     <!-- Dialog -->
     <p-dialog
@@ -150,20 +111,21 @@ import { MessageService, ConfirmationService } from 'primeng/api';
       <ng-template pTemplate="footer">
         <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="dialogVisible = false" />
         <p-button [label]="isEdit ? 'Guardar cambios' : 'Crear proveedor'"
-                  icon="pi pi-check" [loading]="saving" (onClick)="save()" />
+                  icon="pi pi-check" [loading]="saving()" (onClick)="save()">
+          <ng-template pTemplate="loadingicon">
+            <app-suminex-loader [size]="14" />
+          </ng-template>
+        </p-button>
       </ng-template>
     </p-dialog>
   `,
   styles: [`
-    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid var(--sx-border); }
-    .page-header h1 { font-size:1.6rem; font-weight:700; letter-spacing:-0.02em; color:var(--sx-text); }
-    .page-subtitle { color:var(--sx-text-2); font-size:0.83rem; margin-top:0.25rem; }
+    /* Row cells — data-table's scoped CSS doesn't reach ng-template cells */
+    td { padding:0.85rem 1.5rem; vertical-align:middle; }
+    td:first-child { padding-left:3rem; }
+    td:last-child  { padding-right:3rem; }
 
-    .table-toolbar {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:1rem 1.25rem; border-bottom:1px solid var(--sx-border);
-    }
-    .record-count { font-size:0.78rem; color:var(--sx-text-3); font-weight:500; }
+    .row-actions { justify-content: center; }
 
     .provider-name-cell { display:flex; align-items:center; gap:0.75rem; }
     .provider-avatar {
@@ -194,13 +156,6 @@ import { MessageService, ConfirmationService } from 'primeng/api';
     .text-muted { color:var(--sx-text-2); }
     .text-sm { font-size:0.82rem; }
 
-    .empty-state {
-      display:flex; flex-direction:column; align-items:center; gap:0.75rem;
-      padding:3rem; color:var(--sx-text-3);
-    }
-    .empty-state .pi { font-size:2rem; }
-    .empty-state span { font-size:0.875rem; }
-
     .dialog-form { display:flex; flex-direction:column; gap:1.25rem; padding:0.25rem 0; }
     .field { display:flex; flex-direction:column; gap:0.5rem; }
     .field-row { display:flex; align-items:center; justify-content:space-between; padding:0.25rem 0; }
@@ -208,20 +163,45 @@ import { MessageService, ConfirmationService } from 'primeng/api';
   `]
 })
 export class ProvidersComponent implements OnInit {
-  @ViewChild('dt') dt!: Table;
   private svc     = inject(ProvidersService);
   private msg     = inject(MessageService);
   private confirm = inject(ConfirmationService);
 
-  providers: Provider[] = [];
+  providers = signal<Provider[]>([]);
   loading = signal(true);
   loadError = '';
   dialogVisible = false;
   isEdit = false;
-  saving = false;
-  globalFilter = '';
+  saving = signal(false);
   selectedProvider: Provider | null = null;
   form: ProviderForm & { isActive?: boolean } = { name: '', cif: '', isActive: true };
+
+  page = signal(1);
+  pageSize = signal(20);
+  searchTerm = signal('');
+
+  tableColumns: DataTableColumn[] = [
+    { key: 'name',     label: 'Nombre' },
+    { key: 'cif',      label: 'CIF' },
+    { key: 'services', label: 'Servicios', align: 'center' },
+    { key: 'created',  label: 'Alta' },
+    { key: 'status',   label: 'Estado',   align: 'center' },
+    { key: 'actions',  label: 'Acciones', align: 'center', width: '100px' },
+  ];
+
+  filtered = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    const list = this.providers();
+    if (!term) return list;
+    return list.filter(p => p.name.toLowerCase().includes(term) || p.cif.toLowerCase().includes(term));
+  });
+
+  filteredTotal = computed(() => this.filtered().length);
+
+  pagedRows = computed(() => {
+    const start = (this.page() - 1) * this.pageSize();
+    return this.filtered().slice(start, start + this.pageSize());
+  });
 
   ngOnInit() { this.load(); }
 
@@ -229,10 +209,14 @@ export class ProvidersComponent implements OnInit {
     this.loading.set(true);
     this.loadError = '';
     this.svc.getAll().pipe(finalize(() => this.loading.set(false))).subscribe({
-      next:  d => { this.providers = d; },
+      next:  d => { this.providers.set(d); },
       error: e => { this.loadError = e?.status === 401 ? 'Sin autorización. Verifica tu sesión.' : 'Error al cargar los proveedores. Inténtalo de nuevo.'; },
     });
   }
+
+  onSearchChange(term: string)   { this.searchTerm.set(term); this.page.set(1); }
+  onPageChange(p: number)        { this.page.set(p); }
+  onPageSizeChange(size: number) { this.pageSize.set(size); this.page.set(1); }
 
   openNew() {
     this.isEdit = false;
@@ -252,7 +236,7 @@ export class ProvidersComponent implements OnInit {
       this.msg.add({ severity: 'warn', summary: 'Campos requeridos', detail: 'Nombre y CIF son obligatorios.' });
       return;
     }
-    this.saving = true;
+    this.saving.set(true);
     const obs$ = this.isEdit
       ? this.svc.update(this.selectedProvider!.id, this.form)
       : this.svc.create(this.form);
@@ -261,12 +245,12 @@ export class ProvidersComponent implements OnInit {
       next: () => {
         this.msg.add({ severity: 'success', summary: 'Guardado', detail: `Proveedor ${this.isEdit ? 'actualizado' : 'creado'} correctamente.` });
         this.dialogVisible = false;
-        this.saving = false;
+        this.saving.set(false);
         this.load();
       },
       error: () => {
         this.msg.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar.' });
-        this.saving = false;
+        this.saving.set(false);
       },
     });
   }

@@ -30,6 +30,12 @@ export interface ServiceTariffProduct {
   name:     string;
   type:     string;
   isActive: boolean;
+  /* Campos de precio por período — el listado agrupado no los documenta explícitamente;
+     se leen de forma defensiva (undefined si el backend no los incluye aquí). */
+  commissionEnergyPct?: number | null;
+  commissionPowerPct?:  number | null;
+  energyPeriods?:       EnergyPeriodDto[];
+  powerPeriods?:        PowerPeriodDto[];
 }
 
 export interface ServiceTariffBoePeriod {

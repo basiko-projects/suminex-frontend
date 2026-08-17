@@ -4,11 +4,12 @@ import { ServicesService } from '../../core/services/services.service';
 import { ServiceListItem, ServiceDetail } from '../../core/models/service.model';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { SuminexLoaderComponent } from '../../shared/components/suminex-loader';
 
 @Component({
   selector: 'app-service-detail',
   standalone: true,
-  imports: [DecimalPipe, SlicePipe, DialogModule, ButtonModule],
+  imports: [DecimalPipe, SlicePipe, DialogModule, ButtonModule, SuminexLoaderComponent],
   template: `
     <p-dialog [visible]="true" header="Detalle del servicio"
               [modal]="true" [style]="{width:'560px', maxHeight:'92vh'}"
@@ -17,7 +18,7 @@ import { ButtonModule } from 'primeng/button';
 
       @if (loading()) {
         <div class="loading-state">
-          <i class="pi pi-spin pi-spinner"></i>
+          <app-suminex-loader [size]="28" />
           <span>Cargando detalle…</span>
         </div>
       } @else {

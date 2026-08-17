@@ -42,6 +42,39 @@ export interface SupplyListResponse {
   hasPreviousPage: boolean;
 }
 
+export interface CreateSupplyBody {
+  serviceId:            number;
+  serviceType:          CategoryCode;
+  originFlow:           'Manual' | 'AI' | 'Comparator';
+  estimatedSavings:     number;
+  comparisonHistoryId?: string;
+  ocrDocumentId?:       string;
+  holderName:           string;
+  holderDni:            string;
+  holderPhone:          string;
+  holderEmail:          string;
+  isUserTheHolder:      boolean;
+  holderIban?:          string;
+  cups?:                string;
+  phoneToPort?:         string;
+  street?:              string;
+  floor?:               string;
+  door?:                string;
+  postalCode?:          string;
+  province?:            string;
+  locality?:            string;
+}
+
+export interface CreateSupplyResponse {
+  id:               string;
+  serviceId:        number;
+  serviceType:      CategoryCode;
+  originFlow:       string;
+  estimatedSavings: number;
+  status:           SupplyStatus;
+  createdAt:        string;
+}
+
 export interface SupplyFilters {
   page?:        number;
   pageSize?:    number;

@@ -5,11 +5,12 @@ import { finalize } from 'rxjs/operators';
 import { ServicesService } from '../../core/services/services.service';
 import { ServiceListItem } from '../../core/models/service.model';
 import { TarifaFormComponent } from './modals/tarifa-form';
+import { SuminexLoaderComponent } from '../../shared/components/suminex-loader';
 
 @Component({
   selector: 'app-tarifas-list',
   standalone: true,
-  imports: [TarifaFormComponent],
+  imports: [TarifaFormComponent, SuminexLoaderComponent],
   template: `
     <!-- List header -->
     <div class="list-hdr">
@@ -104,7 +105,7 @@ import { TarifaFormComponent } from './modals/tarifa-form';
           <div class="confirm-footer">
             <button class="btn-cancel" (click)="deleteTarget = null">Cancelar</button>
             <button class="btn-danger" [disabled]="deleting()" (click)="confirmDelete()">
-              @if (deleting()) { <i class="pi pi-spin pi-spinner"></i> } Eliminar
+              @if (deleting()) { <app-suminex-loader [size]="14" /> } Eliminar
             </button>
           </div>
         </div>
@@ -277,10 +278,10 @@ export class TarifasListComponent implements OnChanges {
     return ({ LUZ: 'Luz', GAS: 'Gas', MOBILE: 'Móvil', INTERNET: 'Internet' } as Record<string, string>)[this.serviceType] ?? this.serviceType;
   }
   get typeColor() {
-    return ({ LUZ: '#D97706', GAS: '#059669', MOBILE: '#7C3AED', INTERNET: '#0284C7' } as Record<string, string>)[this.serviceType] ?? '#4F46E5';
+    return ({ LUZ: '#D97706', GAS: '#059669', MOBILE: '#7C3AED', INTERNET: '#0284C7' } as Record<string, string>)[this.serviceType] ?? '#227CFF';
   }
   get typeBg() {
-    return ({ LUZ: '#FEF9EE', GAS: '#F0FDF8', MOBILE: '#F5F3FF', INTERNET: '#F0F9FF' } as Record<string, string>)[this.serviceType] ?? '#EEF2FF';
+    return ({ LUZ: '#FEF9EE', GAS: '#F0FDF8', MOBILE: '#F5F3FF', INTERNET: '#F0F9FF' } as Record<string, string>)[this.serviceType] ?? '#EAF2FF';
   }
   get typeBorder() {
     return ({ LUZ: '#FDE68A', GAS: '#A7F3D0', MOBILE: '#DDD6FE', INTERNET: '#BAE6FD' } as Record<string, string>)[this.serviceType] ?? '#C7D2FE';

@@ -24,7 +24,9 @@ import { HeaderComponent } from '../header/header';
       <div class="shell-main">
         <app-header (openSidebar)="openSidebar()" />
         <main class="main-content">
-          <router-outlet />
+          <div class="content-wrap">
+            <router-outlet />
+          </div>
         </main>
       </div>
     </div>
@@ -33,13 +35,13 @@ import { HeaderComponent } from '../header/header';
     .shell {
       display: flex;
       min-height: 100vh;
-      background: var(--sx-bg);
+      background: #FFFFFF;
+      color-scheme: light;
     }
 
     /* ── Fixed sidebar (desktop ≥1024px) ── */
     .fixed-sidebar {
       display: none;
-      width: 260px;
       flex-shrink: 0;
     }
 
@@ -73,19 +75,24 @@ import { HeaderComponent } from '../header/header';
     }
     .main-content {
       flex: 1;
-      padding: 1.5rem 1.25rem;
       overflow-x: hidden;
+      overflow-y: auto;
+      background: #FFFFFF;
+    }
+    .content-wrap {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem;
     }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* ── Desktop: show fixed sidebar, hide drawer toggle ── */
+    /* ── Desktop: show fixed sidebar ── */
     @media (min-width: 1024px) {
       .fixed-sidebar { display: block; }
       .drawer-sidebar { display: none; }
       .drawer-backdrop { display: none; }
-      .shell-main { margin-left: 0; }
-      .main-content { padding: 2rem 2.5rem; }
+      .content-wrap { padding: 2.5rem 2.5rem; }
     }
   `]
 })

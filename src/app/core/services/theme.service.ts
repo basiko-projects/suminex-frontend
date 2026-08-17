@@ -1,38 +1,17 @@
 import { Injectable, signal, effect } from '@angular/core';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'light'; // 'dark' | 'light' — dark disabled, re-enable when ready
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  private readonly STORAGE_KEY = 'suminex-theme';
-
-  theme = signal<Theme>(this.getInitial());
+  theme = signal<Theme>('light');
 
   constructor() {
-    effect(() => {
-      const t = this.theme();
-      const html = document.documentElement;
-      if (t === 'dark') {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
-      localStorage.setItem(this.STORAGE_KEY, t);
-    });
-    // Apply immediately on init (before first render)
-    if (this.theme() === 'dark') {
-      document.documentElement.classList.add('dark');
-    }
+    // Remove any persisted dark class on startup
+    document.documentElement.classList.remove('dark');
+    localStorage.removeItem('suminex-theme');
   }
 
-  toggle() {
-    this.theme.set(this.theme() === 'dark' ? 'light' : 'dark');
-  }
-
-  private getInitial(): Theme {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
-    // Respect OS preference if no saved value
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
+  // Toggle kept for future dark mode — wire back getInitial() + CSS .dark block when ready
+  toggle() { /* no-op until dark mode is enabled */ }
 }

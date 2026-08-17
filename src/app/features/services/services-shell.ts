@@ -6,11 +6,17 @@ import { TarifaFormComponent } from './modals/tarifa-form';
 import { ProductoLuzFormComponent } from './modals/producto-luz-form';
 import { BoeLuzFormComponent } from './modals/boe-luz-form';
 import { OmieLuzFormComponent } from './modals/omie-luz-form';
+import { SuminexLoaderComponent } from '../../shared/components/suminex-loader';
+import { ButtonModule } from 'primeng/button';
+import { DataTableComponent, DataTableColumn } from '../../shared/data-table/data-table';
 
 @Component({
   selector: 'app-services-shell',
   standalone: true,
-  imports: [TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent],
+  imports: [
+    TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, SuminexLoaderComponent,
+    ButtonModule, DataTableComponent,
+  ],
   template: `
     <div class="svc-page">
 
@@ -94,40 +100,33 @@ import { OmieLuzFormComponent } from './modals/omie-luz-form';
           <!-- Productos -->
           @if (activeContentTab() === 'productos') {
             <div class="tab-section">
-              <div class="tab-hdr">
-                <span class="tab-title">Productos</span>
-                <button class="btn-add" (click)="showProductoLuz = true">
-                  <i class="pi pi-plus"></i> Nuevo producto
-                </button>
-              </div>
-              @if (!(activeTarifa()!.products?.length)) {
-                <div class="empty-tab"><i class="pi pi-box"></i><span>Sin productos configurados aún</span></div>
-              } @else {
-                <table class="prod-table">
-                  <thead><tr>
-                    <th>Nombre</th><th>Tipo</th><th>Estado</th>
-                    <th class="th-right">Acciones</th>
-                  </tr></thead>
-                  <tbody>
-                    @for (p of activeTarifa()!.products!; track p.id) {
-                      <tr>
-                        <td class="fw-600">{{ p.name }}</td>
-                        <td><span class="type-badge" [class.indexed]="p.type==='INDEXED'" [class.fixed]="p.type==='FIXED'">{{ p.type }}</span></td>
-                        <td><span class="status-chip" [class.st-on]="p.isActive" [class.st-off]="!p.isActive">{{ p.isActive ? 'Activo' : 'Inactivo' }}</span></td>
-                        <td>
-                          <div class="row-acts">
-                            <button class="act-btn"      title="Ver detalle" (click)="openProductView(p.id)">
-                              @if (loadingDetailFor() === p.id) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-eye"></i> }
-                            </button>
-                            <button class="act-btn edit" title="Editar"   (click)="startEditProduct(p.id)"><i class="pi pi-pencil"></i></button>
-                            <button class="act-btn del"  title="Eliminar" (click)="deleteConfirmId.set(p.id)"><i class="pi pi-trash"></i></button>
-                          </div>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              }
+              <app-data-table
+                title="Productos"
+                [columns]="productColumns"
+                [rows]="activeTarifa()!.products ?? []"
+                [total]="(activeTarifa()!.products ?? []).length"
+                [page]="1"
+                [pageSize]="(activeTarifa()!.products ?? []).length || 20"
+                [searchable]="false"
+                [rowTemplate]="prodRowTpl"
+                emptyMessage="Sin productos configurados aún">
+                <p-button dtActions label="Nuevo producto" icon="pi pi-plus" size="small" (onClick)="showProductoLuz = true" />
+              </app-data-table>
+
+              <ng-template #prodRowTpl let-p>
+                <td class="fw-600">{{ p.name }}</td>
+                <td><div class="cell-center"><span class="type-badge" [class.indexed]="p.type==='INDEXED'" [class.fixed]="p.type==='FIXED'">{{ typeLabel(p.type) }}</span></div></td>
+                <td><div class="cell-center"><span class="status-chip" [class.st-on]="p.isActive" [class.st-off]="!p.isActive">{{ p.isActive ? 'Activo' : 'Inactivo' }}</span></div></td>
+                <td>
+                  <div class="row-acts">
+                    <button class="act-btn"      title="Ver detalle" (click)="openProductView(p.id)">
+                      @if (loadingDetailFor() === p.id) { <app-suminex-loader [size]="14" /> } @else { <i class="pi pi-eye"></i> }
+                    </button>
+                    <button class="act-btn edit" title="Editar"   (click)="startEditProduct(p.id)"><i class="pi pi-pencil"></i></button>
+                    <button class="act-btn del"  title="Eliminar" (click)="deleteConfirmId.set(p.id)"><i class="pi pi-trash"></i></button>
+                  </div>
+                </td>
+              </ng-template>
             </div>
           }
 
@@ -311,7 +310,7 @@ import { OmieLuzFormComponent } from './modals/omie-luz-form';
           <div class="confirm-acts">
             <button class="btn-cancel-sm" (click)="deleteConfirmId.set(null)" [disabled]="deleting()">Cancelar</button>
             <button class="btn-del-sm" (click)="doDeleteProduct()" [disabled]="deleting()">
-              @if (deleting()) { <i class="pi pi-spin pi-spinner"></i> } Eliminar
+              @if (deleting()) { <app-suminex-loader [size]="14" /> } Eliminar
             </button>
           </div>
         </div>
@@ -328,7 +327,7 @@ import { OmieLuzFormComponent } from './modals/omie-luz-form';
                 @if (activeTarifa()?.code) {
                   <span class="tariff-chip">{{ activeTarifa()!.code }}</span>
                 }
-                <span class="type-badge" [class.indexed]="viewingProduct().type==='INDEXED'" [class.fixed]="viewingProduct().type==='FIXED'">{{ viewingProduct().type }}</span>
+                <span class="type-badge" [class.indexed]="viewingProduct().type==='INDEXED'" [class.fixed]="viewingProduct().type==='FIXED'">{{ typeLabel(viewingProduct().type) }}</span>
                 <span class="status-chip" [class.st-on]="viewingProduct().isActive" [class.st-off]="!viewingProduct().isActive">{{ viewingProduct().isActive ? 'Activo' : 'Inactivo' }}</span>
               </div>
             </div>
@@ -382,22 +381,22 @@ import { OmieLuzFormComponent } from './modals/omie-luz-form';
     :host { display: block; font-family: Inter, system-ui, sans-serif; }
 
     .svc-header { margin-bottom: 1.25rem; }
-    .svc-title { font-size: 20px; font-weight: 700; color: var(--text-primary, #1C2033); margin: 0 0 2px; }
-    .svc-sub   { font-size: 12px; color: var(--text-muted, #9299B8); margin: 0; }
+    .svc-title { font-size: 20px; font-weight: 700; color: var(--sx-text); margin: 0 0 2px; }
+    .svc-sub   { font-size: 12px; color: var(--sx-text-3); margin: 0; }
 
     /* Nivel 1: tipo */
     .type-tabs {
       display: flex; gap: 2px; margin-bottom: 0;
-      border-bottom: 1px solid var(--border-color, #D5D9E8);
+      border-bottom: 1px solid var(--sx-border);
     }
     .type-tab {
       display: inline-flex; align-items: center; gap: 7px;
       padding: 8px 16px 9px; border: none; background: transparent;
-      font-size: 13px; font-weight: 500; color: var(--text-secondary, #5A6180);
+      font-size: 13px; font-weight: 500; color: var(--sx-text-2);
       cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: all 140ms; font-family: inherit; border-radius: 6px 6px 0 0;
     }
-    .type-tab:hover { color: var(--text-primary, #1C2033); background: var(--bg-subtle, #E8EBF4); }
+    .type-tab:hover { color: var(--sx-text); background: var(--sx-surface-2); }
     .type-tab.active { color: var(--tc); font-weight: 600; border-bottom-color: var(--tc); }
     .tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
@@ -408,43 +407,43 @@ import { OmieLuzFormComponent } from './modals/omie-luz-form';
     }
     .tarifa-tab {
       padding: 5px 14px; border-radius: 20px;
-      border: 1.5px solid var(--border-color, #D5D9E8);
-      background: transparent; color: var(--text-secondary, #5A6180);
+      border: 1.5px solid var(--sx-border);
+      background: transparent; color: var(--sx-text-2);
       font-size: 12px; font-weight: 600; font-family: monospace;
       cursor: pointer; transition: all 140ms;
     }
-    .tarifa-tab:hover { border-color: var(--accent-border, #C7D2FE); color: var(--accent, #4F46E5); }
-    .tarifa-tab.active { background: var(--accent, #4F46E5); border-color: var(--accent, #4F46E5); color: #fff; }
+    .tarifa-tab:hover { border-color: var(--sx-border-2); color: var(--sx-primary); }
+    .tarifa-tab.active { background: var(--sx-primary-btn); border-color: var(--sx-primary-btn); color: #fff; }
 
     .tarifa-chip-group { display: flex; align-items: center; gap: 3px; }
 
     .side-chip {
       padding: 4px 8px; border-radius: 20px;
-      border: 1px solid var(--border-color, #D5D9E8);
-      background: var(--bg-subtle, #E8EBF4);
-      color: var(--text-muted, #9299B8);
+      border: 1px solid var(--sx-border);
+      background: var(--sx-surface-2);
+      color: var(--sx-text-3);
       font-size: 10px; font-weight: 600; font-family: inherit;
       cursor: pointer; transition: all 120ms; white-space: nowrap;
     }
-    .side-chip:hover { border-color: var(--accent-border, #C7D2FE); color: var(--accent, #4F46E5); background: var(--accent-light, #EEF2FF); }
+    .side-chip:hover { border-color: var(--sx-border-2); color: var(--sx-primary); background: var(--sx-primary-bg); }
 
     .btn-new-tarifa {
       width: 28px; height: 28px; border-radius: 50%;
-      border: 1.5px dashed var(--border-color, #D5D9E8);
-      background: transparent; color: var(--text-muted, #9299B8);
+      border: 1.5px dashed var(--sx-border);
+      background: transparent; color: var(--sx-text-3);
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       font-size: 11px; transition: all 140ms;
     }
-    .btn-new-tarifa:hover { border-color: var(--accent, #4F46E5); color: var(--accent, #4F46E5); }
+    .btn-new-tarifa:hover { border-color: var(--sx-primary); color: var(--sx-primary); }
 
-    .skel-tab { width: 64px; height: 28px; border-radius: 20px; background: var(--bg-subtle, #E8EBF4); animation: skel 1.2s ease-in-out infinite alternate; }
+    .skel-tab { width: 64px; height: 28px; border-radius: 20px; background: var(--sx-surface-2); animation: skel 1.2s ease-in-out infinite alternate; }
     @keyframes skel { from{opacity:0.5}to{opacity:1} }
-    .no-tarifas { display: flex; align-items: center; gap: 10px; padding: 14px 0; color: var(--text-muted, #9299B8); font-size: 13px; }
+    .no-tarifas { display: flex; align-items: center; gap: 10px; padding: 14px 0; color: var(--sx-text-3); font-size: 13px; }
     .btn-new-small {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 5px 10px; border-radius: 20px;
-      border: 1px solid var(--accent-border, #C7D2FE); background: var(--accent-light, #EEF2FF);
-      color: var(--accent, #4F46E5); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
+      border: 1px solid var(--sx-border-2); background: var(--sx-primary-bg);
+      color: var(--sx-primary-text); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
     }
 
     /* Nivel 3: detalle */
@@ -452,145 +451,143 @@ import { OmieLuzFormComponent } from './modals/omie-luz-form';
     .detail-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .detail-hdr-left { display: flex; align-items: center; gap: 10px; }
     .tarifa-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: monospace; }
-    .detail-name { font-size: 15px; font-weight: 600; color: var(--text-primary, #1C2033); }
+    .detail-name { font-size: 15px; font-weight: 600; color: var(--sx-text); }
 
     /* Content tabs */
     .content-tabs {
       display: flex; gap: 2px; margin-bottom: 16px;
-      border-bottom: 1px solid var(--border-color, #D5D9E8);
+      border-bottom: 1px solid var(--sx-border);
     }
     .content-tab {
       padding: 7px 14px 8px; border: none; background: transparent;
-      font-size: 13px; font-weight: 500; color: var(--text-secondary, #5A6180);
+      font-size: 13px; font-weight: 500; color: var(--sx-text-2);
       cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: all 140ms; font-family: inherit; border-radius: 6px 6px 0 0;
     }
-    .content-tab:hover { color: var(--text-primary, #1C2033); background: var(--bg-subtle, #E8EBF4); }
-    .content-tab.active { color: var(--accent, #4F46E5); font-weight: 600; border-bottom-color: var(--accent, #4F46E5); }
+    .content-tab:hover { color: var(--sx-text); background: var(--sx-surface-2); }
+    .content-tab.active { color: var(--sx-primary); font-weight: 600; border-bottom-color: var(--sx-primary); }
 
     /* Tab section */
     .tab-section { }
     .tab-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-    .tab-title { font-size: 14px; font-weight: 600; color: var(--text-primary, #1C2033); }
+    .tab-title { font-size: 14px; font-weight: 600; color: var(--sx-text); }
     .btn-add {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 6px 12px; border-radius: 8px;
-      background: var(--accent, #4F46E5); color: #fff; border: none;
+      background: var(--sx-primary-btn); color: #fff; border: none;
       font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit;
     }
-    .btn-add:hover { background: var(--accent-hover, #4338CA); }
+    .btn-add:hover { background: var(--sx-primary); }
     .btn-add .pi { font-size: 10px; }
 
     /* Pricing grid */
     .pricing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
     .pcard {
       display: flex; flex-direction: column; gap: 4px; padding: 12px 14px;
-      background: var(--bg-surface, #fff); border: 1px solid var(--border-color, #D5D9E8);
+      background: var(--sx-surface); border: 1px solid var(--sx-border);
       border-radius: 10px;
     }
-    .plabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9299B8); }
-    .pcard strong { font-size: 14px; font-weight: 600; color: var(--text-primary, #1C2033); }
+    .plabel { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sx-text-3); }
+    .pcard strong { font-size: 14px; font-weight: 600; color: var(--sx-text); }
 
     /* Empty */
-    .empty-tab { display: flex; align-items: center; gap: 10px; padding: 32px; color: var(--text-muted, #9299B8); font-size: 13px; justify-content: center; }
+    .empty-tab { display: flex; align-items: center; gap: 10px; padding: 32px; color: var(--sx-text-3); font-size: 13px; justify-content: center; }
     .empty-tab .pi { font-size: 22px; }
 
     /* Loading row */
-    .loading-row { display: flex; align-items: center; gap: 8px; padding: 28px; color: var(--text-muted, #9299B8); font-size: 13px; justify-content: center; }
-    .loading-row .pi { font-size: 16px; color: var(--accent, #4F46E5); }
+    .loading-row { display: flex; align-items: center; gap: 8px; padding: 28px; color: var(--sx-text-3); font-size: 13px; justify-content: center; }
+    .loading-row .pi { font-size: 16px; color: var(--sx-primary); }
 
-    /* Product table */
-    .prod-table { width: 100%; border-collapse: collapse; border: 1px solid var(--border-color, #D5D9E8); border-radius: 10px; overflow: hidden; font-size: 13px; }
-    .prod-table thead tr { background: var(--bg-subtle, #E8EBF4); }
-    .prod-table th { padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9299B8); }
-    .prod-table td { padding: 10px 12px; border-top: 1px solid var(--border-color, #D5D9E8); vertical-align: middle; }
-    .prod-table tbody tr:hover { background: var(--bg-subtle, #E8EBF4); }
-    .th-right { text-align: right !important; }
-    .fw-600 { font-weight: 600; color: var(--text-primary, #1C2033); }
-    .txt-muted { color: var(--text-muted, #9299B8); }
+    /* Product table row cells — data-table's scoped CSS doesn't reach ng-template cells */
+    td { padding: 0.85rem 1.5rem; vertical-align: middle; font-size: 14px; font-weight: 500; color: var(--sx-text); }
+    td:first-child { padding-left: 3rem; }
+    td:last-child  { padding-right: 3rem; }
+    .fw-600 { font-weight: 600; color: var(--sx-text); }
+    .txt-muted { color: var(--sx-text-3); }
     .text-xs { font-size: 12px; }
+    .cell-center { display: flex; justify-content: center; }
     .type-badge { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 11px; font-weight: 700; }
-    .type-badge.indexed { background: var(--accent-light, #EEF2FF); color: var(--accent, #4F46E5); }
-    .type-badge.fixed   { background: var(--bg-subtle, #E8EBF4); color: var(--text-secondary, #5A6180); }
-    .row-acts { display: flex; justify-content: flex-end; gap: 4px; }
-    .act-btn { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--border-color, #D5D9E8); background: transparent; color: var(--text-muted, #9299B8); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 120ms; }
+    .type-badge.indexed { background: var(--sx-primary-bg); color: var(--sx-primary-text); }
+    .type-badge.fixed   { background: var(--sx-surface-2); color: var(--sx-text-2); }
+    .row-acts { display: flex; justify-content: center; gap: 4px; }
+    .act-btn { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--sx-border); background: transparent; color: var(--sx-text-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 120ms; }
     .act-btn .pi { font-size: 10px; }
-    .act-btn:hover       { border-color: var(--accent-border, #C7D2FE); color: var(--accent, #4F46E5); background: var(--accent-light, #EEF2FF); }
+    .act-btn:hover       { border-color: var(--sx-border-2); color: var(--sx-text); background: var(--sx-surface-2); }
     .act-btn.edit:hover  { border-color: #FDE68A; color: #D97706; background: rgba(217,119,6,0.08); }
     .act-btn.del:hover   { border-color: #FECACA; color: #DC2626; background: #FEF2F2; }
     .status-chip { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .st-on  { background: rgba(5,150,105,0.1); color: #059669; border: 1px solid rgba(5,150,105,0.25); }
-    .st-off { background: var(--bg-subtle, #E8EBF4); color: var(--text-muted, #9299B8); border: 1px solid var(--border-color, #D5D9E8); }
+    .st-on  { background: var(--sx-green-bg); color: var(--sx-green); border: 1px solid var(--sx-border-2); }
+    .st-off { background: var(--sx-surface-2); color: var(--sx-text-3); border: 1px solid var(--sx-border); }
 
     /* Expanded row */
-    .expanded-row td { background: var(--bg-subtle, #E8EBF4) !important; padding: 10px 16px !important; }
+    .expanded-row td { background: var(--sx-surface-2) !important; padding: 10px 16px !important; }
     .expanded-body { display: flex; gap: 28px; flex-wrap: wrap; }
     .period-group { display: flex; flex-direction: column; gap: 6px; }
-    .pg-title { font-size: 11px; font-weight: 600; color: var(--text-secondary, #5A6180); display: flex; align-items: center; gap: 4px; }
+    .pg-title { font-size: 11px; font-weight: 600; color: var(--sx-text-2); display: flex; align-items: center; gap: 4px; }
     .pg-cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
     .pg-cell  { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .pg-lbl   { font-size: 10px; font-weight: 700; color: var(--text-muted, #9299B8); text-transform: uppercase; }
-    .pg-val   { font-size: 12px; font-weight: 600; color: var(--text-primary, #1C2033); font-variant-numeric: tabular-nums; background: var(--bg-surface, #fff); border: 1px solid var(--border-color, #D5D9E8); border-radius: 6px; padding: 5px 8px; width: 100%; text-align: center; }
-    .pg-val.val-boe { color: var(--accent, #4F46E5); background: var(--accent-light, #EEF2FF); border-color: var(--accent-border, #C7D2FE); }
+    .pg-lbl   { font-size: 10px; font-weight: 700; color: var(--sx-text-3); text-transform: uppercase; }
+    .pg-val   { font-size: 12px; font-weight: 600; color: var(--sx-text); font-variant-numeric: tabular-nums; background: var(--sx-surface); border: 1px solid var(--sx-border); border-radius: 6px; padding: 5px 8px; width: 100%; text-align: center; }
+    .pg-val.val-boe { color: var(--sx-primary-text); background: var(--sx-primary-bg); border-color: var(--sx-border-2); }
 
     /* BOE table */
-    .boe-info-note { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--accent, #4F46E5); background: var(--accent-light, #EEF2FF); border: 1px solid var(--accent-border, #C7D2FE); padding: 7px 11px; border-radius: 8px; margin-bottom: 10px; }
+    .boe-info-note { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sx-primary-text); background: var(--sx-primary-bg); border: 1px solid var(--sx-border-2); padding: 7px 11px; border-radius: 8px; margin-bottom: 10px; }
     .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .data-table thead tr { background: var(--bg-subtle, #E8EBF4); }
-    .data-table th { padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9299B8); border-bottom: 1px solid var(--border-color, #D5D9E8); }
-    .data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border-color, #D5D9E8); color: var(--text-primary, #1C2033); }
+    .data-table thead tr { background: var(--sx-surface-2); }
+    .data-table th { padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--sx-text-3); border-bottom: 1px solid var(--sx-border); }
+    .data-table td { padding: 9px 12px; border-bottom: 1px solid var(--sx-border); color: var(--sx-text); }
     .data-table tbody tr:last-child td { border-bottom: none; }
-    .data-table tbody tr:hover td { background: var(--bg-subtle, #E8EBF4); }
+    .data-table tbody tr:hover td { background: var(--sx-surface-2); }
     .mono { font-variant-numeric: tabular-nums; font-family: monospace; font-size: 13px; }
-    .period-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: var(--bg-subtle, #E8EBF4); color: var(--text-secondary, #5A6180); border: 1px solid var(--border-color, #D5D9E8); }
+    .period-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: var(--sx-surface-2); color: var(--sx-text-2); border: 1px solid var(--sx-border); }
 
     /* OMIE cards */
-    .omie-card { border: 1px solid var(--border-color, #D5D9E8); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; }
+    .omie-card { border: 1px solid var(--sx-border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; }
     .omie-card-hdr { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
     .omie-card-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .omie-card-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .omie-name { font-size: 13px; font-weight: 700; color: var(--text-primary, #1C2033); }
-    .omie-margin { font-size: 11px; color: var(--text-muted, #9299B8); background: var(--bg-subtle, #E8EBF4); padding: 2px 7px; border-radius: 4px; }
-    .omie-date { font-size: 11px; color: var(--text-muted, #9299B8); }
+    .omie-name { font-size: 13px; font-weight: 700; color: var(--sx-text); }
+    .omie-margin { font-size: 11px; color: var(--sx-text-3); background: var(--sx-surface-2); padding: 2px 7px; border-radius: 4px; }
+    .omie-date { font-size: 11px; color: var(--sx-text-3); }
     .omie-periods { display: flex; gap: 8px; flex-wrap: wrap; }
     .omie-period-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 48px; }
-    .omie-factor { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-primary, #1C2033); background: var(--bg-surface, #fff); border: 1px solid var(--border-color, #D5D9E8); border-radius: 6px; padding: 4px 8px; width: 100%; text-align: center; }
-    .omie-no-periods { font-size: 12px; color: var(--text-muted, #9299B8); font-style: italic; }
-    .omie-factor-sub { font-size: 9px; color: var(--text-muted, #9299B8); text-align: center; margin-top: 1px; }
+    .omie-factor { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--sx-text); background: var(--sx-surface); border: 1px solid var(--sx-border); border-radius: 6px; padding: 4px 8px; width: 100%; text-align: center; }
+    .omie-no-periods { font-size: 12px; color: var(--sx-text-3); font-style: italic; }
+    .omie-factor-sub { font-size: 9px; color: var(--sx-text-3); text-align: center; margin-top: 1px; }
 
     /* Confirm delete overlay */
     .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 600; backdrop-filter: blur(2px); animation: cfadeIn 150ms ease; }
     @keyframes cfadeIn { from{opacity:0}to{opacity:1} }
-    .confirm-box { background: var(--bg-surface, #fff); border-radius: 16px; padding: 28px 24px; width: 340px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.18); animation: cslideUp 180ms ease-out; }
+    .confirm-box { background: var(--sx-surface); border-radius: 16px; padding: 28px 24px; width: 340px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.18); animation: cslideUp 180ms ease-out; }
     @keyframes cslideUp { from{transform:translateY(6px);opacity:0}to{transform:translateY(0);opacity:1} }
     .confirm-icon { font-size: 28px; color: #F59E0B; margin-bottom: 10px; }
-    .confirm-title { font-size: 15px; font-weight: 700; color: var(--text-primary, #1C2033); margin: 0 0 6px; }
-    .confirm-msg   { font-size: 13px; color: var(--text-muted, #9299B8); margin: 0 0 20px; }
+    .confirm-title { font-size: 15px; font-weight: 700; color: var(--sx-text); margin: 0 0 6px; }
+    .confirm-msg   { font-size: 13px; color: var(--sx-text-3); margin: 0 0 20px; }
     .confirm-acts  { display: flex; justify-content: center; gap: 10px; }
-    .btn-cancel-sm { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color, #D5D9E8); background: transparent; color: var(--text-secondary, #5A6180); font-size: 13px; cursor: pointer; font-family: inherit; transition: background 120ms; }
-    .btn-cancel-sm:hover { background: var(--bg-subtle, #E8EBF4); }
+    .btn-cancel-sm { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--sx-border); background: transparent; color: var(--sx-text-2); font-size: 13px; cursor: pointer; font-family: inherit; transition: background 120ms; }
+    .btn-cancel-sm:hover { background: var(--sx-surface-2); }
     .btn-del-sm { display: flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 8px; background: #DC2626; color: #fff; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 140ms; }
     .btn-del-sm:hover:not(:disabled) { background: #B91C1C; }
     .btn-del-sm:disabled, .btn-cancel-sm:disabled { opacity: 0.6; cursor: not-allowed; }
 
     /* Product view modal */
-    .view-modal { background: var(--bg-surface, #fff); border-radius: 16px; padding: 20px; width: min(92vw, 480px); max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.18); animation: cslideUp 180ms ease-out; display: flex; flex-direction: column; gap: 14px; }
+    .view-modal { background: var(--sx-surface); border-radius: 16px; padding: 20px; width: min(92vw, 480px); max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.18); animation: cslideUp 180ms ease-out; display: flex; flex-direction: column; gap: 14px; }
     @media (min-width: 768px) { .view-modal { width: min(80vw, 640px); padding: 26px; gap: 18px; } }
     @media (min-width: 1280px) { .view-modal { width: min(55vw, 760px); padding: 32px; gap: 22px; } }
     .view-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .view-head-info { display: flex; flex-direction: column; gap: 8px; }
-    .view-title { font-size: 17px; font-weight: 700; color: var(--text-primary, #1C2033); line-height: 1.2; }
+    .view-title { font-size: 17px; font-weight: 700; color: var(--sx-text); line-height: 1.2; }
     @media (min-width: 768px) { .view-title { font-size: 20px; } }
     .view-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .tariff-chip { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; background: var(--accent-light, #EEF2FF); color: var(--accent, #4F46E5); border: 1px solid var(--accent-border, #C7D2FE); letter-spacing: 0.03em; }
-    .close-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-color, #D5D9E8); background: transparent; color: var(--text-muted, #9299B8); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .tariff-chip { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; background: var(--sx-primary-bg); color: var(--sx-primary-text); border: 1px solid var(--sx-border-2); letter-spacing: 0.03em; }
+    .close-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--sx-border); background: transparent; color: var(--sx-text-3); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .close-btn:hover { color: #DC2626; border-color: #FECACA; background: #FEF2F2; }
     .close-btn .pi { font-size: 11px; }
-    .view-dates { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-secondary, #5A6180); background: var(--bg-subtle, #E8EBF4); border-radius: 8px; padding: 8px 12px; flex-wrap: wrap; }
+    .view-dates { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--sx-text-2); background: var(--sx-surface-2); border-radius: 8px; padding: 8px 12px; flex-wrap: wrap; }
     @media (min-width: 768px) { .view-dates { font-size: 13px; padding: 10px 14px; } }
-    .view-date-lbl { font-weight: 600; color: var(--text-muted, #9299B8); font-size: 11px; text-transform: uppercase; }
+    .view-date-lbl { font-weight: 600; color: var(--sx-text-3); font-size: 11px; text-transform: uppercase; }
     .view-section { display: flex; flex-direction: column; gap: 10px; }
-    .view-section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-secondary, #5A6180); }
+    .view-section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--sx-text-2); }
     @media (min-width: 768px) { .view-section-title { font-size: 13px; } }
     .view-section-title .pi { font-size: 12px; }
   `]
@@ -603,6 +600,13 @@ export class ServicesShellComponent implements OnInit {
   activeTarifa     = signal<ServiceTariff | null>(null);
   activeContentTab = signal<string>('productos');
   loadingTarifas   = signal(false);
+
+  productColumns: DataTableColumn[] = [
+    { key: 'name',    label: 'Nombre' },
+    { key: 'type',    label: 'Tipo',     align: 'center' },
+    { key: 'status',  label: 'Estado',   align: 'center' },
+    { key: 'actions', label: 'Acciones', align: 'center', width: '110px' },
+  ];
 
   showNewTarifaForm = false;
   showProductoLuz   = false;
@@ -636,11 +640,15 @@ export class ServicesShellComponent implements OnInit {
     return [{ key:'config', label:'Configuración' }];
   }
 
+  typeLabel(t: string): string {
+    return t === 'FIXED' ? 'Fijo' : t === 'INDEXED' ? 'Indexado' : t;
+  }
+
   typeColor(t: string): string {
-    return ({ LUZ:'#D97706', GAS:'#059669', MOBILE:'#7C3AED', INTERNET:'#0284C7' } as any)[t] ?? '#4F46E5';
+    return ({ LUZ:'#D97706', GAS:'#059669', MOBILE:'#7C3AED', INTERNET:'#0284C7' } as any)[t] ?? '#227CFF';
   }
   typeBg(t: string): string {
-    return ({ LUZ:'rgba(217,119,6,0.12)', GAS:'rgba(5,150,105,0.12)', MOBILE:'rgba(124,58,237,0.12)', INTERNET:'rgba(2,132,199,0.12)' } as any)[t] ?? 'rgba(79,70,229,0.12)';
+    return ({ LUZ:'rgba(217,119,6,0.12)', GAS:'rgba(5,150,105,0.12)', MOBILE:'rgba(124,58,237,0.12)', INTERNET:'rgba(2,132,199,0.12)' } as any)[t] ?? 'rgba(34,124,255,0.12)';
   }
 
   ngOnInit() { this.loadServices(); }
@@ -674,22 +682,23 @@ export class ServicesShellComponent implements OnInit {
     this.viewingProduct.set(null);
   }
 
-  private fetchProductDetail(tariffId: number, productId: number, cb: (d: any) => void) {
+  private fetchProductDetail(tariffId: number, productId: number, cb: (d: any) => void, onError?: () => void) {
     const cacheKey = `${tariffId}-${productId}`;
     if (this.detailCache.has(cacheKey)) { cb(this.detailCache.get(cacheKey)); return; }
     this.svc.getProductById(tariffId, productId).subscribe({
       next: d => { this.detailCache.set(cacheKey, d); cb(d); },
-      error: () => {},
+      error: () => { onError?.(); },
     });
   }
 
   openProductView(productId: number) {
     const tariffId = this.activeTarifa()!.id;
     this.loadingDetailFor.set(productId);
-    this.fetchProductDetail(tariffId, productId, d => {
-      this.viewingProduct.set(d);
-      this.loadingDetailFor.set(null);
-    });
+    this.fetchProductDetail(
+      tariffId, productId,
+      d => { this.viewingProduct.set(d); this.loadingDetailFor.set(null); },
+      () => this.loadingDetailFor.set(null),
+    );
   }
 
   startEditProduct(productId: number) {
