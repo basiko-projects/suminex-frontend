@@ -4,9 +4,9 @@
 
 /* ── Tailwind v4 design tokens ───────────────────────────── */
 @theme {
-  --color-sx-primary:    #3D8EFF;
-  --color-sx-primary-dk: #1A5FCC;
-  --color-sx-primary-bg: rgba(61,142,255,0.12);
+  --color-sx-primary:    #227CFF;
+  --color-sx-primary-dk: #1A6FE8;
+  --color-sx-primary-bg: rgba(34,124,255,0.12);
   --color-sx-green:      #22C578;
   --color-sx-green-dk:   #0D7A4E;
   --color-sx-amber:      #FFB347;
@@ -21,17 +21,17 @@
 :root {
   color-scheme: light;
 
-  --sx-bg:          #F8FAFC;
+  --sx-bg:          #FFFFFF;
   --sx-surface:     #FFFFFF;
   --sx-surface-2:   #F1F5F9;
 
   --sx-border:      #E2E8F0;
   --sx-border-2:    #CBD5E1;
 
-  --sx-primary:     #2563EB;
-  --sx-primary-btn: #1D4ED8;
-  --sx-primary-bg:  #EFF6FF;
-  --sx-primary-text:#1D4ED8;
+  --sx-primary:     #227CFF;
+  --sx-primary-btn: #1A6FE8;
+  --sx-primary-bg:  #EAF2FF;
+  --sx-primary-text:#1A6FE8;
 
   --sx-text:        #0F172A;
   --sx-text-2:      #475569;
@@ -57,10 +57,10 @@
   --text-primary:    #1C2033;
   --text-secondary:  #5A6180;
   --text-muted:      #9299B8;
-  --accent:          #4F46E5;
-  --accent-hover:    #4338CA;
-  --accent-light:    #EEF2FF;
-  --accent-border:   #C7D2FE;
+  --accent:          #227CFF;
+  --accent-hover:    #1A6FE8;
+  --accent-light:    #EAF2FF;
+  --accent-border:   #B9D9FF;
   --luz:             #D97706;
   --luz-bg:          #FEF9EE;
   --luz-border:      #FDE68A;
@@ -96,79 +96,30 @@
   --shadow-lg:       0 8px 32px rgba(0,0,0,0.16);
 }
 
-/* ── Dark theme (.dark on <html>) ────────────────────────── */
-.dark {
-  color-scheme: dark;
-
-  --sx-bg:          #0F1B2D;
-  --sx-surface:     #152540;
-  --sx-surface-2:   #1C3050;
-  --sx-border:      rgba(255,255,255,0.08);
-  --sx-border-2:    rgba(255,255,255,0.12);
-
-  --sx-primary:     #3D8EFF;
-  --sx-primary-btn: #3D8EFF;
-  --sx-primary-bg:  rgba(61,142,255,0.12);
-  --sx-primary-text:#3D8EFF;
-
-  --sx-text:        #FFFFFF;
-  --sx-text-2:      #7A9BC4;
-  --sx-text-3:      #4A6A8C;
-
-  --sx-green:       #22C578;
-  --sx-green-bg:    rgba(34,197,120,0.12);
-  --sx-amber:       #FFB347;
-  --sx-amber-bg:    rgba(255,179,71,0.12);
-  --sx-red:         #FF6B6B;
-  --sx-red-bg:      rgba(255,107,107,0.12);
-
-  --sx-shadow:      0 2px 16px rgba(0,0,0,0.4);
-  --sx-shadow-lg:   0 8px 40px rgba(0,0,0,0.5);
-
-  --bg-base:         #0D0F1A;
-  --bg-surface:      #161929;
-  --bg-subtle:       #1E2138;
-  --bg-input:        #1A1D30;
-  --border-color:    #2A2E4A;
-  --border-strong:   #3D4270;
-  --text-primary:    #E2E5F5;
-  --text-secondary:  #8890B5;
-  --text-muted:      #525878;
-  --accent:          #6366F1;
-  --accent-hover:    #818CF8;
-  --accent-light:    #1E1F3A;
-  --accent-border:   #3730A3;
-  --luz:             #F59E0B;
-  --luz-bg:          #1A1407;
-  --luz-border:      #78350F;
-  --gas:             #10B981;
-  --gas-bg:          #061410;
-  --gas-border:      #065F46;
-  --mobile:          #8B5CF6;
-  --mobile-bg:       #160E38;
-  --mobile-border:   #4C1D95;
-  --internet:        #38BDF8;
-  --internet-bg:     #061824;
-  --internet-border: #0C4A6E;
-  --success:         #10B981;
-  --success-bg:      #061410;
-  --danger:          #EF4444;
-  --danger-bg:       #1A0808;
-  --danger-border:   #7F1D1D;
-  --font-xs:         11px;
-  --font-sm:         12px;
-  --font-base:       13px;
-  --font-md:         14px;
-  --font-lg:         15px;
-  --font-xl:         18px;
-  --radius-sm:       6px;
-  --radius-md:       8px;
-  --radius-lg:       12px;
-  --radius-xl:       16px;
-  --shadow-sm:       0 1px 3px rgba(0,0,0,0.12);
-  --shadow-md:       0 4px 16px rgba(0,0,0,0.24);
-  --shadow-lg:       0 8px 32px rgba(0,0,0,0.32);
-}
+/*
+ * DARK MODE — desactivado temporalmente.
+ * Para reactivar:
+ *   1. Descomentar este bloque
+ *   2. En ThemeService restaurar getInitial() con localStorage / OS preference
+ *   3. Añadir el toggle button al header
+ *
+ * .dark {
+ *   color-scheme: dark;
+ *   --sx-bg: #0F1B2D; --sx-surface: #152540; --sx-surface-2: #1C3050;
+ *   --sx-border: rgba(255,255,255,0.08); --sx-border-2: rgba(255,255,255,0.12);
+ *   --sx-primary: #3D8EFF; --sx-primary-btn: #3D8EFF;
+ *   --sx-primary-bg: rgba(61,142,255,0.12); --sx-primary-text: #3D8EFF;
+ *   --sx-text: #FFFFFF; --sx-text-2: #7A9BC4; --sx-text-3: #4A6A8C;
+ *   --sx-green: #22C578; --sx-green-bg: rgba(34,197,120,0.12);
+ *   --sx-amber: #FFB347; --sx-amber-bg: rgba(255,179,71,0.12);
+ *   --sx-red: #FF6B6B; --sx-red-bg: rgba(255,107,107,0.12);
+ *   --bg-base: #0D0F1A; --bg-surface: #161929; --bg-subtle: #1E2138;
+ *   --bg-input: #1A1D30; --border-color: #2A2E4A; --border-strong: #3D4270;
+ *   --text-primary: #E2E5F5; --text-secondary: #8890B5; --text-muted: #525878;
+ *   --accent: #6366F1; --accent-hover: #818CF8; --accent-light: #1E1F3A;
+ *   --danger: #EF4444; --danger-bg: #1A0808; --danger-border: #7F1D1D;
+ * }
+ */
 
 /* ── Base reset ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }

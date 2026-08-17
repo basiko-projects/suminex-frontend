@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter, OnInit, inject, signal } from '
 import { FormsModule } from '@angular/forms';
 import { ServicesService } from '../../../core/services/services.service';
 import { CreateBoePeriodsDto } from '../../../core/models/service.model';
+import { SuminexLoaderComponent } from '../../../shared/components/suminex-loader';
 
 @Component({
   selector: 'app-boe-luz-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SuminexLoaderComponent],
   template: `
     <div class="modal-overlay" (click)="cancelled.emit()">
       <div class="modal-box" (click)="$event.stopPropagation()">
@@ -54,7 +55,7 @@ import { CreateBoePeriodsDto } from '../../../core/models/service.model';
         <div class="modal-foot">
           <button class="btn-cancel" (click)="cancelled.emit()" [disabled]="saving()">Cancelar</button>
           <button class="btn-primary" (click)="submit()" [disabled]="saving()">
-            @if (saving()) { <i class="pi pi-spin pi-spinner"></i> } {{ editBoe ? 'Guardar cambios' : 'Guardar BOE' }}
+            @if (saving()) { <app-suminex-loader [size]="14" /> } {{ editBoe ? 'Guardar cambios' : 'Guardar BOE' }}
           </button>
         </div>
       </div>

@@ -18,6 +18,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TooltipModule } from 'primeng/tooltip';
 import { TabsModule } from 'primeng/tabs';
 import { TagModule } from 'primeng/tag';
+import { SuminexLoaderComponent } from '../../shared/components/suminex-loader';
 
 const PERIODS = ['P1','P2','P3','P4','P5','P6'];
 
@@ -43,7 +44,7 @@ function emptyGasTier(order: number): GasTierDto {
     SlicePipe,
     DialogModule, ButtonModule, InputTextModule, InputNumberModule,
     SelectModule, DatePickerModule, ToggleSwitchModule, TooltipModule,
-    TabsModule, TagModule,
+    TabsModule, TagModule, SuminexLoaderComponent,
   ],
   template: `
     <p-dialog [visible]="true"
@@ -57,7 +58,7 @@ function emptyGasTier(order: number): GasTierDto {
 
       @if (loadingEdit()) {
         <div class="edit-loading">
-          <i class="pi pi-spin pi-spinner"></i>
+          <app-suminex-loader [size]="28" />
           <span>Cargando datos…</span>
         </div>
       } @else {
@@ -221,7 +222,7 @@ function emptyGasTier(order: number): GasTierDto {
                 </div>
                 @if (boeError) { <div class="api-error mt-sm"><i class="pi pi-exclamation-circle"></i><span>{{ boeError }}</span></div> }
                 <button class="save-tab-btn" [disabled]="boeSaving()" (click)="saveBoe()">
-                  @if (boeSaving()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-check"></i> }
+                  @if (boeSaving()) { <app-suminex-loader [size]="14" /> } @else { <i class="pi pi-check"></i> }
                   Guardar BOE
                 </button>
               </div>
@@ -279,8 +280,8 @@ function emptyGasTier(order: number): GasTierDto {
                   </div>
                 </div>
                 @if (omieError) { <div class="api-error mt-sm"><i class="pi pi-exclamation-circle"></i><span>{{ omieError }}</span></div> }
-                <button class="save-tab-btn save-tab-purple" [disabled]="omieSaving()" (click)="saveOmie()">
-                  @if (omieSaving()) { <i class="pi pi-spin pi-spinner"></i> } @else { <i class="pi pi-plus"></i> }
+                <button class="save-tab-btn" [disabled]="omieSaving()" (click)="saveOmie()">
+                  @if (omieSaving()) { <app-suminex-loader [size]="14" /> } @else { <i class="pi pi-plus"></i> }
                   Crear distribución
                 </button>
               </div>
@@ -415,7 +416,11 @@ function emptyGasTier(order: number): GasTierDto {
         <p-button label="Cancelar" severity="secondary" [text]="true"
                   (onClick)="cancelled.emit()" [disabled]="saving()" />
         <p-button [label]="editId ? 'Guardar cambios' : 'Crear oferta'"
-                  icon="pi pi-check" (onClick)="submit()" [loading]="saving()" />
+                  icon="pi pi-check" (onClick)="submit()" [loading]="saving()">
+          <ng-template pTemplate="loadingicon">
+            <app-suminex-loader [size]="14" />
+          </ng-template>
+        </p-button>
       </ng-template>
     </p-dialog>
   `,
@@ -659,9 +664,6 @@ function emptyGasTier(order: number): GasTierDto {
     }
     .save-tab-btn:hover:not(:disabled) { background: var(--sx-primary-btn); }
     .save-tab-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .save-tab-purple { background: #7C3AED; }
-    .save-tab-purple:hover:not(:disabled) { background: #6D28D9; }
-
     .api-error {
       display: flex; align-items: center; gap: 0.5rem;
       background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);

@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ServicesService } from '../../../core/services/services.service';
+import { SuminexLoaderComponent } from '../../../shared/components/suminex-loader';
 
 const PERIODS = ['P1','P2','P3','P4','P5','P6'];
 
 @Component({
   selector: 'app-producto-luz-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SuminexLoaderComponent],
   template: `
     <div class="modal-overlay" (click)="cancelled.emit()">
       <div class="modal-box" (click)="$event.stopPropagation()">
@@ -102,7 +103,7 @@ const PERIODS = ['P1','P2','P3','P4','P5','P6'];
         <div class="modal-foot">
           <button class="btn-cancel" (click)="cancelled.emit()" [disabled]="saving()">Cancelar</button>
           <button class="btn-primary" (click)="submit()" [disabled]="saving()">
-            @if (saving()) { <i class="pi pi-spin pi-spinner"></i> } {{ editProduct ? 'Guardar cambios' : 'Crear producto' }}
+            @if (saving()) { <app-suminex-loader [size]="14" /> } {{ editProduct ? 'Guardar cambios' : 'Crear producto' }}
           </button>
         </div>
       </div>
