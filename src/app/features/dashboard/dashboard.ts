@@ -1,223 +1,208 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
+import { SkeletonModule } from 'primeng/skeleton';
+import { AuthService } from '../../core/services/auth.service';
 import { ServicesService } from '../../core/services/services.service';
 import { SuppliesService } from '../../core/services/supplies.service';
 import { ComparisonHistoryService } from '../../core/services/comparison-history.service';
-import { SkeletonModule } from 'primeng/skeleton';
 
 interface StatCard {
-  title: string;
-  value: string | number;
-  icon: string;
-  trend: string;
-  trendUp: boolean;
-  colorClass: string; // 'blue' | 'green' | 'amber' | 'purple'
-  route: string;
+  label:    string;
+  value:    number;
+  icon:     string;
+  trend:    string;
+  trendUp:  boolean;
+}
+
+interface QuickAction {
+  title:    string;
+  subtitle: string;
+  icon:     string;
+  route:    string;
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, SkeletonModule, DatePipe],
+  imports: [RouterLink, SkeletonModule],
   template: `
-    <div class="dashboard">
+    <div class="dash">
 
-      <!-- Page header -->
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-sub">{{ today | date:'EEEE, d MMMM yyyy' }}</p>
-        </div>
+      <!-- Greeting -->
+      <div class="greeting-section">
+        <h1 class="greeting-title">Hola, {{ userName() }}</h1>
+        <p class="greeting-sub">Bienvenido a Suminex</p>
       </div>
 
       <!-- Stat cards -->
       @if (loading()) {
-        <div class="stats-grid">
-          @for (i of [1,2,3,4]; track i) {
-            <p-skeleton height="104px" borderRadius="12px" />
+        <div class="stats-row">
+          @for (i of [1,2,3]; track i) {
+            <div class="stat-card"><p-skeleton height="108px" borderRadius="16px" /></div>
           }
         </div>
       } @else {
-        <div class="stats-grid">
-          @for (card of statCards; track card.route) {
-            <a [routerLink]="card.route" class="stat-card" [class]="'stat-card stat-card--' + card.colorClass">
-              <div class="stat-inner">
-                <div class="stat-icon-box">
-                  <i [class]="'pi ' + card.icon"></i>
+        <div class="stats-row">
+          @for (s of statCards(); track s.label) {
+            <div class="stat-card">
+              <div class="stat-top">
+                <div class="stat-icon">
+                  <i [class]="'pi ' + s.icon"></i>
                 </div>
-                <div class="stat-body">
-                  <span class="stat-value">{{ card.value }}</span>
-                  <span class="stat-label">{{ card.title }}</span>
-                </div>
-                <span class="trend-badge" [class.trend-up]="card.trendUp" [class.trend-down]="!card.trendUp">
-                  <i [class]="'pi ' + (card.trendUp ? 'pi-arrow-up' : 'pi-arrow-down')"></i>
-                  {{ card.trend }}
+                <span class="pill" [class.pill-green]="s.trendUp" [class.pill-red]="!s.trendUp">
+                  <i class="pi" [class.pi-arrow-up]="s.trendUp" [class.pi-arrow-down]="!s.trendUp"></i>
+                  {{ s.trend }}
                 </span>
               </div>
-            </a>
+              <span class="stat-val">{{ s.value }}</span>
+              <span class="stat-lbl">{{ s.label }}</span>
+            </div>
           }
         </div>
       }
 
       <!-- Quick actions -->
-      <div class="section">
-        <h2 class="section-title">Acciones rápidas</h2>
-        <div class="actions-grid">
-          @for (a of quickActions; track a.route) {
-            <a [routerLink]="a.route" class="action-card" [class]="'action-card action-card--' + a.colorClass">
-              <div class="action-icon">
-                <i [class]="'pi ' + a.icon"></i>
-              </div>
-              <div class="action-info">
-                <span class="action-title">{{ a.title }}</span>
-                <span class="action-desc">{{ a.desc }}</span>
-              </div>
-              <i class="pi pi-chevron-right action-arrow"></i>
-            </a>
-          }
-        </div>
+      <h2 class="section-title">Acciones rápidas</h2>
+      <div class="actions-grid">
+        @for (a of quickActions; track a.title) {
+          <a [routerLink]="a.route" class="action-card">
+            <div class="action-icon">
+              <i [class]="'pi ' + a.icon"></i>
+            </div>
+            <div class="action-body">
+              <span class="action-title">{{ a.title }}</span>
+              <span class="action-sub">{{ a.subtitle }}</span>
+            </div>
+            <span class="action-chevron"><i class="pi pi-chevron-right"></i></span>
+          </a>
+        }
       </div>
 
     </div>
   `,
   styles: [`
-    .dashboard { max-width: 1280px; }
+    .dash { max-width: 1200px; }
 
-    .page-header {
-      margin-bottom: 1.75rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid var(--sx-border);
+    /* ── Greeting ── */
+    .greeting-section { margin-bottom: 1.75rem; }
+    .greeting-title {
+      font-size: 2.1rem; font-weight: 700;
+      color: var(--sx-text); margin: 0 0 0.3rem;
+      letter-spacing: -0.025em; line-height: 1.15;
     }
-    .page-title {
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: var(--sx-text);
-      margin: 0 0 0.25rem;
-    }
-    .page-sub { font-size: 0.85rem; color: var(--sx-text-2); margin: 0; }
+    .greeting-sub { font-size: 0.9rem; color: var(--sx-text-2); margin: 0; }
 
-    /* ── Stat grid ── */
-    .stats-grid {
+    /* ── Stat cards ── */
+    .stats-row {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.1rem; margin-bottom: 2.25rem;
     }
-    @media (min-width: 768px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (min-width: 1024px) {
-      .stats-grid { grid-template-columns: repeat(4, 1fr); }
-    }
+    @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 560px) { .stats-row { grid-template-columns: 1fr; } }
 
     .stat-card {
       background: var(--sx-surface);
       border: 1px solid var(--sx-border);
-      border-radius: 12px;
-      text-decoration: none;
-      padding: 1.25rem;
-      display: block;
-      transition: all 150ms ease;
+      border-radius: 14px; padding: 1.35rem 1.5rem 1.5rem;
+      display: flex; flex-direction: column;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
     }
-    .stat-card:hover {
-      border-color: var(--sx-primary);
-      box-shadow: var(--sx-shadow-lg);
-      transform: translateY(-2px);
-    }
-    .stat-inner { display: flex; align-items: flex-start; gap: 1rem; }
-    .stat-icon-box {
-      width: 44px; height: 44px; border-radius: 10px;
+    .stat-card:hover { border-color: var(--sx-border-2); box-shadow: var(--sx-shadow); }
+
+    .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .stat-icon {
+      width: 40px; height: 40px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      background: var(--sx-surface-2); color: var(--sx-text-2);
+      border: 1px solid var(--sx-border);
     }
-    .stat-icon-box .pi { font-size: 1.2rem; }
-    .stat-body { flex: 1; }
-    .stat-value { display: block; font-size: 1.85rem; font-weight: 700; color: var(--sx-text); line-height: 1; margin-bottom: 0.3rem; }
-    .stat-label { font-size: 0.78rem; color: var(--sx-text-2); font-weight: 500; }
+    .stat-icon .pi { font-size: 1rem; }
 
-    /* Trend badge */
-    .trend-badge {
-      display: flex; align-items: center; gap: 3px;
-      font-size: 0.72rem; font-weight: 600; border-radius: 999px;
-      padding: 0.2rem 0.55rem; white-space: nowrap; flex-shrink: 0;
+    .stat-val {
+      font-size: 2.2rem; font-weight: 700; color: var(--sx-text);
+      line-height: 1; letter-spacing: -0.02em; margin-bottom: 0.4rem;
     }
-    .trend-badge .pi { font-size: 0.6rem; }
-    .trend-up   { background: var(--sx-green-bg);  color: var(--sx-green); }
-    .trend-down { background: var(--sx-red-bg);    color: var(--sx-red); }
+    .stat-lbl { font-size: 0.85rem; color: var(--sx-text-2); font-weight: 500; }
 
-    /* Color variants for icon boxes */
-    .stat-card--blue   .stat-icon-box { background: rgba(61,142,255,0.12); color: #3D8EFF; }
-    .stat-card--green  .stat-icon-box { background: var(--sx-green-bg);    color: var(--sx-green); }
-    .stat-card--amber  .stat-icon-box { background: var(--sx-amber-bg);    color: var(--sx-amber); }
-    .stat-card--purple .stat-icon-box { background: rgba(167,139,250,0.12); color: #A78BFA; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 3px;
+      border-radius: 6px; font-size: 0.76rem; font-weight: 600;
+      padding: 0.2rem 0.5rem; white-space: nowrap;
+    }
+    .pill .pi { font-size: 0.6rem; }
+    .pill-green { background: var(--sx-green-bg); color: var(--sx-green); }
+    .pill-red   { background: var(--sx-red-bg); color: var(--sx-red); }
 
-    /* ── Section ── */
-    .section { margin-bottom: 2rem; }
+    /* ── Quick actions ── */
     .section-title {
-      font-size: 0.9rem; font-weight: 600; color: var(--sx-text-2);
+      font-size: 0.78rem; font-weight: 700; color: var(--sx-text-2);
       text-transform: uppercase; letter-spacing: 0.06em;
       margin: 0 0 1rem;
     }
-
-    /* ── Quick actions ── */
     .actions-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.625rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
     }
-    @media (min-width: 768px) {
-      .actions-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    @media (max-width: 720px) { .actions-grid { grid-template-columns: 1fr; } }
 
     .action-card {
-      display: flex; align-items: center; gap: 1rem;
-      padding: 1rem 1.125rem;
       background: var(--sx-surface);
       border: 1px solid var(--sx-border);
-      border-radius: 12px;
-      text-decoration: none;
-      transition: all 150ms ease;
+      border-radius: 14px; padding: 1.25rem 1.4rem;
+      display: flex; align-items: center; gap: 1rem;
+      text-decoration: none; transition: all 150ms ease;
     }
     .action-card:hover {
-      background: var(--sx-surface-2);
-      border-color: var(--sx-primary);
-      transform: translateX(3px);
+      border-color: var(--sx-border-2);
+      box-shadow: var(--sx-shadow);
     }
+    .action-card:hover .action-chevron { color: var(--sx-primary); transform: translateX(2px); }
     .action-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      width: 44px; height: 44px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      background: var(--sx-surface-2); color: var(--sx-text-2);
+      border: 1px solid var(--sx-border);
     }
-    .action-icon .pi { font-size: 1rem; }
-    .action-info { flex: 1; }
-    .action-title { display: block; font-size: 0.875rem; font-weight: 600; color: var(--sx-text); }
-    .action-desc  { font-size: 0.75rem; color: var(--sx-text-2); }
-    .action-arrow { font-size: 0.7rem; color: var(--sx-text-3); transition: transform 150ms ease; }
-    .action-card:hover .action-arrow { transform: translateX(3px); color: var(--sx-primary-text); }
-
-    /* Action color variants */
-    .action-card--blue   .action-icon { background: rgba(61,142,255,0.12); color: #3D8EFF; }
-    .action-card--purple .action-icon { background: rgba(167,139,250,0.12); color: #A78BFA; }
-    .action-card--amber  .action-icon { background: var(--sx-amber-bg);     color: var(--sx-amber); }
-    .action-card--green  .action-icon { background: var(--sx-green-bg);     color: var(--sx-green); }
+    .action-icon .pi { font-size: 1.05rem; }
+    .action-body { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
+    .action-title { font-size: 1rem; font-weight: 700; color: var(--sx-text); }
+    .action-sub { font-size: 0.82rem; color: var(--sx-text-2); }
+    .action-chevron {
+      color: var(--sx-text-3); font-size: 0.85rem; flex-shrink: 0;
+      transition: all 150ms ease;
+    }
   `]
 })
 export class DashboardComponent implements OnInit {
   private services    = inject(ServicesService);
   private supplies    = inject(SuppliesService);
   private comparisons = inject(ComparisonHistoryService);
+  auth = inject(AuthService);
 
   loading = signal(true);
-  today   = new Date();
-  statCards: StatCard[] = [];
 
-  quickActions = [
-    { title: 'Nueva oferta',    desc: 'Crear tarifa de luz, gas o internet',  icon: 'pi-bolt',       colorClass: 'purple', route: '/services' },
-    { title: 'Usuarios',        desc: 'Gestionar usuarios de la plataforma',  icon: 'pi-users',      colorClass: 'blue',   route: '/users' },
-    { title: 'Comparaciones',   desc: 'Ver actividad reciente de usuarios',   icon: 'pi-chart-bar',  colorClass: 'amber',  route: '/comparison-history' },
-    { title: 'Suministros',     desc: 'Gestionar contratos activos',          icon: 'pi-file-check', colorClass: 'green',  route: '/supplies' },
+  totalSupplies    = 0;
+  totalComparisons = 0;
+  totalTarifas     = 0;
+
+  userName = computed(() => this.auth.currentUser()?.name || 'Administrador');
+
+  statCards = computed<StatCard[]>(() => [
+    { label: 'Tarifas',       value: this.totalTarifas,     icon: 'pi-bolt',       trend: '+5%', trendUp: true },
+    { label: 'Suministros',   value: this.totalSupplies,    icon: 'pi-file-check', trend: '+8%', trendUp: true },
+    { label: 'Comparaciones', value: this.totalComparisons, icon: 'pi-chart-bar',  trend: '-3%', trendUp: false },
+  ]);
+
+  quickActions: QuickAction[] = [
+    { title: 'Nueva oferta',   subtitle: 'Crear tarifa de luz, gas o internet', icon: 'pi-bolt',       route: '/services' },
+    { title: 'Usuarios',       subtitle: 'Gestionar usuarios de la plataforma', icon: 'pi-users',      route: '/users' },
+    { title: 'Comparaciones',  subtitle: 'Ver actividad reciente de usuarios',  icon: 'pi-chart-bar',  route: '/comparison-history' },
+    { title: 'Suministros',    subtitle: 'Gestionar contratos activos',        icon: 'pi-file-check', route: '/supplies' },
   ];
 
   ngOnInit() {
@@ -227,12 +212,9 @@ export class DashboardComponent implements OnInit {
       comparisons: this.comparisons.getAll({ pageSize: 1 }),
     }).pipe(finalize(() => this.loading.set(false))).subscribe({
       next: (data) => {
-        const totalTarifas = data.services.reduce((acc, g) => acc + (g.tariffs?.length ?? 0), 0);
-        this.statCards = [
-          { title: 'Tarifas',           value: totalTarifas,                                 icon: 'pi-bolt',       trend: '+5%', trendUp: true,  colorClass: 'purple', route: '/services' },
-          { title: 'Suministros',       value: data.supplies.totalCount ?? 0,               icon: 'pi-file-check', trend: '+8%', trendUp: true,  colorClass: 'green',  route: '/supplies' },
-          { title: 'Comparaciones',     value: data.comparisons.totalCount ?? 0,             icon: 'pi-chart-bar',  trend: '-3%', trendUp: false, colorClass: 'amber',  route: '/comparison-history' },
-        ];
+        this.totalTarifas     = data.services.reduce((acc, g) => acc + (g.tariffs?.length ?? 0), 0);
+        this.totalSupplies    = data.supplies.totalCount ?? 0;
+        this.totalComparisons = data.comparisons.totalCount ?? 0;
       },
       error: () => {}
     });

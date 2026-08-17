@@ -10,6 +10,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard').then(m => m.DashboardComponent) },
+      { path: 'stats', loadComponent: () => import('./features/stats/stats').then(m => m.StatsComponent) },
       {
         path: 'services',
         loadComponent: () => import('./features/services/services-shell').then(m => m.ServicesShellComponent),
@@ -22,7 +23,9 @@ export const routes: Routes = [
       },
       { path: 'comparison-history', loadComponent: () => import('./features/comparison-history/comparison-history').then(m => m.ComparisonHistoryComponent) },
       { path: 'supplies', loadComponent: () => import('./features/supplies/supplies').then(m => m.SuppliesComponent) },
+      { path: 'nuevo-suministro', loadComponent: () => import('./features/new-supply/new-supply').then(m => m.NewSupplyComponent) },
       { path: 'users',    loadComponent: () => import('./features/users/users').then(m => m.UsersComponent) },
+      { path: 'billing',  loadComponent: () => import('./features/billing/billing').then(m => m.BillingComponent) },
     ]
   },
   { path: '**', redirectTo: '/dashboard' }

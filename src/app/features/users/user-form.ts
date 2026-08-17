@@ -9,6 +9,7 @@ import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { SuminexLoaderComponent } from '../../shared/components/suminex-loader';
 
 @Component({
   selector: 'app-user-form',
@@ -16,7 +17,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
   imports: [
     FormsModule,
     DialogModule, ButtonModule, InputTextModule,
-    PasswordModule, SelectModule, MessageModule, ToggleSwitchModule,
+    PasswordModule, SelectModule, MessageModule, ToggleSwitchModule, SuminexLoaderComponent,
   ],
   template: `
     <p-dialog
@@ -109,7 +110,11 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
                   (onClick)="cancelled.emit()" [disabled]="saving()" />
         <p-button [label]="editUser ? 'Guardar cambios' : 'Crear usuario'"
                   icon="pi pi-check"
-                  (onClick)="submit()" [loading]="saving()" />
+                  (onClick)="submit()" [loading]="saving()">
+          <ng-template pTemplate="loadingicon">
+            <app-suminex-loader [size]="14" />
+          </ng-template>
+        </p-button>
       </ng-template>
     </p-dialog>
   `,

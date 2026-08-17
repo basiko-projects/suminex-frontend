@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Supply, SupplyFilters, SupplyListResponse } from '../models/supply.model';
+import { CreateSupplyBody, CreateSupplyResponse, Supply, SupplyFilters, SupplyListResponse } from '../models/supply.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -22,5 +22,17 @@ export class SuppliesService {
     if (filters?.userName)    params = params.set('userName',    filters.userName);
     if (filters?.userEmail)   params = params.set('userEmail',   filters.userEmail);
     return this.http.get<SupplyListResponse>(this.url, { params });
+  }
+
+  create(body: CreateSupplyBody): Observable<CreateSupplyResponse> {
+    return this.http.post<CreateSupplyResponse>(this.url, body);
+  }
+
+  /** POST /api/supplies/{id}/verify-identity — multipart con DniFront/DniBack, pasa el suministro a InProgress */
+  verifyIdentity(id: string, dniFront: File, dniBack: File): Observable<void> {
+    const formData = new FormData();
+    formData.append('DniFront', dniFront);
+    formData.append('DniBack', dniBack);
+    return this.http.post<void>(`${this.url}/${id}/verify-identity`, formData);
   }
 }
