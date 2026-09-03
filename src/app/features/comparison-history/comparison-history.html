@@ -1,0 +1,238 @@
+@if (loadError) {
+<div class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+  <i class="pi pi-exclamation-circle"></i>
+  <span>{{ loadError }}</span>
+  <button class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1 hover:bg-sx-red-bg" (click)="load()"><i class="pi pi-refresh"></i> Reintentar</button>
+</div>
+}
+
+<!-- Shared table -->
+<app-data-table title="Historial de comparaciones"
+  subtitle="Registro de todas las comparaciones realizadas por usuarios" [columns]="tableColumns" [rows]="items"
+  [total]="total" [page]="page" [pageSize]="pageSize" [loading]="loading()" [rowTemplate]="rowTpl"
+  emptyMessage="No hay comparaciones con los filtros aplicados" (pageChange)="onPageChange($event)"
+  (pageSizeChange)="onPageSizeChange($event)" (filterIconClick)="onFilterIconClick($event, contratadoPop)">
+  <button dtActions type="button" [class]="dateFilterBtnClasses(!!(dateFrom || dateTo))"
+    (click)="fechaPop.toggle($event)" title="Filtrar por fecha">
+    <i class="pi pi-calendar text-[0.85rem]"></i>
+  </button>
+</app-data-table>
+
+<!-- Filter popovers -->
+<p-popover #contratadoPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-50">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Contratado</span>
+    <p-select [options]="contractedOpts" [(ngModel)]="contractedFilter" optionLabel="label" optionValue="value"
+      placeholder="Todos" [showClear]="true" (onChange)="search(); contratadoPop.hide()" />
+  </div>
+</p-popover>
+
+<p-popover #fechaPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-55">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Rango de fechas</span>
+    <p-datepicker [(ngModel)]="dateFrom" placeholder="Desde" dateFormat="dd/mm/yy" [showIcon]="true" />
+    <p-datepicker [(ngModel)]="dateTo" placeholder="Hasta" dateFormat="dd/mm/yy" [showIcon]="true" />
+    <div class="flex justify-end gap-2 mt-1">
+      <button type="button" class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2" (click)="clear(); fechaPop.hide()">Limpiar</button>
+      <button type="button" class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary" (click)="search(); fechaPop.hide()">Aplicar</button>
+    </div>
+  </div>
+</p-popover>
+
+<!-- Row template -->
+<ng-template #rowTpl let-item>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12">
+    <div class="flex flex-col gap-0.5">
+      <span class="font-semibold text-[0.85rem]">{{ item.userFullName }}</span>
+      <span class="text-sx-text-3 text-[0.72rem]">{{ item.userEmail }}</span>
+    </div>
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12"><code class="bg-transparent border-none p-0 rounded-none font-mono text-[0.78rem] text-sx-text-3">{{ item.cups }}</code></td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12"><span class="text-[0.85rem] font-medium text-sx-text">{{ item.productName }}</span></td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12">
+    <span [class]="savingsValueClasses(item.annualSavings > 0)">
+      {{ item.annualSavings | currency:'EUR':'symbol':'1.2-2' }}
+    </span>
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-sx-text-3 text-[0.82rem]">{{ item.createdAt | date:'dd/MM/yy · HH:mm' }}</td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <p-tag [value]="item.willCloseContract ? 'Sí' : 'No'"
+      [severity]="item.willCloseContract ? 'success' : 'secondary'" />
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <button class="inline-flex items-center gap-1 py-1 px-2.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 text-[0.78rem] font-medium cursor-pointer transition-all hover:border-sx-primary hover:text-sx-primary hover:bg-sx-primary-bg" (click)="openDetail(item)" title="Ver detalle">
+      <i class="pi pi-eye"></i> Ver
+    </button>
+  </td>
+</ng-template>
+
+<!-- Detail modal -->
+@if (viewingItem()) {
+<div class="fixed inset-0 bg-black/55 backdrop-blur-[3px] flex items-center justify-center z-600 p-4 animate-[fade-in_150ms_ease]" (click)="viewingItem.set(null)">
+  <div class="bg-sx-surface border border-sx-border rounded-[20px] w-[min(92vw,640px)] min-[900px]:w-[min(75vw,780px)] max-h-[88vh] overflow-y-auto flex flex-col shadow-[0_24px_64px_rgba(15,23,42,0.18)] animate-[slide-down-in_200ms_ease-out]" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-start gap-4 py-6 px-7 border-b border-sx-border sticky top-0 z-2 bg-sx-surface">
+      <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div class="text-[1.05rem] font-bold text-sx-text leading-[1.2]">{{ viewingItem()!.userFullName }}</div>
+        <div class="text-[0.78rem] text-sx-text-3">{{ viewingItem()!.userEmail }}</div>
+        <div class="flex flex-wrap gap-2.5 mt-1.5 items-center justify-between">
+          <code class="bg-transparent border-none p-0 rounded-none font-mono text-[0.75rem] text-sx-text-2">{{ viewingItem()!.cups }}</code>
+          <div class="flex flex-wrap gap-1.5 items-center">
+            <span class="text-[0.75rem] font-bold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-full border border-sx-border-2">{{ viewingItem()!.productName }}</span>
+            @if (viewingItem()!.providerName) {
+            <span class="text-[0.72rem] font-medium text-sx-text-2 bg-sx-surface-2 py-0.75 px-2.5 rounded-full border border-sx-border">{{ viewingItem()!.providerName }}</span>
+            }
+            <p-tag [value]="viewingItem()!.willCloseContract ? 'Contratado' : 'Sin contratar'"
+              [severity]="viewingItem()!.willCloseContract ? 'success' : 'secondary'" />
+          </div>
+        </div>
+      </div>
+      <button class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 transition-all hover:text-sx-red hover:border-sx-red hover:bg-sx-red-bg" (click)="viewingItem.set(null)"><i class="pi pi-times"></i></button>
+    </div>
+
+    <div class="py-6 px-7 pb-7 flex flex-col gap-6">
+
+      <!-- OMIE parameters -->
+      <div class="flex flex-col gap-3.5">
+        <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
+          <span class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i class="pi pi-sliders-h text-[0.68rem]"></i></span> Parámetros de la oferta
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-4">
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3 flex items-center gap-1"><i class="pi pi-bolt text-[0.62rem] text-sx-primary"></i> Fee energía</span>
+            <span class="text-[0.85rem] font-bold text-sx-text">{{ viewingItem()!.energyFee | number:'1.4-4' }} €/kWh</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3 flex items-center gap-1"><i class="pi pi-chart-bar text-[0.62rem] text-sx-primary"></i> Fee potencia</span>
+            <span class="text-[0.85rem] font-bold text-sx-text">{{ viewingItem()!.powerFee | number:'1.4-4' }} €/kW·año</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3 flex items-center gap-1"><i class="pi pi-percentage text-[0.62rem] text-sx-primary"></i> Comisión energía</span>
+            <span class="text-[0.85rem] font-bold text-sx-text">{{ viewingItem()!.energyCommission | number:'1.4-4' }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3 flex items-center gap-1"><i class="pi pi-calculator text-[0.62rem] text-sx-primary"></i> Consumo anual</span>
+            <span class="text-[0.85rem] font-bold text-sx-text">{{ viewingItem()!.annualConsumption | number:'1.0-0' }} kWh</span>
+          </div>
+        </div>
+      </div>
+
+      @if (viewingItem()!.resultData; as r) {
+      <!-- Savings banner -->
+      <div class="flex flex-wrap gap-px bg-sx-border border border-sx-border rounded-xl overflow-hidden">
+        <div class="flex-[1.5] min-w-45 flex items-center gap-3.5 py-4 px-6 bg-sx-green-bg">
+          <div class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-[#16A34A]/15 text-sx-green flex items-center justify-center text-base"><i class="pi pi-sparkles"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Ahorro anual</span>
+            <span class="text-[1.35rem] font-extrabold text-sx-green tracking-[-0.01em]">{{ r.AhorroAnual | currency:'EUR':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-35 flex items-center gap-3 py-4 px-5 bg-sx-surface">
+          <div class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center text-base"><i class="pi pi-calendar"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Ahorro mensual</span>
+            <span class="text-[0.9rem] font-bold text-sx-text">{{ r.AhorroMensual | currency:'EUR':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-35 flex items-center gap-3 py-4 px-5 bg-sx-surface">
+          <div class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-[#16A34A]/15 text-sx-green flex items-center justify-center text-base"><i class="pi pi-percentage"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Ahorro %</span>
+            <span class="text-[0.9rem] font-bold text-sx-green">{{ r.AhorroPorcent | number:'1.2-2' }}%</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-35 flex items-center gap-3 py-4 px-5 bg-sx-surface">
+          <div class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-sx-surface-2 text-sx-text-2 flex items-center justify-center text-base"><i class="pi pi-clock"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Días período</span>
+            <span class="text-[0.9rem] font-bold text-sx-text">{{ r.Dias }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison table -->
+      <div class="flex flex-col gap-3.5">
+        <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
+          <span class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i class="pi pi-file-check text-[0.68rem]"></i></span> Resumen económico
+        </div>
+        <div class="border border-sx-border rounded-xl overflow-hidden">
+          <table class="w-full border-collapse text-[0.82rem]">
+            <thead>
+              <tr>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border"></th>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Tarifa actual</th>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Oferta Suminex</th>
+              </tr>
+            </thead>
+            <tbody class="[&>tr:last-child>td]:border-b-0">
+              <tr>
+                <td class="py-2.25 px-5 border-b border-sx-border text-sx-text-2 text-[0.8rem] font-medium">Base energía (IE)</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-medium text-sx-text">{{ r.BaseIEActual | number:'1.4-4' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ r.BaseIEOferta | number:'1.4-4' }}</td>
+              </tr>
+              <tr>
+                <td class="py-2.25 px-5 border-b border-sx-border text-sx-text-2 text-[0.8rem] font-medium">IE (€/MWh)</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-medium text-sx-text">{{ r.IeActual | number:'1.5-5' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ r.IeOferta | number:'1.5-5' }}</td>
+              </tr>
+              <tr>
+                <td class="py-2.25 px-5 border-b border-sx-border text-sx-text-2 text-[0.8rem] font-medium">Subtotal</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-medium text-sx-text">{{ r.SubTotalActual | currency:'EUR':'symbol':'1.2-2' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ r.SubTotalOferta | currency:'EUR':'symbol':'1.2-2' }}</td>
+              </tr>
+              <tr>
+                <td class="py-2.25 px-5 border-b border-sx-border text-sx-text-2 text-[0.8rem] font-medium">IVA</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-medium text-sx-text">{{ r.IvaActual | currency:'EUR':'symbol':'1.2-2' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ r.IvaOferta | currency:'EUR':'symbol':'1.2-2' }}</td>
+              </tr>
+              <tr class="border-t border-sx-border">
+                <td class="py-2.25 px-5 border-b border-sx-border text-sx-text-2 text-[0.8rem] font-bold">Total</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-text">{{ r.TotalActual | currency:'EUR':'symbol':'1.2-2' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ r.TotalOferta | currency:'EUR':'symbol':'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Periods -->
+      @if (r.Periodos?.length) {
+      <div class="flex flex-col gap-3.5">
+        <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
+          <span class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i class="pi pi-calendar text-[0.68rem]"></i></span> Desglose por período
+        </div>
+        <div class="border border-sx-border rounded-xl overflow-hidden">
+          <table class="w-full border-collapse text-[0.82rem]">
+            <thead>
+              <tr>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Período</th>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Coste energía</th>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Coste potencia</th>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Precio energía</th>
+                <th class="text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 py-2.25 px-5 text-left bg-sx-surface-2 border-b border-sx-border">Precio potencia</th>
+              </tr>
+            </thead>
+            <tbody class="[&>tr:last-child>td]:border-b-0">
+              @for (p of r.Periodos; track p.Periodo) {
+              <tr>
+                <td class="py-2.25 px-5 border-b border-sx-border"><span class="inline-block py-0.5 px-2.5 rounded-full bg-sx-primary-bg text-sx-primary-text text-[0.72rem] font-bold border border-sx-border-2">P{{ p.Periodo + 1 }}</span></td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-medium text-sx-text">{{ p.CosteEnergia | number:'1.4-4' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-medium text-sx-text">{{ p.CostePotencia | number:'1.4-4' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ p.PrecioEnergiaOferta | number:'1.6-6' }}</td>
+                <td class="py-2.25 px-5 border-b border-sx-border text-right tabular-nums text-[0.8rem] font-bold text-sx-green bg-sx-green-bg">{{ p.PrecioPotenciaOferta | number:'1.6-6' }}</td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+      }
+      } @else {
+      <div class="flex items-center gap-2 py-8 px-6 text-sx-text-3 text-[0.85rem]"><i class="pi pi-info-circle"></i> Sin datos de resultado disponibles</div>
+      }
+
+    </div>
+  </div>
+</div>
+}

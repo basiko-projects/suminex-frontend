@@ -1,0 +1,64 @@
+<div
+  class="min-h-screen bg-[linear-gradient(180deg,#227CFF_0%,#1255CC_30%,#071230_65%,#030810_100%)] flex items-center justify-center font-sans p-6">
+  <div class="bg-[#161616] rounded-[20px] pt-11 px-9 pb-9 w-full max-w-105 shadow-[0_32px_80px_rgba(0,0,0,0.55)]">
+
+    <!-- Brand -->
+    <div class="mb-9 text-center">
+      <img src="/logo_suminex.svg" alt="Suminex" class="h-7.5 w-auto block mx-auto mb-4" />
+      <h1 class="text-[28px] font-bold text-white m-0 tracking-[-0.02em] leading-[1.2]">Iniciar sesión</h1>
+    </div>
+
+    <!-- Form -->
+    <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); login()">
+
+      <div class="flex flex-col gap-1">
+        <div class="relative flex items-center">
+          <i class="pi pi-envelope absolute left-3.5 text-sm text-white/30 pointer-events-none"></i>
+          <input type="email" [(ngModel)]="email" name="email" placeholder="Correo" autocomplete="email"
+            [class]="inputClasses(submitted && !email)" />
+        </div>
+        @if (submitted && !email) {
+        <span class="text-[11px] text-[#F87171] pl-0.5">Este campo es obligatorio</span>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <div class="relative flex items-center">
+          <i class="pi pi-lock absolute left-3.5 text-sm text-white/30 pointer-events-none"></i>
+          <input [type]="showPwd() ? 'text' : 'password'" [(ngModel)]="password" name="password"
+            placeholder="Contraseña" autocomplete="current-password" [class]="inputClasses(submitted && !password)" />
+          <button
+            class="absolute right-3 bg-transparent border-none cursor-pointer text-white/30 p-1 flex items-center transition-colors hover:text-white/65"
+            type="button" (click)="showPwd.set(!showPwd())">
+            <i [class]="'pi ' + (showPwd() ? 'pi-eye-slash' : 'pi-eye')" class="text-[15px]"></i>
+          </button>
+        </div>
+        @if (submitted && !password) {
+        <span class="text-[11px] text-[#F87171] pl-0.5">Este campo es obligatorio</span>
+        }
+      </div>
+
+      @if (error()) {
+      <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-[#EF4444]/12 border border-[#EF4444]/35 text-[#F87171] text-xs">
+        <i class="pi pi-exclamation-circle text-[13px] shrink-0"></i>
+        <span>{{ error() }}</span>
+      </div>
+      }
+
+      <button
+        class="w-full py-3.25 px-4 mt-2 bg-[#227CFF] text-white border-[1.5px] border-[#227CFF] rounded-[10px] text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all enabled:hover:bg-[#1A6FE8] enabled:hover:border-[#1A6FE8] disabled:opacity-50 disabled:cursor-not-allowed"
+        type="submit" [disabled]="loading()">
+        @if (loading()) {
+        <app-suminex-loader [size]="16" [onColor]="true" /> Verificando...
+        } @else {
+        Iniciar sesión
+        }
+      </button>
+    </form>
+
+    <p class="text-center mt-7 mb-0 text-xs text-white/35 leading-normal">
+      ¿Necesitas acceso?
+      <a href="mailto:soporte@suminex.es" class="text-[#227CFF] no-underline font-medium hover:underline">Contacta con soporte</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,423 @@
+<div>
+
+  <!-- Título -->
+  <div class="mb-5">
+    <h1 class="text-xl font-bold text-sx-text mb-0.5">Servicios</h1>
+    <p class="text-xs text-sx-text-3 m-0">Gestiona las tarifas de todos los suministros</p>
+  </div>
+
+  <!-- Nivel 1: tipo de servicio -->
+  <div class="flex gap-0.5 border-b border-sx-border">
+    @for (g of serviceGroups(); track g.id) {
+    <button [class]="typeTabClasses(activeGroupId() === g.id)" [style.--tc]="typeColor(g.serviceType)"
+      (click)="selectGroup(g)">
+      <span class="w-1.75 h-1.75 rounded-full shrink-0" [style.background]="typeColor(g.serviceType)"></span>
+      {{ g.name }}
+    </button>
+    }
+  </div>
+
+  <!-- Nivel 2: sub-tabs de tarifas -->
+  @if (loadingTarifas()) {
+  <div class="flex items-center gap-1.5 pt-3 mb-5 flex-wrap">
+    @for (i of [1,2,3]; track i) { <div
+      class="w-16 h-7 rounded-full bg-sx-surface-2 animate-[skel-pulse_1.2s_ease-in-out_infinite_alternate]"></div> }
+  </div>
+  } @else if (!activeGroup()) {
+  <div class="flex items-center gap-2.5 py-3.5 text-sx-text-3 text-[13px]">Selecciona un tipo de servicio</div>
+  } @else if (activeGroup()!.tariffs.length === 0) {
+  <div class="flex items-center gap-2.5 py-3.5 text-sx-text-3 text-[13px]">
+    <span>No hay tarifas de {{ activeGroup()!.name }}.</span>
+    <button
+      class="inline-flex items-center gap-1 py-1.25 px-2.5 rounded-full border border-sx-border-2 bg-sx-primary-bg text-sx-primary-text text-[11px] font-semibold cursor-pointer"
+      (click)="showNewTarifaForm = true">
+      <i class="pi pi-plus"></i> Nueva tarifa
+    </button>
+  </div>
+  } @else {
+  <div class="flex items-center gap-1.5 pt-3 mb-5 flex-wrap">
+    @for (t of sortedTarifas(); track t.id) {
+    <div class="flex items-center gap-0.75">
+      <button [class]="tarifaTabClasses(activeTarifa()?.id === t.id)" (click)="selectTarifa(t)">
+        {{ t.code || t.name }}
+      </button>
+    </div>
+    }
+    <button
+      class="w-7 h-7 rounded-full border-[1.5px] border-dashed border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center text-[11px] transition-all hover:border-sx-primary hover:text-sx-primary"
+      (click)="showNewTarifaForm = true" title="Nueva tarifa">
+      <i class="pi pi-plus"></i>
+    </button>
+  </div>
+  }
+
+  <!-- Nivel 3: detalle de la tarifa seleccionada -->
+  @if (activeTarifa()) {
+  <div>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-3.5">
+      <div class="flex items-center gap-2.5">
+        <span class="py-1 px-2.5 rounded-md text-[11px] font-bold font-mono"
+          [style.background]="typeBg(activeGroup()!.serviceType)" [style.color]="typeColor(activeGroup()!.serviceType)">
+          {{ activeTarifa()!.code || activeTarifa()!.name }}
+        </span>
+        <span class="text-[15px] font-semibold text-sx-text">{{ activeTarifa()!.name }}</span>
+      </div>
+    </div>
+
+    <!-- Tabs de contenido -->
+    <div class="flex gap-0.5 mb-4 border-b border-sx-border">
+      @for (tab of contentTabs(); track tab.key) {
+      <button [class]="contentTabClasses(activeContentTab() === tab.key)" (click)="activeContentTab.set(tab.key)">
+        {{ tab.label }}
+      </button>
+      }
+    </div>
+
+    <!-- Productos -->
+    @if (activeContentTab() === 'productos') {
+    <div>
+      <app-data-table title="Productos" [columns]="productColumns" [rows]="activeTarifa()!.products ?? []"
+        [total]="(activeTarifa()!.products ?? []).length" [page]="1"
+        [pageSize]="(activeTarifa()!.products ?? []).length || 20" [searchable]="false" [rowTemplate]="prodRowTpl"
+        emptyMessage="Sin productos configurados aún">
+        <p-button dtActions label="Nuevo producto" icon="pi pi-plus" size="small" (onClick)="showProductoLuz = true" />
+      </app-data-table>
+
+      <ng-template #prodRowTpl let-p>
+        <td class="py-3.5 px-6 pl-12 align-middle text-sm font-semibold text-sx-text">{{ p.name }}</td>
+        <td class="py-3.5 px-6 align-middle text-sm">
+          <div class="flex justify-center"><span [class]="productTypeBadgeClasses(p.type)">{{ typeLabel(p.type)
+              }}</span></div>
+        </td>
+        <td class="py-3.5 px-6 align-middle text-sm">
+          <div class="flex justify-center"><span [class]="statusChipClasses(p.isActive)">{{ p.isActive ? 'Activo' :
+              'Inactivo' }}</span></div>
+        </td>
+        <td class="py-3.5 px-6 pr-12 align-middle text-sm">
+          <div class="flex justify-center gap-1">
+            <button
+              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-sx-border-2 hover:text-sx-text hover:bg-sx-surface-2"
+              title="Ver detalle" (click)="openProductView(p.id)">
+              @if (loadingDetailFor() === p.id) { <app-suminex-loader [size]="14" /> } @else { <i class="pi pi-eye"></i>
+              }
+            </button>
+            <button
+              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
+              title="Editar" (click)="startEditProduct(p.id)"><i class="pi pi-pencil"></i></button>
+            <button
+              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FECACA] hover:text-[#DC2626] hover:bg-[#FEF2F2]"
+              title="Eliminar" (click)="deleteConfirmId.set(p.id)"><i class="pi pi-trash"></i></button>
+          </div>
+        </td>
+      </ng-template>
+    </div>
+    }
+
+    <!-- Potencia BOE (LUZ) -->
+    @if (activeContentTab() === 'boe') {
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-semibold text-sx-text">Potencia BOE</span>
+        <button
+          class="inline-flex items-center gap-1.25 py-1.5 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer hover:bg-sx-primary"
+          (click)="editingBoeData = null; showBoe = true">
+          <i class="pi pi-plus text-[10px]"></i> Nuevo BOE
+        </button>
+      </div>
+      @if (activeTarifa()!.boePeriods?.length) {
+      <div class="border border-sx-border rounded-xl py-3.5 px-4 mb-2.5 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[13px] font-bold text-sx-text">Potencia BOE actual</span>
+            <span class="text-[11px] text-sx-text-3">{{ activeTarifa()!.boePeriods![0].validFrom }}{{
+              activeTarifa()!.boePeriods![0].validUntil ? ' → ' + activeTarifa()!.boePeriods![0].validUntil : ''
+              }}</span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
+              title="Editar" (click)="editingBoeData = buildEditBoe(); showBoe = true">
+              <i class="pi pi-pencil"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          @for (b of activeTarifa()!.boePeriods; track b.period) {
+          <div class="flex flex-col items-center gap-0.75 min-w-12">
+            <span
+              class="inline-block py-0.5 px-2 rounded text-[11px] font-bold bg-sx-surface-2 text-sx-text-2 border border-sx-border">{{
+              b.period }}</span>
+            <span
+              class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-md py-1 px-2 w-full text-center">{{
+              b.priceKwDay }}</span>
+            <span class="text-[9px] text-sx-text-3 text-center mt-px">€/kW·día</span>
+          </div>
+          }
+        </div>
+      </div>
+      } @else {
+      <div class="flex items-center gap-2.5 py-8 justify-center text-sx-text-3 text-[13px]"><i
+          class="pi pi-bolt text-[22px]"></i><span>Sin períodos BOE registrados</span></div>
+      }
+    </div>
+    }
+
+    <!-- Reparto OMIE (LUZ) -->
+    @if (activeContentTab() === 'omie') {
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-semibold text-sx-text">Reparto OMIE</span>
+        <button
+          class="inline-flex items-center gap-1.25 py-1.5 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer hover:bg-sx-primary"
+          (click)="editingOmieData = null; showOmie = true">
+          <i class="pi pi-plus text-[10px]"></i> Nueva distribución
+        </button>
+      </div>
+      @if (activeTarifa()!.omieDistributions?.length) {
+      @for (dist of activeTarifa()!.omieDistributions; track dist.id) {
+      <div class="border border-sx-border rounded-xl py-3.5 px-4 mb-2.5 flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[13px] font-bold text-sx-text">{{ dist.name }}</span>
+            @if (dist.margin !== null && dist.margin !== undefined) {
+            <span class="text-[11px] text-sx-text-3 bg-sx-surface-2 py-0.5 px-1.75 rounded">margen: {{ dist.margin
+              }}</span>
+            }
+            <span [class]="statusChipClasses(dist.isActive)">
+              {{ dist.isActive ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] text-sx-text-3">{{ dist.validFrom }}{{ dist.validUntil ? ' → ' + dist.validUntil :
+              '' }}</span>
+            <button
+              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
+              title="Editar" (click)="editingOmieData = dist; showOmie = true">
+              <i class="pi pi-pencil"></i>
+            </button>
+          </div>
+        </div>
+        @if (dist.periods.length) {
+        <div class="flex gap-2 flex-wrap">
+          @for (p of dist.periods; track p.period) {
+          <div class="flex flex-col items-center gap-0.75 min-w-12">
+            <span
+              class="inline-block py-0.5 px-2 rounded text-[11px] font-bold bg-sx-surface-2 text-sx-text-2 border border-sx-border">{{
+              p.period }}</span>
+            <span
+              class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-md py-1 px-2 w-full text-center">{{
+              p.factor }}</span>
+          </div>
+          }
+        </div>
+        } @else {
+        <span class="text-xs text-sx-text-3 italic">Sin factores de período</span>
+        }
+      </div>
+      }
+      } @else {
+      <div class="flex items-center gap-2.5 py-8 justify-center text-sx-text-3 text-[13px]"><i
+          class="pi pi-chart-bar text-[22px]"></i><span>Sin distribuciones OMIE</span></div>
+      }
+    </div>
+    }
+
+    <!-- Productos GAS -->
+    @if (activeContentTab() === 'gas-productos') {
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-semibold text-sx-text">Productos</span>
+        <button
+          class="inline-flex items-center gap-1.25 py-1.5 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer hover:bg-sx-primary"
+          (click)="showProductoLuz = true">
+          <i class="pi pi-plus text-[10px]"></i> Nuevo producto
+        </button>
+      </div>
+      @if (activeTarifa()!.pricing; as pr) {
+      <div class="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
+        @if (pr.gasProductType) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Tipo gas</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.gasProductType }}</strong></div>
+        }
+        @if (pr.priceKwh != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Precio €/kWh</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.priceKwh }}</strong></div>
+        }
+        @if (pr.fixedTermMonthly != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Término fijo mensual</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.fixedTermMonthly }} €</strong></div>
+        }
+        @if (pr.indexMargin != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Margen índice</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.indexMargin }}</strong></div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Configuración MOBILE / INTERNET -->
+    @if (activeContentTab() === 'config') {
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm font-semibold text-sx-text">Configuración</span>
+      </div>
+      @if (activeTarifa()!.pricing; as pr) {
+      <div class="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
+        @if (pr.monthlyFee != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Cuota mensual</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.monthlyFee }} €</strong></div>
+        }
+        @if (pr.dataGb != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Datos</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.dataGb }} GB</strong></div>
+        }
+        @if (pr.network) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Red</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.network }}</strong></div>
+        }
+        @if (pr.speedDownMbps != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Bajada</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.speedDownMbps }} Mbps</strong></div>
+        }
+        @if (pr.speedUpMbps != null) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Subida</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.speedUpMbps }} Mbps</strong></div>
+        }
+        @if (pr.technology) {
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+            class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Tecnología</span><strong
+            class="text-sm font-semibold text-sx-text">{{ pr.technology }}</strong></div>
+        }
+      </div>
+      }
+    </div>
+    }
+
+  </div>
+  }
+
+</div>
+
+<!-- Modales -->
+@if (showNewTarifaForm) {
+<app-tarifa-form [serviceId]="activeGroupId() ?? ''" [serviceType]="activeGroup()?.serviceType ?? 'LUZ'"
+  (saved)="onTarifaSaved()" (cancelled)="showNewTarifaForm = false" />
+}
+
+@if ((showProductoLuz || editingProduct()) && activeTarifa()) {
+<app-producto-luz-form [tariffId]="activeTarifa()!.id" [tariffCode]="activeTarifa()!.code ?? ''"
+  [editProduct]="editingProduct()" (saved)="onProductSaved()" (cancelled)="closeProductoForm()" />
+}
+
+@if (deleteConfirmId() !== null) {
+<div
+  class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 backdrop-blur-[2px] animate-[fade-in_150ms_ease]"
+  (click)="deleteConfirmId.set(null)">
+  <div
+    class="bg-sx-surface rounded-2xl py-7 px-6 w-85 text-center shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out]"
+    (click)="$event.stopPropagation()">
+    <div class="text-[28px] text-[#F59E0B] mb-2.5"><i class="pi pi-exclamation-triangle"></i></div>
+    <h3 class="text-[15px] font-bold text-sx-text m-0 mb-1.5">Eliminar producto</h3>
+    <p class="text-[13px] text-sx-text-3 m-0 mb-5">Esta acción no se puede deshacer. ¿Continuar?</p>
+    <div class="flex justify-center gap-2.5">
+      <button
+        class="py-2 px-4.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 text-[13px] cursor-pointer transition-colors hover:bg-sx-surface-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        (click)="deleteConfirmId.set(null)" [disabled]="deleting()">Cancelar</button>
+      <button
+        class="flex items-center gap-1.5 py-2 px-4.5 rounded-lg bg-[#DC2626] text-white border-none text-[13px] font-semibold cursor-pointer transition-colors hover:enabled:bg-[#B91C1C] disabled:opacity-60 disabled:cursor-not-allowed"
+        (click)="doDeleteProduct()" [disabled]="deleting()">
+        @if (deleting()) { <app-suminex-loader [size]="14" /> } Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+@if (viewingProduct()) {
+<div
+  class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 backdrop-blur-[2px] animate-[fade-in_150ms_ease]"
+  (click)="viewingProduct.set(null)">
+  <div
+    class="bg-sx-surface rounded-2xl p-5 w-[min(92vw,480px)] md:w-[min(80vw,640px)] md:p-6.5 xl:w-[min(55vw,760px)] xl:p-8 max-h-[90vh] overflow-y-auto shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out] flex flex-col gap-3.5 md:gap-4.5 xl:gap-5.5"
+    (click)="$event.stopPropagation()">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex flex-col gap-2">
+        <span class="text-[17px] md:text-xl font-bold text-sx-text leading-[1.2]">{{ viewingProduct().name }}</span>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          @if (activeTarifa()?.code) {
+          <span
+            class="py-0.75 px-2.25 rounded-full text-[11px] font-bold bg-sx-primary-bg text-sx-primary-text border border-sx-border-2 tracking-wide">{{
+            activeTarifa()!.code }}</span>
+          }
+          <span [class]="productTypeBadgeClasses(viewingProduct().type)">{{ typeLabel(viewingProduct().type) }}</span>
+          <span [class]="statusChipClasses(viewingProduct().isActive)">{{ viewingProduct().isActive ? 'Activo' :
+            'Inactivo' }}</span>
+        </div>
+      </div>
+      <button
+        class="w-7.5 h-7.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 hover:text-[#DC2626] hover:border-[#FECACA] hover:bg-[#FEF2F2]"
+        (click)="viewingProduct.set(null)"><i class="pi pi-times text-[11px]"></i></button>
+    </div>
+    <div
+      class="flex items-center gap-2.5 text-xs md:text-[13px] text-sx-text-2 bg-sx-surface-2 rounded-lg py-2 px-3 md:py-2.5 md:px-3.5 flex-wrap">
+      <span class="font-semibold text-sx-text-3 text-[11px] uppercase">Desde:</span><span>{{ viewingProduct().validFrom
+        ?? '—' }}</span>
+      <span class="font-semibold text-sx-text-3 text-[11px] uppercase">Hasta:</span><span>{{ viewingProduct().validUntil
+        ?? '—' }}</span>
+    </div>
+    <div class="flex flex-col gap-2.5">
+      <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2"><i
+          class="pi pi-bolt text-xs" style="color:#FACC15"></i> Energía (€/kWh)
+        <span [class]="commissionBadgeClasses(viewingProduct().commissionEnergyPct)">{{
+          commissionLabel(viewingProduct().commissionEnergyPct) }}</span>
+      </div>
+      <div class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(72px,1fr))]">
+        @for (ep of viewingProduct().energyPeriods; track ep.period) {
+        <div class="flex flex-col items-center gap-0.75"><span class="text-[10px] font-bold text-sx-text-3 uppercase">{{
+            ep.period }}</span><span
+            class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-md py-1.25 px-2 w-full text-center">{{
+            ep.priceKwh ?? '—' }}</span></div>
+        }
+      </div>
+    </div>
+    <div class="flex flex-col gap-2.5">
+      <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2"><i
+          class="pi pi-circle text-xs" style="color:#60A5FA"></i> Potencia (€/kW·día)
+        <span [class]="commissionBadgeClasses(viewingProduct().commissionPowerPct)">{{
+          commissionLabel(viewingProduct().commissionPowerPct) }}</span>
+      </div>
+      <div class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(72px,1fr))]">
+        @for (pp of viewingProduct().powerPeriods; track pp.period) {
+        <div class="flex flex-col items-center gap-0.75"><span class="text-[10px] font-bold text-sx-text-3 uppercase">{{
+            pp.period }}</span><span [class]="pgValClasses(pp.priceKwDay === null)">{{ pp.priceKwDay ?? 'BOE' }}</span>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if (showBoe && activeTarifa()) {
+<app-boe-luz-form [tariffId]="activeTarifa()!.id" [tariffCode]="activeTarifa()!.code ?? ''" [editBoe]="editingBoeData"
+  (saved)="onModalSaved(); showBoe = false; editingBoeData = null"
+  (cancelled)="showBoe = false; editingBoeData = null" />
+}
+
+@if (showOmie && activeTarifa()) {
+<app-omie-luz-form [tariffId]="activeTarifa()!.id" [tariffCode]="activeTarifa()!.code ?? ''"
+  [editOmie]="editingOmieData" (saved)="onModalSaved(); showOmie = false; editingOmieData = null"
+  (cancelled)="showOmie = false; editingOmieData = null" />
+}

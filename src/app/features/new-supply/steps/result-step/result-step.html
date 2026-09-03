@@ -1,0 +1,69 @@
+<div class="flex flex-col items-center text-center pt-16 px-6 pb-12 max-w-120 mx-auto animate-[fade-up_0.4s_ease_forwards]">
+
+  <!-- Animated SVG icon -->
+  @if (status === 'success') {
+  <div class="relative inline-flex items-center justify-center mb-8">
+    <svg class="block w-35 h-35" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="40" r="36" fill="rgba(34,197,94,0.12)" />
+      <circle cx="40" cy="40" r="36" stroke="#22C55E" stroke-width="2.5" stroke-dasharray="226"
+        stroke-dashoffset="226" class="animate-[circle-draw_1s_cubic-bezier(0.65,0,0.35,1)_forwards]" />
+      <polyline points="22,41 34,53 58,27" stroke="#16A34A" stroke-width="5" stroke-linecap="round"
+        stroke-linejoin="round" fill="none" stroke-dasharray="62" stroke-dashoffset="62" class="animate-[mark-draw_0.7s_ease_0.85s_forwards]" />
+    </svg>
+    <span class="absolute text-[0.9rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-top_1s_ease-out_1.4s_forwards]">✦</span>
+    <span class="absolute text-[0.65rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-tr_1s_ease-out_1.55s_forwards]">✦</span>
+    <span class="absolute text-[0.8rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-right_1s_ease-out_1.45s_forwards]">✦</span>
+    <span class="absolute text-[0.6rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-br_1s_ease-out_1.6s_forwards]">✦</span>
+    <span class="absolute text-[0.85rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-bottom_1s_ease-out_1.5s_forwards]">✦</span>
+    <span class="absolute text-[0.6rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-bl_1s_ease-out_1.4s_forwards]">✦</span>
+    <span class="absolute text-[0.75rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-left_1s_ease-out_1.55s_forwards]">✦</span>
+    <span class="absolute text-[0.65rem] text-[#22C55E] opacity-0 pointer-events-none animate-[sp-tl_1s_ease-out_1.45s_forwards]">✦</span>
+  </div>
+  }
+  @if (status === 'error') {
+  <div class="relative inline-flex items-center justify-center mb-8">
+    <svg class="block w-35 h-35" viewBox="0 0 80 80" fill="none">
+      <circle cx="40" cy="40" r="36" fill="rgba(239,68,68,0.08)" />
+      <circle cx="40" cy="40" r="36" stroke="#EF4444" stroke-width="2.5" stroke-dasharray="226"
+        stroke-dashoffset="226" class="animate-[circle-draw_1s_cubic-bezier(0.65,0,0.35,1)_forwards]" />
+      <line x1="27" y1="27" x2="53" y2="53" stroke="#EF4444" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="37" stroke-dashoffset="37" class="animate-[mark-draw_0.55s_ease_0.85s_forwards]" />
+      <line x1="53" y1="27" x2="27" y2="53" stroke="#EF4444" stroke-width="5" stroke-linecap="round"
+        stroke-dasharray="37" stroke-dashoffset="37" class="animate-[mark-draw_0.55s_ease_1.2s_forwards]" />
+    </svg>
+    <span class="absolute text-[0.9rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-top_1s_ease-out_1.55s_forwards]">✕</span>
+    <span class="absolute text-[0.6rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-tr_1s_ease-out_1.7s_forwards]">✕</span>
+    <span class="absolute text-[0.8rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-right_1s_ease-out_1.6s_forwards]">✕</span>
+    <span class="absolute text-[0.55rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-br_1s_ease-out_1.75s_forwards]">✕</span>
+    <span class="absolute text-[0.85rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-bottom_1s_ease-out_1.65s_forwards]">✕</span>
+    <span class="absolute text-[0.55rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-bl_1s_ease-out_1.55s_forwards]">✕</span>
+    <span class="absolute text-[0.75rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-left_1s_ease-out_1.7s_forwards]">✕</span>
+    <span class="absolute text-[0.6rem] text-[#EF4444] opacity-0 pointer-events-none animate-[sp-tl_1s_ease-out_1.6s_forwards]">✕</span>
+  </div>
+  }
+
+  <h2 [class]="resultTitleClasses(status === 'error')">
+    {{ status === 'success'
+    ? 'Se ha dado de alta al suministro correctamente'
+    : 'Ha ocurrido un error al dar de alta el suministro' }}
+  </h2>
+  <p class="text-[0.9rem] text-[#64748B] m-0 mb-8 leading-[1.6]">
+    {{ status === 'success'
+    ? 'El nuevo suministro ha sido registrado y será procesado en los próximos días hábiles.'
+    : (submitError || 'Por favor, inténtalo de nuevo o contacta con soporte si el problema persiste.') }}
+  </p>
+
+  @if (status === 'success' && verificationWarning) {
+  <div class="flex items-center gap-2 py-2.5 px-3.5 rounded-lg mb-6 -mt-4 bg-[#D97706]/10 border border-[#D97706]/30 text-[#B45309] text-[0.82rem] text-left max-w-[320px]">
+    <i class="pi pi-exclamation-triangle shrink-0"></i>
+    <span>{{ verificationWarning }} Podrás verificar la identidad más tarde desde el detalle del suministro.</span>
+  </div>
+  }
+
+  @if (status === 'success') {
+  <a routerLink="/supplies" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-xl text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] no-underline mb-3 max-w-[320px]">Ver suministros</a>
+  }
+  <button class="bg-transparent border-[1.5px] border-black/12 rounded-xl py-3.5 px-4 w-full max-w-[320px] text-[0.9rem] font-semibold text-[#475569] cursor-pointer transition-all hover:border-[#227CFF] hover:text-[#227CFF] hover:bg-[#EAF2FF]" (click)="retry.emit()">
+    {{ status === 'success' ? 'Dar de alta otro suministro' : 'Volver a intentarlo' }}
+  </button>
+</div>

@@ -1,0 +1,82 @@
+<p-toast />
+<p-confirmDialog />
+
+@if (loadError) {
+<div
+  class="flex items-center gap-3 py-3.5 px-5 mb-5 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-sm">
+  <i class="pi pi-exclamation-circle text-[1.1rem] shrink-0"></i>
+  <span class="flex-1 font-medium">{{ loadError }}</span>
+  <button
+    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-md border border-sx-red bg-transparent text-sx-red text-[0.8rem] font-semibold cursor-pointer whitespace-nowrap transition-colors hover:bg-sx-red hover:text-white"
+    (click)="load()">
+    <i class="pi pi-refresh"></i> Reintentar
+  </button>
+</div>
+}
+
+<!-- Shared table -->
+<app-data-table title="Proveedores" subtitle="Gestiona las compañías proveedoras de servicios energéticos"
+  [columns]="tableColumns" [rows]="pagedRows()" [total]="filteredTotal()" [page]="page()" [pageSize]="pageSize()"
+  [loading]="loading()" [rowTemplate]="rowTpl" emptyMessage="No hay proveedores registrados"
+  (searchChange)="onSearchChange($event)" (pageChange)="onPageChange($event)"
+  (pageSizeChange)="onPageSizeChange($event)">
+  <p-button dtActions label="Nuevo proveedor" icon="pi pi-plus" size="small" (onClick)="openNew()" />
+</app-data-table>
+
+<!-- Row template -->
+<ng-template #rowTpl let-p>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-[9px] bg-sx-primary-bg border border-sx-border-2 text-sx-primary-text text-sm font-bold flex items-center justify-center shrink-0">{{ p.name.charAt(0) }}</div>
+      <span class="font-semibold">{{ p.name }}</span>
+    </div>
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12"><code>{{ p.cif }}</code></td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <span class="inline-flex items-center justify-center bg-sx-surface-2 border border-sx-border text-sx-text-2 text-xs font-semibold min-w-7 px-2 py-0.5 rounded-full">{{ p.serviceCount }}</span>
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-sx-text-2 text-[0.82rem]">{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <p-tag [value]="p.isActive ? 'Activo' : 'Inactivo'" [severity]="p.isActive ? 'success' : 'danger'" />
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <div class="flex justify-center gap-1">
+      <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-[0.8rem]" (click)="edit(p)" title="Editar">
+        <i class="pi pi-pencil"></i>
+      </button>
+      <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red [&_.pi]:text-[0.8rem]" (click)="confirmDelete(p)" title="Desactivar">
+        <i class="pi pi-trash"></i>
+      </button>
+    </div>
+  </td>
+</ng-template>
+
+<!-- Dialog -->
+<p-dialog [(visible)]="dialogVisible" [header]="isEdit ? 'Editar proveedor' : 'Nuevo proveedor'" [modal]="true"
+  [style]="{width:'460px'}" [draggable]="false">
+  <div class="flex flex-col gap-5 py-1">
+    <div class="flex flex-col gap-2">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Nombre *</label>
+      <input pInputText [(ngModel)]="form.name" class="w-full" placeholder="Ej: Iberdrola" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">CIF *</label>
+      <input pInputText [(ngModel)]="form.cif" class="w-full" placeholder="A12345678" />
+    </div>
+    @if (isEdit) {
+    <div class="flex items-center justify-between py-1">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Estado activo</label>
+      <p-toggleswitch [(ngModel)]="form.isActive" />
+    </div>
+    }
+  </div>
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="dialogVisible = false" />
+    <p-button [label]="isEdit ? 'Guardar cambios' : 'Crear proveedor'" icon="pi pi-check" [loading]="saving()"
+      (onClick)="save()">
+      <ng-template pTemplate="loadingicon">
+        <app-suminex-loader [size]="14" [onColor]="true" />
+      </ng-template>
+    </p-button>
+  </ng-template>
+</p-dialog>

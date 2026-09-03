@@ -1,0 +1,36 @@
+<p-dialog [visible]="true" [header]="editItem ? 'Editar tarifa' : 'Nueva tarifa · ' + serviceTypeLabel" [modal]="true"
+  [style]="{ width: '460px' }" [draggable]="false" [closable]="true" (onHide)="cancelled.emit()">
+  <div class="flex flex-col gap-[1.1rem]">
+    <p class="text-[0.8rem] text-sx-text-3 m-0 mb-2">{{ editItem ? 'Edita el nombre o código de la tarifa' : 'Los
+      productos y precios se configuran después' }}</p>
+
+    @if (apiError) {
+    <div
+      class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.8rem]">
+      <i class="pi pi-exclamation-circle"></i>{{ apiError }}
+    </div>
+    }
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Nombre *</label>
+      <input pInputText [(ngModel)]="form.name" placeholder="Ej: Tarifa doméstica" class="w-full"
+        [class.field-error]="sub && !form.name" />
+      @if (sub && !form.name) { <span class="text-[0.76rem] text-sx-red">Este campo es obligatorio</span> }
+    </div>
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Código <span
+          class="font-normal normal-case tracking-normal">(opcional)</span></label>
+      <input pInputText [(ngModel)]="form.code" placeholder="Ej: 2.0TD" class="w-full" />
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="cancelled.emit()" [disabled]="saving()" />
+    <p-button [label]="editItem ? 'Guardar cambios' : 'Crear tarifa'" icon="pi pi-check" (onClick)="submit()"
+      [loading]="saving()">
+      <ng-template pTemplate="loadingicon">
+        <app-suminex-loader [size]="14" [onColor]="true" />
+      </ng-template>
+    </p-button>
+  </ng-template>
+</p-dialog>

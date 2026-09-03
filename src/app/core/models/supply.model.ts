@@ -1,5 +1,15 @@
-export type SupplyStatus = 'Pending' | 'Active' | 'Cancelled' | 'Completed' | 'InProgress';
+export type SupplyStatus = 'PendingIdentityVerification' | 'Pending' | 'InProgress' | 'Optimized' | 'Cancelled';
 export type CategoryCode = 'LUZ' | 'GAS' | 'MOVIL' | 'INTERNET';
+
+export type SupplyKind = 'electricity' | 'gas' | 'internet' | null;
+
+export interface SupplyOption {
+  id: SupplyKind;
+  label: string;
+  description: string;
+  icon: string;
+  available: boolean;
+}
 
 export interface Supply {
   id:                   string;
@@ -28,8 +38,26 @@ export interface Supply {
   comparisonHistoryId:  string | null;
   dniFrontDocumentId:   string | null;
   dniBackDocumentId:    string | null;
+  optimizedAt:          string | null;
+  cancellationReason:   string | null;
+  cancelledAt:          string | null;
   createdAt:            string;
   updatedAt:            string;
+}
+
+/** Respuesta de POST /api/supplies/{id}/complete — pasa el suministro a Optimized (facturable) */
+export interface CompleteSupplyResponse {
+  id:          string;
+  status:      SupplyStatus;
+  optimizedAt: string;
+}
+
+/** Respuesta de POST /api/supplies/{id}/cancel — Admin, o el Collaborator dueño; funciona en cualquier estado incluido Optimized */
+export interface CancelSupplyResponse {
+  id:                 string;
+  status:             SupplyStatus;
+  cancellationReason: string | null;
+  cancelledAt:        string;
 }
 
 export interface SupplyListResponse {
@@ -42,37 +70,38 @@ export interface SupplyListResponse {
   hasPreviousPage: boolean;
 }
 
-export interface CreateSupplyBody {
-  serviceId:            number;
-  serviceType:          CategoryCode;
-  originFlow:           'Manual' | 'AI' | 'Comparator';
+/** Respuesta de POST /api/supplies/register-with-identity — único endpoint de alta; siempre 200 si los datos base
+ *  son válidos, incluso cuando la identidad no se pudo verificar (verificationSuccess: false, supply igual creado). */
+export interface RegisterSupplyResponse {
+  id:                   string;
+  status:               SupplyStatus;
   estimatedSavings:     number;
-  comparisonHistoryId?: string;
-  ocrDocumentId?:       string;
-  holderName:           string;
-  holderDni:            string;
-  holderPhone:          string;
-  holderEmail:          string;
-  isUserTheHolder:      boolean;
-  holderIban?:          string;
-  cups?:                string;
-  phoneToPort?:         string;
-  street?:              string;
-  floor?:               string;
-  door?:                string;
-  postalCode?:          string;
-  province?:            string;
-  locality?:            string;
+  verificationSuccess:  boolean;
+  verificationMessage:  string | null;
+  dniFrontDocumentId:   string | null;
+  dniBackDocumentId:    string | null;
 }
 
-export interface CreateSupplyResponse {
-  id:               string;
-  serviceId:        number;
-  serviceType:      CategoryCode;
-  originFlow:       string;
-  estimatedSavings: number;
-  status:           SupplyStatus;
-  createdAt:        string;
+/** Respuesta de POST /api/supplies/verify-identity — coteja el OCR de las fotos del DNI contra holderDni; sin id de suministro.
+ *  isVerified/message: solo los manda una versión más nueva del backend — el entorno actual todavía responde
+ *  documentNumber/fullName/birthDate/expirationDate en su lugar, sin isVerified (un 200 OK ya implica éxito). */
+export interface VerifyIdentityResponse {
+  dniFrontDocumentId: string;
+  dniBackDocumentId:  string;
+  isVerified?:        boolean;
+  message?:           string | null;
+  documentNumber?:    string;
+  fullName?:          string | null;
+  birthDate?:         string | null;
+  expirationDate?:    string | null;
+}
+
+/** Respuesta de POST /api/supplies/{id}/link-identity — enlaza documentos ya verificados a un suministro existente, pasa a InProgress */
+export interface LinkIdentityResponse {
+  id:                 string;
+  status:             SupplyStatus;
+  dniFrontDocumentId: string;
+  dniBackDocumentId:  string;
 }
 
 export interface SupplyFilters {

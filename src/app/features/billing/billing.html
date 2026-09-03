@@ -1,0 +1,131 @@
+<div class="max-w-300">
+
+  <!-- Header -->
+  @if (isAdmin) {
+  <div class="mb-6">
+    <h1 class="text-[2.1rem] font-bold text-sx-text mb-1 tracking-tight leading-[1.15]">
+      @if (available(); as a) { Tienes disponible {{ a.total | currency:'EUR':'symbol':'1.0-0' }} }
+      @else if (selectedCollaboratorName(); as name) { Autofactura de {{ name }} }
+      @else { Historial de autofacturas }
+    </h1>
+    <p class="text-sm text-sx-text-2 m-0">
+      {{ selectedCollaboratorId() ? 'Elige el período y genera su autofactura' : 'Ve a Usuarios y elige "Ver facturación" sobre un colaborador para generarle una' }}
+    </p>
+  </div>
+
+  <!-- Summary row: stat card + CTA -->
+  <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-[1.1rem] mb-7 items-stretch">
+    <div class="bg-sx-surface border border-sx-border rounded-2xl px-6 py-5 flex flex-col gap-1.5 justify-center">
+      @if (loadingAvailable()) {
+      <div class="flex items-center gap-2 text-sx-text-3 text-sm"><app-suminex-loader [size]="20" /> Consultando disponible...</div>
+      } @else if (availableError()) {
+      <div class="flex items-center gap-2 text-sx-red text-sm"><i class="pi pi-exclamation-circle"></i>{{ availableError() }}</div>
+      } @else if (available(); as a) {
+      <span class="text-sm text-sx-text-2 font-medium">Disponible para facturar</span>
+      <span class="text-[2.2rem] font-bold text-sx-text leading-none tracking-[0.02em]">{{ a.items.length }}</span>
+      <span class="inline-flex items-center gap-1.5 mt-0.5">
+        @let pct = trendPercent(a.weekTrend);
+        @if (pct === null) {
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-sx-primary-bg text-sx-primary-text">Nuevo</span>
+        } @else {
+        <span [class]="trendBadgeClasses(pct)">
+          <i [class]="'pi ' + (pct >= 0 ? 'pi-arrow-up' : 'pi-arrow-down')"></i>
+          {{ pct >= 0 ? '+' : '' }}{{ pct }}%
+        </span>
+        <span class="text-xs text-sx-text-3">vs. semana pasada</span>
+        }
+      </span>
+      } @else {
+      <span class="text-sm text-sx-text-2 font-medium">Disponible para facturar</span>
+      <span class="text-[2.2rem] font-bold text-sx-text leading-none tracking-[0.02em]">{{ 0 | currency:'EUR':'symbol':'1.0-0' }}</span>
+      }
+    </div>
+    <button
+      class="inline-flex items-center justify-center gap-2 min-w-52.5 py-4 px-6 bg-sx-primary-btn text-white border-none rounded-md text-base font-bold text-center cursor-pointer transition-colors enabled:hover:bg-sx-primary disabled:opacity-55 disabled:cursor-not-allowed"
+      [disabled]="!available() || available()!.items.length === 0 || generating()" (click)="generate()">
+      @if (generating()) {
+      <app-suminex-loader [size]="18" [onColor]="true" /> Generando...
+      } @else {
+      <i class="pi pi-file-plus"></i> Generar autofactura
+      }
+    </button>
+  </div>
+
+  @if (generateError()) {
+  <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem] mb-5">
+    <i class="pi pi-exclamation-circle"></i>{{ generateError() }}
+  </div>
+  }
+  @if (lastGenerated(); as g) {
+  <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-green-bg border border-sx-green text-sx-green text-[0.85rem] mb-5">
+    <i class="pi pi-check-circle"></i>
+    <span>Factura {{ g.invoiceNumber }} generada por {{ g.total | currency:'EUR':'symbol':'1.2-2' }}.</span>
+    <a [href]="g.pdfUrl" target="_blank" class="font-semibold underline">Ver PDF</a>
+  </div>
+  }
+
+  <!-- Filtro: período, justo antes de la tabla -->
+  <div class="flex flex-col gap-1.5 max-w-45 mb-4">
+    <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Período</label>
+    <input type="month"
+      class="w-full py-2.5 px-3 bg-sx-surface border border-sx-border-2 rounded-lg text-sm text-sx-text"
+      [ngModel]="period()" (ngModelChange)="onPeriodChange($event)" />
+  </div>
+  } @else {
+  <div class="mb-6">
+    <h1 class="text-[2.1rem] font-bold text-sx-text mb-1 tracking-tight leading-[1.15]">Mis autofacturas</h1>
+    <p class="text-sm text-sx-text-2 m-0">Consulta tu historial de autofacturas</p>
+  </div>
+
+  <!-- ─── Colaborador: aviso si faltan datos fiscales ─── -->
+  @if (hasFiscalProfile() === false) {
+  <div class="flex items-center justify-between gap-3 flex-wrap bg-sx-amber-bg border border-sx-amber rounded-xl px-5 py-4 mb-7">
+    <div class="flex items-center gap-2.5 text-sx-amber text-sm">
+      <i class="pi pi-exclamation-triangle"></i>Completa tus datos fiscales para poder recibir autofacturas.
+    </div>
+    <button class="py-2 px-4 bg-sx-amber text-white border-none rounded-lg text-[0.82rem] font-semibold cursor-pointer"
+      (click)="profileDialog.open()">Completar datos</button>
+  </div>
+  }
+  }
+
+  <!-- Con colaborador elegido: lo pendiente de facturar (feed de /available) -->
+  @if (isAdmin && selectedCollaboratorId()) {
+  <app-data-table title="Pendiente de facturar" [columns]="pendingColumns" [rows]="available()?.items ?? []"
+    [total]="available()?.items?.length ?? 0" [page]="1" [pageSize]="available()?.items?.length || 20"
+    [loading]="loadingAvailable()" [searchable]="false" [rowTemplate]="pendingRowTpl"
+    emptyMessage="No hay nada pendiente de facturar en este período">
+  </app-data-table>
+
+  <ng-template #pendingRowTpl let-r>
+    <td class="py-3.5 px-6 align-middle text-sm font-semibold text-sx-text first:pl-12">{{ r.clientFullName }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text text-center">{{ r.serviceType }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text">{{ r.phoneNumber || '—' }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text">{{ r.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text">{{ r.amountWithVat | currency:'EUR':'symbol':'1.2-2' }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text last:pr-12 text-center">
+      <span [class]="pendingStatusClasses(r.status)">{{ pendingStatusLabel(r.status) }}</span>
+    </td>
+  </ng-template>
+  } @else {
+  <!-- Historial de facturas ya generadas -->
+  <app-data-table [title]="isAdmin ? 'Historial de autofacturas' : 'Mis autofacturas'" [columns]="tableColumns"
+    [rows]="historyItems()" [total]="historyTotal()" [page]="historyPage()" [pageSize]="20" [loading]="historyLoading()"
+    [searchable]="false" [rowTemplate]="rowTpl" emptyMessage="No hay facturas todavía"
+    (pageChange)="onHistoryPageChange($event)">
+  </app-data-table>
+
+  <ng-template #rowTpl let-r>
+    <td class="py-3.5 px-6 align-middle text-sm font-semibold text-sx-text first:pl-12 last:pr-12">{{ r.invoiceNumber }}</td>
+    @if (isAdmin) {
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text">{{ r.collaboratorName }}</td>
+    }
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text">{{ r.period | date:'MMMM yyyy' }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text">{{ r.total | currency:'EUR':'symbol':'1.2-2' }}</td>
+    <td class="py-3.5 px-6 align-middle text-sm font-medium text-sx-text last:pr-12 text-center">
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-sx-green-bg text-sx-green">{{ r.status }}</span>
+    </td>
+  </ng-template>
+  }
+
+</div>

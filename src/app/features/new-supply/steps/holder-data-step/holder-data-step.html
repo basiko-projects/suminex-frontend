@@ -1,0 +1,34 @@
+<form class="flex flex-col gap-4.5" (submit)="$event.preventDefault(); submitForm()">
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre del titular *</label>
+    <input type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
+      placeholder="Javier Vayá Sifre" />
+    @if (fullNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ fullNameError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular *</label>
+    <input type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
+      placeholder="12345678A" maxlength="9" />
+    @if (dniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ dniError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Teléfono de contacto *</label>
+    <div class="grid grid-cols-[150px_1fr] gap-2.5 max-[480px]:grid-cols-1">
+      <select [class]="formInputClasses(!!phoneError) + ' cursor-pointer'" [(ngModel)]="holderData.phoneCountry" name="phoneCountry">
+        @for (c of countryOptions; track c.dial) {
+        <option [value]="c.dial">{{ c.name }} ({{ c.dial }})</option>
+        }
+      </select>
+      <input type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
+        name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" />
+    </div>
+    @if (phoneError) { <span class="text-[0.76rem] text-[#DC2626]">{{ phoneError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Correo electrónico *</label>
+    <input type="email" [class]="formInputClasses(!!emailError)" [(ngModel)]="holderData.email" name="email"
+      placeholder="titular@ejemplo.es" />
+    @if (emailError) { <span class="text-[0.76rem] text-[#DC2626]">{{ emailError }}</span> }
+  </div>
+  <button type="submit" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-xl text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]">Siguiente</button>
+</form>

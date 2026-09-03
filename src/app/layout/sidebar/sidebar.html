@@ -1,0 +1,60 @@
+<aside class="w-60 h-full bg-[#F6F6F6] border-r border-black/10 flex flex-col overflow-hidden font-sans">
+
+  <!-- Company branding -->
+  <div class="flex items-center gap-3 py-4.5 px-4 shrink-0">
+    <div
+      class="w-10.5 h-10.5 rounded-full bg-[#4375FF] flex items-center justify-center text-[1.05rem] font-bold text-white shrink-0">
+      {{ getInitial() }}</div>
+    <div class="flex-1 flex flex-col gap-px min-w-0">
+      <span
+        class="text-sm font-bold text-[#0F172A] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis">{{
+        auth.currentUser()?.name || 'Administrador' }}</span>
+      <span class="text-xs text-[#94A3B8] whitespace-nowrap overflow-hidden text-ellipsis">Bienvenido a Suminex</span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 py-3.5 px-2.5 flex flex-col gap-px overflow-y-auto">
+
+    <!-- Items comunes (todos los roles) -->
+    @for (item of commercialItems; track item.route) {
+    <a [routerLink]="item.route" routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="{exact: true}"
+      [class]="navItemClasses(rla.isActive)">
+      <span class="w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0 bg-transparent transition-colors">
+        <i [class]="'pi ' + item.icon + ' ' + navIconClasses(rla.isActive)"></i>
+      </span>
+      <span class="flex-1">{{ item.label }}</span>
+      @if (item.badge) {
+      <span [class]="navBadgeClasses(rla.isActive)">{{ item.badge }}</span>
+      }
+    </a>
+    }
+
+    <!-- Sección Administrador (solo admin) -->
+    @if (auth.isAdmin()) {
+    <p class="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-wide pt-3 px-3 pb-1 m-0">Administrador</p>
+    @for (item of adminItems; track item.route) {
+    <a [routerLink]="item.route" routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="{exact: true}"
+      [class]="navItemClasses(rla.isActive)">
+      <span class="w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0 bg-transparent transition-colors">
+        <i [class]="'pi ' + item.icon + ' ' + navIconClasses(rla.isActive)"></i>
+      </span>
+      <span class="flex-1">{{ item.label }}</span>
+      @if (item.badge) {
+      <span [class]="navBadgeClasses(rla.isActive)">{{ item.badge }}</span>
+      }
+    </a>
+    }
+    }
+
+  </nav>
+
+  <!-- Help box -->
+  <div class="m-2.5 py-3.5 px-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl shrink-0">
+    <p class="text-[0.82rem] font-semibold text-[#0F172A] m-0 mb-1">¿Necesitas ayuda?</p>
+    <p class="text-[0.72rem] text-[#64748B] m-0 mb-3 leading-[1.4]">Estamos disponibles para ayudarte</p>
+    <a href="mailto:soporte@suminex.es"
+      class="block text-center py-2 bg-white border border-black/15 rounded-lg text-[0.78rem] font-semibold text-[#1A6FE8] no-underline transition-all hover:bg-[#EFF6FF] hover:border-[#227CFF]">Contactar</a>
+  </div>
+
+</aside>
