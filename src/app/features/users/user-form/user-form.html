@@ -58,12 +58,16 @@
     }
 
     <div class="mb-[1.1rem]">
-      <div class="flex flex-col gap-1.5">
+      <div class="flex items-center justify-between gap-2">
         <label class="text-[0.81rem] font-semibold text-sx-text-2">
           Contraseña
           @if (!editUser) { <span class="text-sx-red">*</span> }
           @if (editUser) { <span class="font-normal text-xs text-sx-text-3 ml-1">(dejar vacío para no cambiar)</span> }
         </label>
+        <button type="button" class="text-xs font-semibold text-sx-primary-text bg-transparent border-none cursor-pointer p-0 hover:underline"
+          (click)="generatePassword()">Generar</button>
+      </div>
+      <div class="flex flex-col gap-1.5 mt-1.5">
         <p-password [(ngModel)]="password" [toggleMask]="true" [feedback]="false"
           [placeholder]="editUser ? '••••••••' : 'Mínimo 8 caracteres'" class="w-full" inputClass="w-full"
           [class.field-error]="submitted && !editUser && !password" />

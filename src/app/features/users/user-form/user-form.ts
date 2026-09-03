@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, inject, signal } from '
 import { FormsModule } from '@angular/forms';
 import { UsersService } from '../../../core/services/users.service';
 import { UserItem } from '../../../core/models/user.model';
+import { generatePassword } from '../../../core/helpers/password.helpers';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -52,6 +53,10 @@ export class UserFormComponent implements OnInit {
       this.role     = (this.editUser.role === 'Admin' ? 'Admin' : 'Collaborator');
       this.isActive = this.editUser.isActive;
     }
+  }
+
+  generatePassword() {
+    this.password = generatePassword();
   }
 
   submit() {
