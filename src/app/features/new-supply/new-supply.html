@@ -1,0 +1,145 @@
+<div class="pb-12 font-sans">
+
+  @if (status() === 'idle' && !registering()) {
+
+  @if (step() > 1) {
+  <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 transition-colors hover:text-[#0F172A]" (click)="goBack()">
+    <i class="pi pi-arrow-left text-[0.78rem]"></i> Volver
+  </button>
+  }
+
+  <!-- ─── STEP 1: Supply type ─── -->
+  @if (step() === 1) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">¿Que tipo de suministro quieres dar de alta?</h1>
+    <p class="text-sm text-[#64748B] m-0">Elige el tipo de suministro que quieres dar de alta</p>
+  </div>
+
+  <app-supply-type-step [options]="supplyOptions" (select)="selectSupply($event)" />
+  }
+
+  <!-- ─── STEP 2: Ownership change ─── -->
+  @if (step() === 2) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">¿Con o sin cambio de titularidad?</h1>
+    <p class="text-sm text-[#64748B] m-0">Selecciona cómo deseas realizar el alta del suministro</p>
+  </div>
+
+  <app-ownership-step (select)="selectOwnership($event)" />
+  }
+
+  <!-- ─── STEP 3: Holder data ─── -->
+  @if (step() === 3) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Datos del nuevo titular</h1>
+    <p class="text-sm text-[#64748B] m-0">Revisa los datos leídos de tu factura y corrígelos si es necesario</p>
+  </div>
+
+  <app-holder-data-step [initialData]="holderPrefill()" (submitted)="onHolderSubmit($event)" />
+  }
+
+  <!-- ─── STEP 4: Supply point data ─── -->
+  @if (step() === 4) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Datos del punto de suministro</h1>
+    <p class="text-sm text-[#64748B] m-0">Revisa los datos leídos de tu factura y corrígelos si es necesario</p>
+  </div>
+
+  <app-supply-point-step [selectedSupply]="selectedSupply()" [initialData]="supplyPointPrefill()" (submitted)="onSupplyPointSubmit($event)" />
+  }
+
+  <!-- ─── STEP 5: Documents ─── -->
+  @if (step() === 5) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Documentación necesaria</h1>
+    <p class="text-sm text-[#64748B] m-0">Adjunta los documentos requeridos para completar el alta</p>
+  </div>
+
+  <app-documents-step (submitted)="onDocumentsSubmit($event)" />
+  }
+
+  } <!-- end @if (status() === 'idle' && !registering()) -->
+
+  <!-- ─── Dando de alta el suministro ─── -->
+  @if (registering()) {
+  <div class="flex flex-col items-center justify-center text-center py-24 gap-4">
+    <app-suminex-loader [size]="40" />
+    <p class="text-[0.95rem] text-[#64748B] m-0">Dando de alta el suministro...</p>
+  </div>
+  }
+
+  <!-- ─── Invoice modal — shown after choosing con/sin cambio de titularidad ─── -->
+  @if (showInvoiceModal()) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4" (click)="closeInvoiceModal()">
+    <div class="bg-white rounded-2xl p-6 w-[min(94vw,760px)] h-[min(90vh,720px)] flex flex-col" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between mb-4 shrink-0">
+        <div>
+          <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">Sube la factura</h2>
+          <p class="text-sm text-[#64748B] m-0">La necesitamos para calcular la oferta</p>
+        </div>
+        <button class="w-8 h-8 rounded-lg border border-black/10 bg-transparent text-[#94A3B8] flex items-center justify-center cursor-pointer transition-all shrink-0 enabled:hover:bg-red-50 enabled:hover:text-red-500 enabled:hover:border-red-500 disabled:opacity-40 disabled:cursor-not-allowed"
+          [disabled]="comparisonLoading()" (click)="closeInvoiceModal()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      @if (invoiceFile(); as file) {
+      <div class="flex-1 min-h-0 flex flex-col border-[1.5px] border-black/10 rounded-[14px] overflow-hidden bg-[#FAFAFA]">
+        <div class="flex-1 min-h-0">
+          @if (invoicePreviewKind() === 'image') {
+          <img [src]="invoicePreviewUrl()" alt="Vista previa de la factura" class="w-full h-full object-contain bg-black/5" />
+          } @else if (invoicePreviewKind() === 'pdf') {
+          <iframe [src]="invoicePreviewUrl()" title="Vista previa de la factura" class="w-full h-full block border-none"></iframe>
+          } @else {
+          <div class="w-full h-full flex flex-col items-center justify-center text-center px-6">
+            <i class="pi pi-file text-[1.75rem] text-[#94A3B8] mb-2.5"></i>
+          </div>
+          }
+        </div>
+        <div class="flex items-center justify-between gap-3 py-2.5 px-3.5 border-t border-black/10 bg-white shrink-0">
+          <span class="text-[0.82rem] font-semibold text-[#16A34A] break-all min-w-0">
+            <i class="pi pi-check-circle mr-1"></i>{{ file.name }}
+          </span>
+          <button type="button" class="shrink-0 text-[0.78rem] font-semibold text-[#227CFF] bg-transparent border-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:underline"
+            [disabled]="comparisonLoading()" (click)="invoiceFileInput.click()">Cambiar</button>
+        </div>
+      </div>
+      } @else {
+      <div class="flex-1 min-h-0 border-2 border-dashed border-black/14 rounded-[14px] flex flex-col items-center justify-center text-center cursor-pointer transition-all bg-[#FAFAFA] hover:border-[#227CFF] hover:bg-[#EAF2FF]"
+        (click)="invoiceFileInput.click()" (dragover)="$event.preventDefault()" (drop)="onInvoiceDrop($event)">
+        <i class="pi pi-file-pdf text-[1.75rem] text-[#94A3B8] mb-2.5"></i>
+        <p class="text-[0.9rem] font-bold text-[#0F172A] m-0 mb-1">Última factura</p>
+        <p class="text-[0.78rem] text-[#94A3B8] m-0">Arrastra el archivo aquí o haz clic para seleccionar</p>
+        <span class="inline-block mt-2 text-[0.72rem] text-[#CBD5E1]">JPG, PNG o PDF · Máx. 10MB</span>
+      </div>
+      }
+      <input #invoiceFileInput type="file" accept="image/*,.pdf" hidden (change)="onInvoiceFileSelect($event)" />
+      @if (invoiceSubmitted && !invoiceFile()) {
+      <span class="block mt-1.5 text-[0.76rem] text-[#DC2626] shrink-0">Este documento es obligatorio</span>
+      }
+      @if (comparisonError()) {
+      <div class="flex items-center gap-2 py-2.5 px-3 rounded-[10px] mt-3 bg-[#EF4444]/8 border border-[#EF4444]/30 text-[#DC2626] text-[0.82rem] shrink-0">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ comparisonError() }}</span>
+      </div>
+      }
+
+      <button class="w-full py-3.5 px-4 mt-5 bg-[#227CFF] text-white border-none rounded-xl text-[0.95rem] font-bold cursor-pointer transition-colors shrink-0 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed enabled:hover:bg-[#1A6FE8]"
+        [disabled]="comparisonLoading()" (click)="submitInvoice()">
+        @if (comparisonLoading()) {
+        <app-suminex-loader [size]="18" [onColor]="true" />
+        <span>Procesando factura...</span>
+        } @else {
+        <span>Continuar</span>
+        }
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- ─── RESULT SCREEN ─── -->
+  @if (status() !== 'idle') {
+  <app-result-step [status]="status()" [submitError]="submitError()" [verificationWarning]="verificationWarning()" (retry)="reset()" />
+  }
+
+</div>

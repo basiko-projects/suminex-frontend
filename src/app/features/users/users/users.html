@@ -1,0 +1,104 @@
+<p-toast />
+<p-confirmDialog />
+
+@if (formVisible) {
+<app-user-form [editUser]="editingUser" (saved)="onUserSaved()" (cancelled)="closeForm()" />
+}
+
+@if (loadError) {
+<div
+  class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+  <i class="pi pi-exclamation-circle"></i>
+  <span>{{ loadError }}</span>
+  <button
+    class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1"
+    (click)="load()"><i class="pi pi-refresh"></i> Reintentar</button>
+</div>
+}
+
+<!-- Shared table -->
+<app-data-table title="Usuarios" subtitle="Todos los usuarios registrados en la plataforma" [columns]="tableColumns"
+  [rows]="items" [total]="total" [page]="page" [pageSize]="pageSize" [loading]="loading()" [rowTemplate]="rowTpl"
+  emptyMessage="No hay usuarios con los filtros aplicados" (pageChange)="onPageChange($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
+  (filterIconClick)="onFilterIconClick($event, rolPop, estadoPop, verificadoPop)">
+  <p-button dtActions label="Nuevo usuario" icon="pi pi-user-plus" size="small" (onClick)="formVisible = true" />
+</app-data-table>
+
+<!-- Filter popovers -->
+<p-popover #rolPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-50">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Rol</span>
+    <p-select [options]="roleOpts" [(ngModel)]="filterRole" optionLabel="label" optionValue="value" placeholder="Todos"
+      [showClear]="true" (onChange)="search(); rolPop.hide()" />
+  </div>
+</p-popover>
+
+<p-popover #estadoPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-50">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Estado</span>
+    <p-select [options]="activeOpts" [(ngModel)]="filterActive" optionLabel="label" optionValue="value"
+      placeholder="Todos" [showClear]="true" (onChange)="search(); estadoPop.hide()" />
+  </div>
+</p-popover>
+
+<p-popover #verificadoPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-50">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Verificación</span>
+    <p-select [options]="verifiedOpts" [(ngModel)]="filterVerified" optionLabel="label" optionValue="value"
+      placeholder="Todos" [showClear]="true" (onChange)="search(); verificadoPop.hide()" />
+  </div>
+</p-popover>
+
+<!-- Row template -->
+<ng-template #rowTpl let-u>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12">
+    <div class="flex flex-col gap-0.5">
+      <span class="font-semibold text-sm text-sx-text">{{ u.fullName }}</span>
+      <span class="text-[0.73rem] text-sx-text-3">{{ u.email }}</span>
+    </div>
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-[0.83rem] text-sx-text-2 tabular-nums">{{ u.phone ||
+    '—' }}</td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <select [class]="roleSelectClasses(u.role)" [ngModel]="u.role" (ngModelChange)="onRoleChange(u, $event)">
+      @for (o of roleOpts; track o.value) {
+      <option [ngValue]="o.value">{{ o.label }}</option>
+      }
+    </select>
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <p-tag [value]="u.isActive ? 'Activo' : 'Inactivo'" [severity]="u.isActive ? 'success' : 'danger'" />
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <p-tag [value]="u.isVerified ? 'Verificado' : 'Pendiente'" [severity]="u.isVerified ? 'success' : 'warn'" />
+  </td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-[0.83rem] text-sx-text-2">{{ u.createdAt |
+    date:'dd/MM/yy' }}</td>
+  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+    <div class="flex items-center justify-center gap-1">
+      <button
+        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+        (click)="openEdit(u)" pTooltip="Editar">
+        <i class="pi pi-pencil"></i>
+      </button>
+      @if (u.role === 'Collaborator') {
+      <button
+        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+        (click)="openFiscalProfile(u)" pTooltip="Datos fiscales">
+        <i class="pi pi-id-card"></i>
+      </button>
+      <button
+        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+        (click)="openBilling(u)" pTooltip="Ver facturación">
+        <i class="pi pi-file-invoice"></i>
+      </button>
+      }
+      <button
+        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red [&_.pi]:text-xs"
+        (click)="confirmDelete(u)" pTooltip="Eliminar">
+        <i class="pi pi-trash"></i>
+      </button>
+    </div>
+  </td>
+</ng-template>

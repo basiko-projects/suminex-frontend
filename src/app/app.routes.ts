@@ -13,18 +13,19 @@ export const routes: Routes = [
       { path: 'stats', loadComponent: () => import('./features/stats/stats').then(m => m.StatsComponent) },
       {
         path: 'services',
-        loadComponent: () => import('./features/services/services-shell').then(m => m.ServicesShellComponent),
+        loadComponent: () => import('./features/services/services-shell/services-shell').then(m => m.ServicesShellComponent),
         canActivate: [authGuard],
       },
       {
         path: 'services/tarifas/:id',
-        loadComponent: () => import('./features/services/tarifa-detail').then(m => m.TarifaDetailComponent),
+        loadComponent: () => import('./features/services/tarifa-detail/tarifa-detail').then(m => m.TarifaDetailComponent),
         canActivate: [authGuard],
       },
       { path: 'comparison-history', loadComponent: () => import('./features/comparison-history/comparison-history').then(m => m.ComparisonHistoryComponent) },
       { path: 'supplies', loadComponent: () => import('./features/supplies/supplies').then(m => m.SuppliesComponent) },
-      { path: 'nuevo-suministro', loadComponent: () => import('./features/new-supply/new-supply').then(m => m.NewSupplyComponent) },
-      { path: 'users',    loadComponent: () => import('./features/users/users').then(m => m.UsersComponent) },
+      { path: 'new-supply', loadComponent: () => import('./features/new-supply/new-supply').then(m => m.NewSupplyComponent) },
+      { path: 'comparator', loadComponent: () => import('./features/comparator/comparator').then(m => m.ComparatorComponent) },
+      { path: 'users',    loadComponent: () => import('./features/users/users/users').then(m => m.UsersComponent) },
       { path: 'billing',  loadComponent: () => import('./features/billing/billing').then(m => m.BillingComponent) },
     ]
   },

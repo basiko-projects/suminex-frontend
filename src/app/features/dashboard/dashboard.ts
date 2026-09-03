@@ -1,20 +1,16 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { CurrencyPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { SkeletonModule } from 'primeng/skeleton';
+import { DatePickerModule } from 'primeng/datepicker';
+import { PopoverModule } from 'primeng/popover';
 import { AuthService } from '../../core/services/auth.service';
-import { ServicesService } from '../../core/services/services.service';
-import { SuppliesService } from '../../core/services/supplies.service';
-import { ComparisonHistoryService } from '../../core/services/comparison-history.service';
+import { StatsService } from '../../core/services/stats.service';
+import { DashboardKpi, DashboardTimeseriesPoint, StatsGroupBy } from '../../core/models/stats.model';
 
-interface StatCard {
-  label:    string;
-  value:    number;
-  icon:     string;
-  trend:    string;
-  trendUp:  boolean;
-}
+interface KpiDisplay { hasData: boolean; pct: number; arrowUp: boolean; good: boolean; }
 
 interface QuickAction {
   title:    string;
@@ -23,180 +19,52 @@ interface QuickAction {
   route:    string;
 }
 
+type Period = 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+
+function toDateParam(d: Date): string { return d.toISOString().split('T')[0]; }
+function pad2(n: number): string { return String(n).padStart(2, '0'); }
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, SkeletonModule],
-  template: `
-    <div class="dash">
-
-      <!-- Greeting -->
-      <div class="greeting-section">
-        <h1 class="greeting-title">Hola, {{ userName() }}</h1>
-        <p class="greeting-sub">Bienvenido a Suminex</p>
-      </div>
-
-      <!-- Stat cards -->
-      @if (loading()) {
-        <div class="stats-row">
-          @for (i of [1,2,3]; track i) {
-            <div class="stat-card"><p-skeleton height="108px" borderRadius="16px" /></div>
-          }
-        </div>
-      } @else {
-        <div class="stats-row">
-          @for (s of statCards(); track s.label) {
-            <div class="stat-card">
-              <div class="stat-top">
-                <div class="stat-icon">
-                  <i [class]="'pi ' + s.icon"></i>
-                </div>
-                <span class="pill" [class.pill-green]="s.trendUp" [class.pill-red]="!s.trendUp">
-                  <i class="pi" [class.pi-arrow-up]="s.trendUp" [class.pi-arrow-down]="!s.trendUp"></i>
-                  {{ s.trend }}
-                </span>
-              </div>
-              <span class="stat-val">{{ s.value }}</span>
-              <span class="stat-lbl">{{ s.label }}</span>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Quick actions -->
-      <h2 class="section-title">Acciones rápidas</h2>
-      <div class="actions-grid">
-        @for (a of quickActions; track a.title) {
-          <a [routerLink]="a.route" class="action-card">
-            <div class="action-icon">
-              <i [class]="'pi ' + a.icon"></i>
-            </div>
-            <div class="action-body">
-              <span class="action-title">{{ a.title }}</span>
-              <span class="action-sub">{{ a.subtitle }}</span>
-            </div>
-            <span class="action-chevron"><i class="pi pi-chevron-right"></i></span>
-          </a>
-        }
-      </div>
-
-    </div>
-  `,
-  styles: [`
-    .dash { max-width: 1200px; }
-
-    /* ── Greeting ── */
-    .greeting-section { margin-bottom: 1.75rem; }
-    .greeting-title {
-      font-size: 2.1rem; font-weight: 700;
-      color: var(--sx-text); margin: 0 0 0.3rem;
-      letter-spacing: -0.025em; line-height: 1.15;
-    }
-    .greeting-sub { font-size: 0.9rem; color: var(--sx-text-2); margin: 0; }
-
-    /* ── Stat cards ── */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.1rem; margin-bottom: 2.25rem;
-    }
-    @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 560px) { .stats-row { grid-template-columns: 1fr; } }
-
-    .stat-card {
-      background: var(--sx-surface);
-      border: 1px solid var(--sx-border);
-      border-radius: 14px; padding: 1.35rem 1.5rem 1.5rem;
-      display: flex; flex-direction: column;
-      transition: border-color 150ms ease, box-shadow 150ms ease;
-    }
-    .stat-card:hover { border-color: var(--sx-border-2); box-shadow: var(--sx-shadow); }
-
-    .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
-    .stat-icon {
-      width: 40px; height: 40px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      background: var(--sx-surface-2); color: var(--sx-text-2);
-      border: 1px solid var(--sx-border);
-    }
-    .stat-icon .pi { font-size: 1rem; }
-
-    .stat-val {
-      font-size: 2.2rem; font-weight: 700; color: var(--sx-text);
-      line-height: 1; letter-spacing: -0.02em; margin-bottom: 0.4rem;
-    }
-    .stat-lbl { font-size: 0.85rem; color: var(--sx-text-2); font-weight: 500; }
-
-    .pill {
-      display: inline-flex; align-items: center; gap: 3px;
-      border-radius: 6px; font-size: 0.76rem; font-weight: 600;
-      padding: 0.2rem 0.5rem; white-space: nowrap;
-    }
-    .pill .pi { font-size: 0.6rem; }
-    .pill-green { background: var(--sx-green-bg); color: var(--sx-green); }
-    .pill-red   { background: var(--sx-red-bg); color: var(--sx-red); }
-
-    /* ── Quick actions ── */
-    .section-title {
-      font-size: 0.78rem; font-weight: 700; color: var(--sx-text-2);
-      text-transform: uppercase; letter-spacing: 0.06em;
-      margin: 0 0 1rem;
-    }
-    .actions-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-    }
-    @media (max-width: 720px) { .actions-grid { grid-template-columns: 1fr; } }
-
-    .action-card {
-      background: var(--sx-surface);
-      border: 1px solid var(--sx-border);
-      border-radius: 14px; padding: 1.25rem 1.4rem;
-      display: flex; align-items: center; gap: 1rem;
-      text-decoration: none; transition: all 150ms ease;
-    }
-    .action-card:hover {
-      border-color: var(--sx-border-2);
-      box-shadow: var(--sx-shadow);
-    }
-    .action-card:hover .action-chevron { color: var(--sx-primary); transform: translateX(2px); }
-    .action-icon {
-      width: 44px; height: 44px; border-radius: 11px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      background: var(--sx-surface-2); color: var(--sx-text-2);
-      border: 1px solid var(--sx-border);
-    }
-    .action-icon .pi { font-size: 1.05rem; }
-    .action-body { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
-    .action-title { font-size: 1rem; font-weight: 700; color: var(--sx-text); }
-    .action-sub { font-size: 0.82rem; color: var(--sx-text-2); }
-    .action-chevron {
-      color: var(--sx-text-3); font-size: 0.85rem; flex-shrink: 0;
-      transition: all 150ms ease;
-    }
-  `]
+  imports: [RouterLink, CurrencyPipe, SkeletonModule, FormsModule, DatePickerModule, PopoverModule],
+  templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
-  private services    = inject(ServicesService);
-  private supplies    = inject(SuppliesService);
-  private comparisons = inject(ComparisonHistoryService);
-  auth = inject(AuthService);
-
-  loading = signal(true);
-
-  totalSupplies    = 0;
-  totalComparisons = 0;
-  totalTarifas     = 0;
+  private auth  = inject(AuthService);
+  private stats = inject(StatsService);
 
   userName = computed(() => this.auth.currentUser()?.name || 'Administrador');
 
-  statCards = computed<StatCard[]>(() => [
-    { label: 'Tarifas',       value: this.totalTarifas,     icon: 'pi-bolt',       trend: '+5%', trendUp: true },
-    { label: 'Suministros',   value: this.totalSupplies,    icon: 'pi-file-check', trend: '+8%', trendUp: true },
-    { label: 'Comparaciones', value: this.totalComparisons, icon: 'pi-chart-bar',  trend: '-3%', trendUp: false },
-  ]);
+  loading      = signal(true);
+  activePeriod = signal<Period>('week');
+  loadError    = '';
+
+  totalSupplies   = 0;
+  avgOrderValue   = 0;
+  avgOrderDiffAbs = 0;
+
+  private readonly emptyTrend: KpiDisplay = { hasData: false, pct: 0, arrowUp: true, good: true };
+  suppliesTrend: KpiDisplay = this.emptyTrend;
+  avgOrderTrend: KpiDisplay = this.emptyTrend;
+
+  customFrom: Date | null = null;
+  customTo:   Date | null = null;
+
+  showSupplies    = true;
+  showComparisons = true;
+
+  timeseries: DashboardTimeseriesPoint[] = [];
+  groupBy: StatsGroupBy = 'day';
+
+  periods = [
+    { key: 'today'   as Period, label: 'Hoy' },
+    { key: 'week'    as Period, label: 'Semana' },
+    { key: 'month'   as Period, label: 'Mes' },
+    { key: 'quarter' as Period, label: 'Trimestre' },
+    { key: 'year'    as Period, label: 'Año' },
+    { key: 'custom'  as Period, label: 'Personalizado' },
+  ];
 
   quickActions: QuickAction[] = [
     { title: 'Nueva oferta',   subtitle: 'Crear tarifa de luz, gas o internet', icon: 'pi-bolt',       route: '/services' },
@@ -205,18 +73,160 @@ export class DashboardComponent implements OnInit {
     { title: 'Suministros',    subtitle: 'Gestionar contratos activos',        icon: 'pi-file-check', route: '/supplies' },
   ];
 
-  ngOnInit() {
-    forkJoin({
-      services:    this.services.getServices(),
-      supplies:    this.supplies.getAll({ pageSize: 1 }),
-      comparisons: this.comparisons.getAll({ pageSize: 1 }),
-    }).pipe(finalize(() => this.loading.set(false))).subscribe({
-      next: (data) => {
-        this.totalTarifas     = data.services.reduce((acc, g) => acc + (g.tariffs?.length ?? 0), 0);
-        this.totalSupplies    = data.supplies.totalCount ?? 0;
-        this.totalComparisons = data.comparisons.totalCount ?? 0;
-      },
-      error: () => {}
-    });
+  get chartRangeLabel(): string {
+    const [start, end] = this.currentRange();
+    const fmt = (d: Date) => `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+    return `${fmt(start)} – ${fmt(end)}`;
+  }
+
+  get chart() {
+    const pts = this.timeseries;
+    const n = pts.length;
+    const plotLeft = 44, plotRight = 530, plotTop = 8, plotBottom = 158;
+    const step = n > 1 ? (plotRight - plotLeft) / (n - 1) : 0;
+    const xs = pts.map((_, i) => plotLeft + i * step);
+
+    const activeValues: number[] = [];
+    if (this.showSupplies)    pts.forEach(p => activeValues.push(p.supplies));
+    if (this.showComparisons) pts.forEach(p => activeValues.push(p.comparisons));
+    const rawMax  = activeValues.length ? Math.max(...activeValues) : 0;
+    const niceMax = Math.max(5, Math.ceil(rawMax / 5) * 5);
+
+    const yFor = (v: number) => plotBottom - (v / niceMax) * (plotBottom - plotTop);
+
+    const linePath = (values: number[]) =>
+      values.length ? values.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xs[i]},${yFor(v)}`).join(' ') : '';
+
+    const areaPath = (values: number[]) => {
+      if (!values.length) return '';
+      return `${linePath(values)} L ${xs[xs.length - 1]},${plotBottom} L ${xs[0]},${plotBottom} Z`;
+    };
+
+    const suppliesValues    = pts.map(p => p.supplies);
+    const comparisonsValues = pts.map(p => p.comparisons);
+
+    const gridYs = [8, 38, 68, 98, 128, 158];
+    const gridLabels = gridYs.map((y, i) => ({ y, value: Math.round(niceMax * (5 - i) / 5) }));
+
+    const labelStep = n > 8 ? Math.ceil(n / 6) : 1;
+    const xLabels = pts
+      .map((p, i) => ({ x: xs[i], label: this.formatBucketLabel(p.date) }))
+      .filter((_, i) => i % labelStep === 0 || i === n - 1);
+
+    return {
+      n,
+      suppliesPath:    this.showSupplies    ? linePath(suppliesValues)    : '',
+      suppliesArea:    this.showSupplies    ? areaPath(suppliesValues)    : '',
+      comparisonsPath: this.showComparisons ? linePath(comparisonsValues) : '',
+      comparisonsArea: this.showComparisons ? areaPath(comparisonsValues) : '',
+      gridLabels,
+      xLabels,
+    };
+  }
+
+  ngOnInit() { this.load(); }
+
+  onPeriodChange(p: Period) {
+    this.activePeriod.set(p);
+    if (p !== 'custom') this.load();
+  }
+
+  applyCustomRange() {
+    this.activePeriod.set('custom');
+    this.load();
+  }
+
+  /** [start, end] del período activo, ambos como Date a medianoche */
+  private currentRange(): [Date, Date] {
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let start: Date;
+    switch (this.activePeriod()) {
+      case 'today':    start = new Date(end); break;
+      case 'week': {
+        const dow = now.getDay();
+        start = new Date(end);
+        start.setDate(end.getDate() - (dow === 0 ? 6 : dow - 1));
+        break;
+      }
+      case 'month':    start = new Date(now.getFullYear(), now.getMonth(), 1); break;
+      case 'quarter':  start = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1); break;
+      case 'year':     start = new Date(now.getFullYear(), 0, 1); break;
+      case 'custom':   start = this.customFrom ?? new Date(now.getFullYear(), now.getMonth(), 1);
+                        return [start, this.customTo ?? end];
+    }
+    return [start, end];
+  }
+
+  /**
+   * El backend ya resuelve el período anterior y el % de variación (previousValue/changePercent).
+   * changePercent viene AUSENTE (no null) cuando previousValue es 0 — en ese caso no hay base
+   * de comparación real, así que no mostramos ni 0% ni infinito.
+   */
+  private kpiDisplay(kpi: DashboardKpi, badWhenUp = false): KpiDisplay {
+    const hasData = kpi.changePercent !== undefined && kpi.changePercent !== null;
+    if (!hasData) return { hasData: false, pct: 0, arrowUp: true, good: true };
+    const arrowUp = kpi.changePercent! >= 0;
+    const good    = badWhenUp ? kpi.changePercent! <= 0 : kpi.changePercent! >= 0;
+    return { hasData: true, pct: Math.round(Math.abs(kpi.changePercent!)), arrowUp, good };
+  }
+
+  private groupByForSpan(days: number): StatsGroupBy {
+    if (days <= 31)  return 'day';
+    if (days <= 180) return 'week';
+    return 'month';
+  }
+
+  private formatBucketLabel(dateStr: string): string {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (this.groupBy === 'month') {
+      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      return months[d.getMonth()];
+    }
+    return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+  }
+
+  load() {
+    this.loading.set(true);
+    this.loadError = '';
+
+    const [start, end] = this.currentRange();
+    const spanDays = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+    this.groupBy = this.groupByForSpan(spanDays);
+
+    this.stats.getDashboard({ from: toDateParam(start), to: toDateParam(end), groupBy: this.groupBy })
+      .pipe(finalize(() => this.loading.set(false))).subscribe({
+        next: ({ summary, timeseries }) => {
+          this.timeseries    = timeseries ?? [];
+          this.totalSupplies = summary.managedSupplies.value;
+          this.avgOrderValue = summary.avgOrderValue.value;
+          this.avgOrderDiffAbs = Math.abs(summary.avgOrderValue.value - summary.avgOrderValue.previousValue);
+
+          this.suppliesTrend = this.kpiDisplay(summary.managedSupplies);
+          this.avgOrderTrend = this.kpiDisplay(summary.avgOrderValue);
+        },
+        error: e => {
+          this.loadError = e?.status === 403
+            ? 'No tienes permisos para ver las estadísticas.'
+            : 'Error al cargar las estadísticas. Inténtalo de nuevo.';
+        },
+      });
+  }
+
+  periodBtnClasses(active: boolean): string {
+    const base = 'py-[0.45rem] px-4.5 rounded-full text-[0.845rem] cursor-pointer transition-all';
+    return active
+      ? `${base} bg-[#227CFF] border border-[#227CFF] text-white font-semibold`
+      : `${base} border border-black/12 bg-white text-[#475569] font-medium hover:bg-[#F8FAFC] hover:text-[#0F172A]`;
+  }
+
+  pillClasses(good: boolean): string {
+    const base = 'inline-flex items-center gap-[3px] rounded-full text-[0.72rem] font-bold py-[0.2rem] px-2.25 whitespace-nowrap';
+    return good ? `${base} bg-[#16A34A]/10 text-[#16A34A]` : `${base} bg-[#DC2626]/10 text-[#DC2626]`;
+  }
+
+  legendItemClasses(dim: boolean): string {
+    const base = 'inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[0.78rem] font-medium text-[#475569] p-0 transition-opacity';
+    return dim ? `${base} opacity-40` : base;
   }
 }

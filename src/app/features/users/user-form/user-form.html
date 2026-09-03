@@ -1,0 +1,84 @@
+<p-dialog [visible]="true" [header]="editUser ? 'Editar usuario' : 'Nuevo usuario'" [modal]="true"
+  [style]="{ width: '480px' }" [draggable]="false" [closable]="true" (onHide)="cancelled.emit()">
+  <div class="flex flex-col">
+
+    @if (apiError) {
+    <div
+      class="flex items-center gap-2 bg-sx-red-bg border border-sx-red text-sx-red rounded-lg py-2.5 px-3.5 text-[0.82rem] mb-[1.1rem]">
+      <i class="pi pi-exclamation-circle text-sm shrink-0"></i>
+      <span>{{ apiError }}</span>
+    </div>
+    }
+
+    <div class="mb-[1.1rem]">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">Nombre completo <span
+            class="text-sx-red">*</span></label>
+        <input pInputText [(ngModel)]="fullName" placeholder="Ej: María García" class="w-full"
+          [class.field-error]="submitted && !fullName" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-[1.1rem]">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">Correo electrónico <span
+            class="text-sx-red">*</span></label>
+        <input pInputText [(ngModel)]="email" type="email" placeholder="correo@ejemplo.com" class="w-full"
+          [class.field-error]="submitted && !email" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">Teléfono</label>
+        <input pInputText [(ngModel)]="phone" placeholder="+34 600 000 000" class="w-full" />
+      </div>
+    </div>
+
+    @if (editUser) {
+    <div class="grid grid-cols-2 gap-4 mb-[1.1rem]">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">Rol <span class="text-sx-red">*</span></label>
+        <p-select [options]="roleOpts" [(ngModel)]="role" optionLabel="label" optionValue="value"
+          placeholder="Seleccionar" class="w-full" [class.field-error]="submitted && !role" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">Estado</label>
+        <div class="flex-1 flex items-center gap-2.5">
+          <p-toggleswitch [(ngModel)]="isActive" />
+          <span class="text-[0.83rem] text-sx-text-2">{{ isActive ? 'Activo' : 'Inactivo' }}</span>
+        </div>
+      </div>
+    </div>
+    } @else {
+    <div class="mb-[1.1rem]">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">Rol <span class="text-sx-red">*</span></label>
+        <p-select [options]="roleOpts" [(ngModel)]="role" optionLabel="label" optionValue="value"
+          placeholder="Seleccionar" class="w-full" [class.field-error]="submitted && !role" />
+      </div>
+    </div>
+    }
+
+    <div class="mb-[1.1rem]">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.81rem] font-semibold text-sx-text-2">
+          Contraseña
+          @if (!editUser) { <span class="text-sx-red">*</span> }
+          @if (editUser) { <span class="font-normal text-xs text-sx-text-3 ml-1">(dejar vacío para no cambiar)</span> }
+        </label>
+        <p-password [(ngModel)]="password" [toggleMask]="true" [feedback]="false"
+          [placeholder]="editUser ? '••••••••' : 'Mínimo 8 caracteres'" class="w-full" inputClass="w-full"
+          [class.field-error]="submitted && !editUser && !password" />
+      </div>
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="cancelled.emit()" [disabled]="saving()" />
+    <p-button [label]="editUser ? 'Guardar cambios' : 'Crear usuario'" icon="pi pi-check" (onClick)="submit()"
+      [loading]="saving()">
+      <ng-template pTemplate="loadingicon">
+        <app-suminex-loader [size]="14" [onColor]="true" />
+      </ng-template>
+    </p-button>
+  </ng-template>
+</p-dialog>

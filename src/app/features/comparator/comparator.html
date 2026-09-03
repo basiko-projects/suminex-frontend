@@ -1,0 +1,87 @@
+<div class="pb-12 font-sans">
+
+  @if (selectedSupply()) {
+  <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 transition-colors hover:text-[#0F172A]" (click)="goBack()">
+    <i class="pi pi-arrow-left text-[0.78rem]"></i> Volver
+  </button>
+  }
+
+  @if (!selectedSupply()) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Comparador de tarifas</h1>
+    <p class="text-sm text-[#64748B] m-0">Elige el tipo de factura que quieres comparar</p>
+  </div>
+
+  <app-supply-type-step [options]="supplyOptions" (select)="selectSupply($event)" />
+  } @else {
+
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Sube la factura</h1>
+    <p class="text-sm text-[#64748B] m-0">La analizamos y te mostramos cuánto pagaría con Suminex</p>
+  </div>
+
+  @if (ocrStatus() === 'idle') {
+  <div class="border-2 border-dashed border-black/14 rounded-[14px] py-8 px-6 flex flex-col items-center text-center cursor-pointer transition-all bg-[#FAFAFA] hover:border-[#227CFF] hover:bg-[#EAF2FF]" (click)="invoiceCompareInput.click()" (dragover)="$event.preventDefault()"
+    (drop)="onInvoiceDrop($event)">
+    <input #invoiceCompareInput type="file" accept="image/*,.pdf" hidden (change)="onInvoiceInputChange($event)" />
+    <i class="pi pi-file-pdf text-[1.75rem] text-[#94A3B8] mb-2.5"></i>
+    <p class="text-[0.9rem] font-bold text-[#0F172A] m-0 mb-1">Factura</p>
+    <p class="text-[0.78rem] text-[#94A3B8] m-0">Arrastra el archivo aquí o haz clic para seleccionar</p>
+    <span class="inline-block mt-2 text-[0.72rem] text-[#CBD5E1]">JPG, PNG o PDF · Máx. 10MB</span>
+  </div>
+  }
+
+  @if (ocrStatus() === 'uploading') {
+  <div class="flex items-center gap-2.5 py-8 text-[#64748B] text-[0.9rem]">
+    <app-suminex-loader [size]="28" />
+    <span>Leyendo la factura y calculando la comparativa...</span>
+  </div>
+  }
+
+  @if (ocrStatus() === 'error') {
+  <div class="flex items-center gap-2 py-3 px-3.5 rounded-[10px] mb-4 bg-[#EF4444]/8 border border-[#EF4444]/30 text-[#DC2626] text-[0.85rem]">
+    <i class="pi pi-exclamation-circle"></i>
+    <span>{{ ocrErrorMsg() }}</span>
+  </div>
+  <button class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-xl text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]" (click)="retryInvoice()">Intentar de nuevo</button>
+  }
+
+  @if (ocrStatus() === 'done' && !matchedTariffDetail()) {
+  <div class="grid grid-cols-2 gap-5 mb-5 max-[560px]:grid-cols-1">
+    <div class="bg-white border-[1.5px] border-black/10 rounded-[14px] p-5 flex flex-col gap-1.5">
+      <span class="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Consumo actual</span>
+      <span class="text-[0.85rem] font-semibold text-[#475569]">{{ comparison()?.currentProviderName ?? 'Compañía actual' }}</span>
+      <span class="text-2xl font-extrabold text-[#0F172A]">{{ comparison()?.currentTotal ?? 0 | number:'1.2-2' }} €</span>
+    </div>
+    <div class="bg-[#EAF2FF] border-[1.5px] border-[#227CFF] rounded-[14px] p-5 flex flex-col gap-1.5">
+      <span class="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Con Suminex</span>
+      @if (comparison(); as c) {
+      <span class="text-[0.85rem] font-semibold text-[#475569]">{{ c.bestTariffName }}</span>
+      <span class="text-2xl font-extrabold text-[#0F172A]">{{ c.estimatedTotal | number:'1.2-2' }} €</span>
+      } @else {
+      <span class="text-[0.85rem] font-semibold text-[#475569]">Sin tarifa comparable disponible</span>
+      }
+    </div>
+  </div>
+
+  @if (comparison(); as c) {
+  <div [class]="savingsClasses(c.savingsAmount < 0)">
+    @if (c.savingsAmount >= 0) {
+    <i class="pi pi-arrow-down"></i>
+    Ahorra {{ c.savingsAmount | number:'1.2-2' }} € al mes ({{ c.savingsPercent | number:'1.0-1' }}%)
+    } @else {
+    <i class="pi pi-arrow-up"></i>
+    Pagaría {{ -c.savingsAmount | number:'1.2-2' }} € más al mes con Suminex
+    }
+  </div>
+  }
+
+  <button class="bg-transparent border-[1.5px] border-black/12 rounded-xl py-3.5 px-4 w-full max-w-[320px] text-[0.9rem] font-semibold text-[#475569] cursor-pointer transition-all hover:border-[#227CFF] hover:text-[#227CFF] hover:bg-[#EAF2FF]" (click)="retryInvoice()">Cambiar factura</button>
+  }
+
+  @if (showConfigureProduct() && matchedTariffDetail() && luzOcrData()) {
+  <app-configure-product [tariff]="matchedTariffDetail()!" [ocr]="luzOcrData()!" (closed)="closeConfigureProduct()" />
+  }
+  }
+
+</div>

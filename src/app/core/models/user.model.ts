@@ -1,4 +1,4 @@
-export type UserRole = 'Admin' | 'User' | 'Agent';
+export type UserRole = 'Admin' | 'Client' | 'Collaborator';
 
 export interface UserItem {
   id:         string;
@@ -34,14 +34,19 @@ export interface CreateUserDto {
   email:    string;
   phone:    string;
   password: string;
-  role:     'Admin' | 'Agent';
+  role:     'Admin' | 'Collaborator';
 }
 
 export interface UpdateUserDto {
   fullName: string;
   email:    string;
   phone:    string;
-  role:     'Admin' | 'Agent';
+  role:     'Admin' | 'Collaborator';
   isActive: boolean;
   password?: string;
+}
+
+export interface ChangeRoleResponse {
+  userId: string;
+  role:   UserRole;
 }

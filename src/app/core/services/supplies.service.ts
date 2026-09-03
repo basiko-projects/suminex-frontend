@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { CreateSupplyBody, CreateSupplyResponse, Supply, SupplyFilters, SupplyListResponse } from '../models/supply.model';
+import { CancelSupplyResponse, CompleteSupplyResponse, LinkIdentityResponse, RegisterSupplyResponse, Supply, SupplyFilters, SupplyListResponse, VerifyIdentityResponse } from '../models/supply.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -24,15 +24,36 @@ export class SuppliesService {
     return this.http.get<SupplyListResponse>(this.url, { params });
   }
 
-  create(body: CreateSupplyBody): Observable<CreateSupplyResponse> {
-    return this.http.post<CreateSupplyResponse>(this.url, body);
+  /** POST /api/supplies/register-with-identity — único endpoint de alta (reemplaza el viejo POST /api/supplies JSON,
+   *  que ya no existe). Multipart: crea el suministro y verifica identidad en una sola llamada; siempre 200 si los
+   *  datos base son válidos, aunque la identidad no matchee o falten las fotos (verificationSuccess: false). */
+  registerWithIdentity(formData: FormData): Observable<RegisterSupplyResponse> {
+    return this.http.post<RegisterSupplyResponse>(`${this.url}/register-with-identity`, formData);
   }
 
-  /** POST /api/supplies/{id}/verify-identity — multipart con DniFront/DniBack, pasa el suministro a InProgress */
-  verifyIdentity(id: string, dniFront: File, dniBack: File): Observable<void> {
+  /** POST /api/supplies/verify-identity — para verificar identidad más tarde, sobre un suministro que ya quedó
+   *  en PendingIdentityVerification. Ya no se usa en el alta (ver registerWithIdentity).
+   *  holderDni: el DNI que el titular confirmó en el formulario — el backend lo compara contra el OCR de DniFront y falla si no coincide. */
+  verifyIdentity(dniFront: File, dniBack: File, holderDni: string): Observable<VerifyIdentityResponse> {
     const formData = new FormData();
     formData.append('DniFront', dniFront);
     formData.append('DniBack', dniBack);
-    return this.http.post<void>(`${this.url}/${id}/verify-identity`, formData);
+    formData.append('HolderDni', holderDni);
+    return this.http.post<VerifyIdentityResponse>(`${this.url}/verify-identity`, formData);
+  }
+
+  /** POST /api/supplies/{id}/complete — solo desde InProgress; pasa el suministro a Optimized (ya facturable) */
+  complete(id: string): Observable<CompleteSupplyResponse> {
+    return this.http.post<CompleteSupplyResponse>(`${this.url}/${id}/complete`, null);
+  }
+
+  /** POST /api/supplies/{id}/link-identity — enlaza documentos ya verificados a un suministro creado sin ellos; pasa a InProgress */
+  linkIdentity(id: string, dniFrontDocumentId: string, dniBackDocumentId: string): Observable<LinkIdentityResponse> {
+    return this.http.post<LinkIdentityResponse>(`${this.url}/${id}/link-identity`, { dniFrontDocumentId, dniBackDocumentId });
+  }
+
+  /** POST /api/supplies/{id}/cancel — da de baja el suministro; funciona en cualquier estado, incluido Optimized */
+  cancel(id: string, reason?: string): Observable<CancelSupplyResponse> {
+    return this.http.post<CancelSupplyResponse>(`${this.url}/${id}/cancel`, { reason: reason ?? null });
   }
 }
