@@ -1,0 +1,33 @@
+<div class="flex min-h-screen bg-white scheme-light">
+  <!-- Fixed sidebar — desktop only -->
+  <app-sidebar class="hidden lg:block shrink-0" />
+
+  <!-- Mobile/tablet drawer -->
+  @if (drawerOpen()) {
+  <div class="fixed inset-0 bg-black/50 z-199 animate-[fade-in_150ms_ease] lg:hidden" (click)="closeSidebar()"></div>
+  }
+  <div
+    class="fixed top-0 left-0 bottom-0 w-60 z-200 -translate-x-full transition-transform duration-200 ease-in-out lg:hidden"
+    [class.translate-x-0]="drawerOpen()" [class.-translate-x-full]="!drawerOpen()">
+    <app-sidebar />
+    @if (drawerOpen()) {
+    <button
+      class="absolute top-6 right-0 translate-x-1/2 w-8 h-8 rounded-full border border-black/10 bg-white text-[#94A3B8] flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-500"
+      (click)="closeSidebar()" aria-label="Cerrar menú">
+      <i class="pi pi-times"></i>
+    </button>
+    }
+  </div>
+
+  <!-- Main content area -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <app-header (openSidebar)="openSidebar()" />
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-white">
+      <div class="max-w-7xl mx-auto py-10 px-5 lg:px-10">
+        <router-outlet />
+      </div>
+    </main>
+  </div>
+
+  <app-fiscal-profile-dialog />
+</div>

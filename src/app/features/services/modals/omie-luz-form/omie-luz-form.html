@@ -1,0 +1,73 @@
+<p-dialog
+  [visible]="true"
+  [header]="(editOmie ? 'Editar' : 'Nuevo') + ' Reparto OMIE · ' + tariffCode"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [draggable]="false"
+  [closable]="true"
+  (onHide)="cancelled.emit()">
+  <div class="flex flex-col gap-[1.1rem]">
+    <p class="text-[0.8rem] text-sx-text-3 m-0 mb-2">Solo aplica a productos de tipo INDEXED</p>
+
+    @if (apiError) { <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.8rem]"><i class="pi pi-exclamation-circle"></i>{{ apiError }}</div> }
+
+    <div class="grid grid-cols-3 gap-3">
+      <div class="flex flex-col gap-1.5 col-span-2">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Nombre *</label>
+        <input pInputText [(ngModel)]="form.name" placeholder="Ej: Reparto OMIE 2026" class="w-full" [class.field-error]="sub && !form.name" />
+        @if (sub && !form.name) { <span class="text-[0.76rem] text-sx-red">Obligatorio</span> }
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Margen <span class="font-normal normal-case tracking-normal">(null = default)</span></label>
+        <input pInputText type="number" [(ngModel)]="form.margin" placeholder="—" step="0.000001" class="w-full" />
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Activo</label>
+        <div class="flex-1 flex items-center gap-2.5">
+          <p-toggleswitch [(ngModel)]="form.isActive" />
+          <span class="text-[0.83rem] text-sx-text-2">{{ form.isActive ? 'Activo' : 'Inactivo' }}</span>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Válido desde *</label>
+        <input pInputText type="date" [(ngModel)]="form.validFrom" class="w-full" [class.field-error]="sub && !form.validFrom" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Válido hasta <span class="font-normal normal-case tracking-normal">(opcional)</span></label>
+        <input pInputText type="date" [(ngModel)]="form.validUntil" class="w-full" />
+      </div>
+    </div>
+
+    <div class="border border-sx-border rounded-xl p-[0.9rem]">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <span class="text-[0.85rem] font-semibold text-sx-text block">Factores OMIE</span>
+          <span class="text-[0.72rem] text-sx-text-3">factor por período P1-P6</span>
+        </div>
+        <div class="flex gap-1.5 items-center">
+          <input pInputText type="number" [(ngModel)]="commonVal" placeholder="Valor común" step="0.0001" class="w-27.5" />
+          <p-button label="Aplicar a todos" [text]="true" size="small" (onClick)="applyAll()" />
+        </div>
+      </div>
+      <div class="grid gap-2.5" [style.grid-template-columns]="'repeat(' + columnCount + ', minmax(0,1fr))'">
+        @for (p of visiblePeriods; track p; let i = $index) {
+          <div class="flex flex-col gap-0.75 min-w-0">
+            <label class="text-[0.7rem] font-bold text-sx-text-3 text-center">{{ p }}</label>
+            <input pInputText type="number" [(ngModel)]="factors[i]" step="0.0001" placeholder="1.0000" class="text-center w-full min-w-0" />
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="cancelled.emit()" [disabled]="saving()" />
+    <p-button label="Guardar OMIE" icon="pi pi-check" (onClick)="submit()" [loading]="saving()">
+      <ng-template pTemplate="loadingicon">
+        <app-suminex-loader [size]="14" [onColor]="true" />
+      </ng-template>
+    </p-button>
+  </ng-template>
+</p-dialog>

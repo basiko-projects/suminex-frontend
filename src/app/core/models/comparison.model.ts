@@ -181,3 +181,45 @@ export interface SaveComparisonResponse {
   comparisonHistoryId: string;
   createdAt:           string;
 }
+
+/** Titular leído por OCR en el flujo unificado POST /api/comparisons (origen "Manual") */
+export interface ManualComparisonHolder {
+  name:       string | null;
+  dni:        string | null;
+  phone:      string | null;
+  email:      string | null;
+  street:     string | null;
+  number:     string | null;
+  floor:      string | null;
+  door:       string | null;
+  postalCode: string | null;
+  locality:   string | null;
+  province:   string | null;
+}
+
+export interface ManualComparisonOcrData {
+  cups:                string | null;
+  billingDays:         number;
+  totalCurrentEnergy:  number;
+  totalCurrentPower:   number;
+  totalCurrentInvoice: number;
+  holder:              ManualComparisonHolder;
+}
+
+/** Respuesta de POST /api/comparisons — hace OCR + selección de tarifa + cálculo en una sola llamada */
+export interface ManualComparisonResponse {
+  comparisonHistoryId: string;
+  ocrDocumentId:       string;
+  tariffId:            number;
+  serviceName:         string;
+  productName:         string;
+  monthlySavings:      number;
+  savingsPercent:      number;
+  annualSavings:       number;
+  commission:          number;
+  currentTotal:        number;
+  offerTotal:          number;
+  days:                number;
+  ocrData:             ManualComparisonOcrData;
+  claudeExplanation:   string | null;
+}

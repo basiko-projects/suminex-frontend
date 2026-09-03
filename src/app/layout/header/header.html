@@ -1,0 +1,116 @@
+<header
+  class="h-14.5 bg-white border-b border-black/10 flex items-center justify-between px-5 sticky top-0 z-100 shrink-0">
+
+  <!-- Left: hamburger + page tab -->
+  <div class="flex items-center gap-3">
+    <button
+      class="w-8.5 h-8.5 rounded-lg border border-black/10 bg-transparent text-[#475569] flex items-center justify-center cursor-pointer transition-all lg:hidden hover:bg-[#F8FAFC] hover:border-black/15"
+      (click)="openSidebar.emit()" aria-label="Abrir menú">
+      <i class="pi pi-bars"></i>
+    </button>
+
+    <div
+      class="flex items-center gap-[0.55rem] py-1.5 pr-3.5 pl-2 bg-[#EAF2FF] border border-[rgba(37,99,235,0.30)] rounded-[9px]">
+      <span class="w-6.5 h-6.5 bg-[#227CFF] rounded-md flex items-center justify-center shrink-0">
+        <i [class]="'pi ' + getPageIcon()" class="text-white text-[0.78rem]"></i>
+      </span>
+      <span class="text-[0.845rem] font-semibold text-[#1A6FE8]">{{ getPageTitle() }}</span>
+    </div>
+  </div>
+
+  <!-- Right: nuevo suministro + icons + user -->
+  <div class="flex items-center gap-2">
+
+    <!-- Nuevo suministro button -->
+    <a routerLink="/new-supply"
+      class="inline-flex items-center gap-[0.45rem] py-[0.45rem] px-4 border border-black/15 rounded-lg bg-white text-[#475569] text-[0.82rem] font-medium no-underline transition-all whitespace-nowrap hover:bg-[#EAF2FF] hover:border-[#227CFF] hover:text-[#1A6FE8]">
+      <i class="pi pi-user-plus text-[0.82rem]"></i>
+      <span class="hidden sm:inline">Nuevo suministro</span>
+    </a>
+
+    <!-- Bell -->
+    <div class="relative" (click)="toggleNotifs($event)">
+      <button
+        class="w-8.5 h-8.5 rounded-lg border border-black/10 bg-transparent text-[#475569] flex items-center justify-center cursor-pointer transition-all relative hover:bg-[#F8FAFC] hover:border-black/15 hover:text-[#0F172A]"
+        title="Notificaciones">
+        <i class="pi pi-bell"></i>
+        <span
+          class="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[0.6rem] font-bold min-w-4 h-4 rounded-full flex items-center justify-center px-0.75 border-2 border-white leading-none">{{
+          notifications.length }}</span>
+      </button>
+
+      @if (notifsOpen()) {
+      <div
+        class="absolute top-[calc(100%+10px)] w-75 -right-15 sm:w-85 sm:right-0 bg-white border border-black/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-200 overflow-hidden"
+        (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between pt-3.5 px-4 pb-3 border-b border-black/[0.07]">
+          <span class="text-sm font-bold text-[#0F172A]">Notificaciones</span>
+          <span class="bg-[#EF4444] text-white text-[0.68rem] font-bold py-[0.1rem] px-[0.45rem] rounded-full">{{
+            notifications.length }}</span>
+        </div>
+        <div class="max-h-90 overflow-y-auto">
+          @for (n of notifications; track n.id) {
+          <div [class]="notifItemClasses(n.unread)">
+            <div [class]="notifIconWrapClasses(n.type)">
+              <i [class]="'pi ' + n.icon" class="text-[0.85rem]"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p
+                class="text-[0.8rem] font-semibold text-[#0F172A] m-0 mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                {{ n.title }}</p>
+              <p class="text-[0.72rem] text-[#64748B] m-0 mb-1 leading-[1.4]">{{ n.desc }}</p>
+              <span class="text-[0.68rem] text-[#94A3B8]">{{ n.time }}</span>
+            </div>
+            @if (n.unread) { <span
+              class="absolute top-3.5 right-3 w-1.75 h-1.75 rounded-full bg-[#227CFF] shrink-0"></span> }
+          </div>
+          }
+        </div>
+        <div class="py-2.5 px-4 border-t border-black/[0.07]">
+          <button
+            class="w-full py-2 bg-transparent border-none cursor-pointer text-[0.78rem] font-semibold text-[#227CFF] text-center rounded-md transition-colors hover:bg-[#EAF2FF]">Ver
+            todas las notificaciones</button>
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="w-px h-5.5 bg-black/12 mx-0.5"></div>
+
+    <!-- User avatar + dropdown -->
+    <div class="flex items-center gap-[0.55rem] px-[0.2rem] cursor-pointer relative" (click)="toggleDropdown($event)">
+      <div
+        class="w-8 h-8 rounded-full bg-[#16A34A] flex items-center justify-center text-[0.8rem] font-bold text-white shrink-0">
+        {{ getInitial() }}</div>
+      <i class="pi pi-chevron-down text-[0.6rem] text-[#94A3B8] transition-transform hidden sm:inline-block"
+        [class.rotate-180]="dropdownOpen()"></i>
+
+      @if (dropdownOpen()) {
+      <div
+        class="absolute top-[calc(100%+10px)] right-0 min-w-50 bg-white border border-black/10 rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] z-200 overflow-hidden"
+        (click)="$event.stopPropagation()">
+        <div class="py-3 px-4 flex flex-col gap-0.5">
+          <span class="text-[0.82rem] font-semibold text-[#0F172A]">{{ auth.currentUser()?.name || 'Admin' }}</span>
+          <span class="text-[0.72rem] text-[#94A3B8]">{{ auth.currentUser()?.email }}</span>
+        </div>
+        <div class="h-px bg-black/8"></div>
+        <button
+          class="flex items-center gap-2.5 w-full py-2.5 px-4 bg-transparent border-none cursor-pointer text-[0.82rem] font-medium text-left transition-colors text-[#475569] hover:bg-[#F8FAFC]"
+          (click)="profileDialog.open()">
+          <i class="pi pi-id-card text-[0.85rem]"></i>
+          Mi perfil
+        </button>
+        <div class="h-px bg-black/8"></div>
+        <button
+          class="flex items-center gap-2.5 w-full py-2.5 px-4 bg-transparent border-none cursor-pointer text-[0.82rem] font-medium text-left transition-colors text-[#DC2626] hover:bg-[#FEF2F2]"
+          (click)="auth.logout()">
+          <i class="pi pi-sign-out text-[0.85rem]"></i>
+          Cerrar sesión
+        </button>
+      </div>
+      }
+    </div>
+
+  </div>
+
+</header>

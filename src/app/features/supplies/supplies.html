@@ -1,0 +1,332 @@
+<p-toast />
+<p-confirmDialog />
+
+<!-- Error banner -->
+@if (loadError) {
+<div
+  class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+  <i class="pi pi-exclamation-circle"></i>
+  <span>{{ loadError }}</span>
+  <button
+    class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1 hover:bg-sx-red-bg"
+    (click)="load()">
+    <i class="pi pi-refresh"></i> Reintentar
+  </button>
+</div>
+}
+
+<!-- Shared table -->
+<app-data-table title="Suministros" subtitle="Gestiona los contratos de suministro de todos los clientes"
+  [columns]="tableColumns" [rows]="items" [total]="total" [page]="page" [pageSize]="pageSize" [loading]="loading()"
+  [sortOptions]="tableSortOptions" [rowTemplate]="rowTpl" [stickyFirstColumn]="true"
+  emptyMessage="No hay suministros con los filtros aplicados" (pageChange)="onPageChange($event)"
+  (sortChange)="onSortChange($event)" (pageSizeChange)="onPageSizeChange($event)"
+  (filterIconClick)="onFilterIconClick($event, tipoPop, estadoPop)">
+  <button dtActions type="button" [class]="dateFilterBtnClasses(!!(dateFrom || dateTo))"
+    (click)="fechaPop.toggle($event)" title="Filtrar por fecha">
+    <i class="pi pi-calendar text-[0.85rem]"></i>
+  </button>
+</app-data-table>
+
+<!-- Filter popovers -->
+<p-popover #tipoPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-50">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Tipo de servicio</span>
+    <p-select [options]="categoryOpts" [(ngModel)]="filterCategory" optionLabel="label" optionValue="value"
+      placeholder="Todos" [showClear]="true" (onChange)="search(); tipoPop.hide()" />
+  </div>
+</p-popover>
+
+<p-popover #estadoPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-50">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Estado</span>
+    <p-select [options]="statusOpts" [(ngModel)]="filterStatus" optionLabel="label" optionValue="value"
+      placeholder="Todos" [showClear]="true" (onChange)="search(); estadoPop.hide()" />
+  </div>
+</p-popover>
+
+<p-popover #fechaPop>
+  <div class="flex flex-col gap-2.5 p-1 min-w-55">
+    <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Rango de fechas</span>
+    <p-datepicker [(ngModel)]="dateFrom" placeholder="Desde" dateFormat="dd/mm/yy" [showIcon]="true" />
+    <p-datepicker [(ngModel)]="dateTo" placeholder="Hasta" dateFormat="dd/mm/yy" [showIcon]="true" />
+    <div class="flex justify-end gap-2 mt-1">
+      <button type="button"
+        class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2"
+        (click)="clear(); fechaPop.hide()">Limpiar</button>
+      <button type="button"
+        class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary"
+        (click)="search(); fechaPop.hide()">Aplicar</button>
+    </div>
+  </div>
+</p-popover>
+
+<!-- Row template -->
+<ng-template #rowTpl let-s let-isLast="isLast">
+  <td class="py-3.5 px-6 pl-12 align-middle text-sm font-medium text-[#292D32] sx-sticky-col-boundary" [class.sx-row-end]="isLast">
+    <span class="font-medium text-sm block max-w-55 whitespace-nowrap overflow-hidden text-ellipsis"
+      [title]="s.holderName">{{ s.holderName }}</span></td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]"><span class="text-sx-text-3">{{ s.holderEmail
+      }}</span></td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]">{{ s.holderPhone || '—' }}</td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]">{{ s.holderDni }}</td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]"><span class="text-sx-text-3">{{ s.userFullName
+      }}</span></td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32] text-center">
+    <span [class]="typeBadgeClasses(s.serviceType)">
+      <i [class]="'pi ' + typeIcon(s.serviceType)"></i>
+      {{ s.serviceType }}
+    </span>
+  </td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]">{{ s.tariffCode || s.serviceName }}</td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]">
+    <span class="text-[0.85rem] font-bold text-[#059669]">{{ s.estimatedSavings | currency:'EUR':'symbol':'1.2-2'
+      }}</span>
+  </td>
+  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32] text-center">
+    <span [class]="statusBadgeClasses(s.status)">
+      {{ statusLabel(s.status) }}
+    </span>
+  </td>
+  <td class="py-3.5 px-6 pr-12 align-middle text-sm font-medium text-[#292D32] text-center">
+    <div class="flex items-center justify-center gap-1">
+      @if (s.status === 'InProgress') {
+      <button
+        class="w-8 h-8 rounded-lg border-none bg-transparent text-[#94A3B8] cursor-pointer inline-flex items-center justify-center transition-colors hover:text-sx-green disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="completingId() === s.id" (click)="completeSupply(s)"
+        title="Marcar como optimizado (deja el suministro facturable)">
+        @if (completingId() === s.id) {
+        <app-suminex-loader [size]="14" />
+        } @else {
+        <i class="pi pi-verified"></i>
+        }
+      </button>
+      }
+      @if (s.status !== 'Cancelled') {
+      <button
+        class="w-8 h-8 rounded-lg border-none bg-transparent text-[#94A3B8] cursor-pointer inline-flex items-center justify-center transition-colors hover:text-sx-red disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="cancellingId() === s.id" (click)="cancelSupply(s)" title="Dar de baja">
+        @if (cancellingId() === s.id) {
+        <app-suminex-loader [size]="14" />
+        } @else {
+        <i class="pi pi-times-circle"></i>
+        }
+      </button>
+      }
+      <button
+        class="w-8 h-8 rounded-lg border-none bg-transparent text-[#94A3B8] cursor-pointer inline-flex items-center justify-center transition-colors hover:text-[#227CFF]"
+        (click)="openDetail(s)" title="Ver detalle">
+        <i class="pi pi-eye"></i>
+      </button>
+    </div>
+  </td>
+</ng-template>
+
+<!-- Detail modal -->
+@if (viewingItem()) {
+<div
+  class="fixed inset-0 bg-black/55 backdrop-blur-[3px] flex items-center justify-center z-600 p-4 animate-[fade-in_150ms_ease]"
+  (click)="viewingItem.set(null)">
+  <div
+    class="bg-sx-surface border border-sx-border rounded-[20px] w-[min(92vw,660px)] min-[900px]:w-[min(75vw,820px)] max-h-[88vh] overflow-y-auto flex flex-col shadow-[0_24px_64px_rgba(15,23,42,0.18)] animate-[slide-down-in_200ms_ease-out]"
+    (click)="$event.stopPropagation()">
+
+    <div class="flex items-start gap-4 py-6 px-7 border-b border-sx-border sticky top-0 z-2 bg-sx-surface">
+      <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div class="text-[1.05rem] font-bold text-sx-text leading-[1.2]">{{ viewingItem()!.userFullName }}</div>
+        <div class="text-[0.78rem] text-sx-text-3">{{ viewingItem()!.userEmail }}</div>
+        <div class="flex flex-wrap gap-1.5 mt-1.5">
+          <span [class]="typeBadgeClasses(viewingItem()!.serviceType)">
+            <i [class]="'pi ' + typeIcon(viewingItem()!.serviceType)"></i>
+            {{ viewingItem()!.serviceType }}
+          </span>
+          @if (viewingItem()!.tariffCode) {
+          <code
+            class="font-mono text-[0.7rem] font-bold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-full border border-sx-border-2">{{ viewingItem()!.tariffCode }}</code>
+          }
+          <span [class]="statusBadgeClasses(viewingItem()!.status)">
+            {{ statusLabel(viewingItem()!.status) }}
+          </span>
+          @if (viewingItem()!.status === 'PendingIdentityVerification' || viewingItem()!.status === 'Pending') {
+          <span class="inline-flex items-center gap-1.5 text-[0.75rem] text-sx-text-3">
+            <i class="pi pi-info-circle"></i>Pendiente de verificar identidad — todavía no se puede optimizar
+          </span>
+          }
+        </div>
+      </div>
+      @if (viewingItem()!.status === 'InProgress') {
+      <button
+        class="inline-flex items-center gap-2 py-2 px-3.5 rounded-lg border-none bg-sx-primary-btn text-white text-[0.8rem] font-semibold cursor-pointer transition-colors shrink-0 enabled:hover:bg-sx-primary disabled:opacity-60 disabled:cursor-not-allowed"
+        [disabled]="completingId() === viewingItem()!.id" (click)="completeSupply(viewingItem()!)"
+        title="Confirma que la comercializadora ya activó el cambio y lo deja facturable">
+        @if (completingId() === viewingItem()!.id) {
+        <app-suminex-loader [size]="14" [onColor]="true" /> Optimizando...
+        } @else {
+        <i class="pi pi-verified"></i> Marcar como optimizado
+        }
+      </button>
+      }
+      @if (viewingItem()!.status !== 'Cancelled') {
+      <button
+        class="inline-flex items-center gap-2 py-2 px-3.5 rounded-lg border border-sx-red bg-transparent text-sx-red text-[0.8rem] font-semibold cursor-pointer transition-colors shrink-0 enabled:hover:bg-sx-red-bg disabled:opacity-60 disabled:cursor-not-allowed"
+        [disabled]="cancellingId() === viewingItem()!.id" (click)="cancelSupply(viewingItem()!)"
+        title="Dar de baja este suministro">
+        @if (cancellingId() === viewingItem()!.id) {
+        <app-suminex-loader [size]="14" /> Dando de baja...
+        } @else {
+        <i class="pi pi-times-circle"></i> Dar de baja
+        }
+      </button>
+      }
+      <button
+        class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 transition-all hover:text-sx-red hover:border-sx-red hover:bg-sx-red-bg"
+        (click)="viewingItem.set(null)"><i class="pi pi-times"></i></button>
+    </div>
+    @if (completeError()) {
+    <div class="flex items-center gap-2 py-2.5 px-3 mx-7 mt-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.82rem]">
+      <i class="pi pi-exclamation-circle"></i>{{ completeError() }}
+    </div>
+    }
+
+    <div class="py-6 px-7 pb-7 flex flex-col gap-6">
+
+      <div class="flex flex-wrap gap-px bg-sx-border border border-sx-border rounded-xl overflow-hidden">
+        <div class="flex-[1.5] min-w-45 flex items-center gap-3.5 py-4 px-6 bg-sx-green-bg">
+          <div
+            class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-[#16A34A]/15 text-sx-green flex items-center justify-center text-base">
+            <i class="pi pi-sparkles"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Ahorro estimado</span>
+            <span class="text-[1.35rem] font-extrabold text-sx-green tracking-[-0.01em]">{{
+              viewingItem()!.estimatedSavings | currency:'EUR':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-37.5 flex items-center gap-3 py-4 px-5 bg-sx-surface">
+          <div
+            class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center text-base">
+            <i class="pi pi-bolt"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Tarifa contratada</span>
+            <span class="text-[0.9rem] font-bold text-sx-text">{{ viewingItem()!.serviceName }}</span>
+          </div>
+        </div>
+        <div class="flex-1 min-w-37.5 flex items-center gap-3 py-4 px-5 bg-sx-surface">
+          <div
+            class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-sx-surface-2 text-sx-text-2 flex items-center justify-center text-base">
+            <i class="pi pi-sitemap"></i></div>
+          <div class="flex flex-col gap-0.5">
+            <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Origen</span>
+            <span
+              class="text-[0.75rem] font-semibold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-full border border-sx-border-2 w-fit">{{
+              viewingItem()!.originFlow }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3.5">
+        <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
+          <span
+            class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i
+              class="pi pi-user text-[0.68rem]"></i></span> Titular
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-3">
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Nombre</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.holderName }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">DNI / NIF</span>
+            <code
+              class="text-[0.83rem] font-medium text-sx-text break-all font-mono">{{ viewingItem()!.holderDni }}</code>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Email</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.holderEmail }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Teléfono</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.holderPhone || '—'
+              }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border col-span-2">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">IBAN</span>
+            <code
+              class="text-[0.83rem] font-medium text-sx-text break-all font-mono">{{ viewingItem()!.holderIban || '—' }}</code>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">¿Usuario = titular?</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.isUserTheHolder ? 'Sí' :
+              'No' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3.5">
+        <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
+          <span
+            class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i
+              class="pi pi-map-marker text-[0.68rem]"></i></span> Punto de suministro
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-3">
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border col-span-2">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">CUPS</span>
+            <code class="text-[0.83rem] font-medium text-sx-text break-all font-mono">{{ viewingItem()!.cups }}</code>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border col-span-2">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Calle</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.street }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Piso</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.floor || '—' }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Puerta</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.door || '—' }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">CP</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.postalCode }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Localidad</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.locality }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Provincia</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.province }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3.5">
+        <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
+          <span
+            class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i
+              class="pi pi-info-circle text-[0.68rem]"></i></span> Información del registro
+        </div>
+        <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-3">
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Creado</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.createdAt |
+              date:'dd/MM/yyyy · HH:mm' }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Actualizado</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.updatedAt |
+              date:'dd/MM/yyyy · HH:mm' }}</span>
+          </div>
+          @if (viewingItem()!.optimizedAt) {
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Optimizado</span>
+            <span class="text-[0.83rem] font-semibold text-sx-green break-all">{{ viewingItem()!.optimizedAt |
+              date:'dd/MM/yyyy · HH:mm' }}</span>
+          </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+}

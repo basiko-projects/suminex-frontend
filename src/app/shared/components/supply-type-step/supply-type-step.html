@@ -1,0 +1,17 @@
+<div class="supply-grid gap-5">
+  @for (option of options; track option.id) {
+  <button [class]="supplyCardClasses(option.available)" [disabled]="!option.available"
+    (click)="option.available ? select.emit(option.id) : null">
+    <div class="mb-5">
+      <div [class]="iconCircleClasses(option.available)">
+        <i [class]="'pi ' + option.icon + ' ' + iconCircleIconClasses(option.available)"></i>
+      </div>
+      <div [class]="dividerClasses(option.available)"></div>
+    </div>
+    <p [class]="supplyLabelClasses(option.available)">
+      {{ option.available ? option.label : 'Próximamente' }}
+    </p>
+    <p class="text-[0.78rem] text-[#94A3B8] m-0 leading-[1.4]">{{ option.description }}</p>
+  </button>
+  }
+</div>

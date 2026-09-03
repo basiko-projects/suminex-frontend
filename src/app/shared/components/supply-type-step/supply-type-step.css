@@ -1,0 +1,6 @@
+/* 3-tier responsive override (base / ≤640 / 480-640 range) kept as real CSS
+   since overlapping arbitrary Tailwind breakpoints can't guarantee the same
+   cascade precedence as hand-written nested media queries. */
+.supply-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 640px) { .supply-grid { grid-template-columns: 1fr; } }
+@media (min-width: 480px) and (max-width: 640px) { .supply-grid { grid-template-columns: repeat(2, 1fr); } }

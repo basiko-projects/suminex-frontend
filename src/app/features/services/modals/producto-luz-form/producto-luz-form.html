@@ -1,0 +1,99 @@
+<p-dialog
+  [visible]="true"
+  [header]="(editProduct ? 'Editar producto' : 'Nuevo producto') + ' · ' + tariffCode"
+  [modal]="true"
+  [style]="{ width: '660px' }"
+  [draggable]="false"
+  [closable]="true"
+  (onHide)="cancelled.emit()">
+  <div class="flex flex-col gap-[1.1rem]">
+    <p class="text-[0.8rem] text-sx-text-3 m-0 mb-2">Configura los precios de energía y potencia</p>
+
+    @if (apiError) { <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.8rem]"><i class="pi pi-exclamation-circle"></i>{{ apiError }}</div> }
+
+    <div class="grid grid-cols-3 gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Nombre *</label>
+        <input pInputText [(ngModel)]="form.name" placeholder="Ej: Index Base" class="w-full" [class.field-error]="sub && !form.name" />
+        @if (sub && !form.name) { <span class="text-[0.76rem] text-sx-red">Obligatorio</span> }
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Tipo *</label>
+        <p-select [options]="productTypeOpts" [(ngModel)]="form.productType" optionLabel="label" optionValue="value" class="w-full" />
+      </div>
+    </div>
+    <div class="grid grid-cols-4 gap-3">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Comisión energía %</label>
+        <input pInputText type="number" [(ngModel)]="form.commissionEnergyPct" placeholder="—" step="0.01" class="w-full" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Comisión potencia %</label>
+        <input pInputText type="number" [(ngModel)]="form.commissionPowerPct" placeholder="—" step="0.01" class="w-full" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Válido desde</label>
+        <input pInputText type="date" [(ngModel)]="form.validFrom" class="w-full" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Válido hasta</label>
+        <input pInputText type="date" [(ngModel)]="form.validUntil" class="w-full" />
+      </div>
+    </div>
+
+    <!-- Energy periods -->
+    <div class="border border-sx-border rounded-xl p-[0.9rem]">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <span class="text-[0.85rem] font-semibold text-sx-text block">Precios de energía</span>
+          <span class="text-[0.72rem] text-sx-text-3">{{ form.productType === 'FIXED' ? '€/kWh · price_kwh' : 'base_value · para cálculo OMIE' }}</span>
+        </div>
+        <div class="flex gap-1.5 items-center">
+          <input pInputText type="number" [(ngModel)]="energyCommon" placeholder="Valor común" step="0.000001" class="w-27.5" />
+          <p-button label="Aplicar a todos" [text]="true" size="small" (onClick)="applyEnergy()" />
+        </div>
+      </div>
+      <div class="grid gap-2.5" [style.grid-template-columns]="'repeat(' + columnCount + ', minmax(0,1fr))'">
+        @for (p of visiblePeriods; track p; let i = $index) {
+          <div class="flex flex-col gap-0.75 min-w-0">
+            <label class="text-[0.7rem] font-bold text-sx-text-3 text-center">{{ p }}</label>
+            <input pInputText type="number" [(ngModel)]="energyPeriods[i]" step="0.000001" placeholder="0.000000" class="text-center w-full min-w-0" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Power periods -->
+    <div class="border border-sx-border rounded-xl p-[0.9rem]">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <span class="text-[0.85rem] font-semibold text-sx-text block">Potencia</span>
+          <span class="text-[0.72rem] text-sx-text-3">€/kW·día · vacío = null → usa BOE de la tarifa</span>
+        </div>
+        <div class="flex gap-1.5 items-center">
+          <input pInputText type="number" [(ngModel)]="powerCommon" placeholder="Valor común" step="0.00000001" class="w-27.5" />
+          <p-button label="Aplicar a todos" [text]="true" size="small" (onClick)="applyPower()" />
+        </div>
+      </div>
+      <div class="grid gap-2.5" [style.grid-template-columns]="'repeat(' + columnCount + ', minmax(0,1fr))'">
+        @for (p of visiblePeriods; track p; let i = $index) {
+          <div class="flex flex-col gap-0.75 min-w-0">
+            <label class="text-[0.7rem] font-bold text-sx-text-3 text-center">{{ p }}</label>
+            <input pInputText type="number" [(ngModel)]="powerPeriods[i]" step="0.00000001" placeholder="null → BOE" class="text-center w-full min-w-0" />
+          </div>
+        }
+      </div>
+      <div class="flex items-center gap-1.5 mt-2.5 text-[0.72rem] text-sx-primary-text bg-sx-primary-bg py-2 px-2.5 rounded-md"><i class="pi pi-info-circle"></i> Los campos vacíos usarán automáticamente el BOE de la tarifa {{ tariffCode }}</div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="cancelled.emit()" [disabled]="saving()" />
+    <p-button [label]="editProduct ? 'Guardar cambios' : 'Crear producto'" icon="pi pi-check"
+              (onClick)="submit()" [loading]="saving()">
+      <ng-template pTemplate="loadingicon">
+        <app-suminex-loader [size]="14" [onColor]="true" />
+      </ng-template>
+    </p-button>
+  </ng-template>
+</p-dialog>

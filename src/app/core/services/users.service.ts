@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { UserFilters, UsersPagedResponse, CreateUserDto, UpdateUserDto } from '../models/user.model';
+import { UserFilters, UsersPagedResponse, CreateUserDto, UpdateUserDto, UserRole, ChangeRoleResponse } from '../models/user.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -30,5 +30,10 @@ export class UsersService {
 
   delete(id: string): Observable<any> {
     return this.http.delete(`${this.url}/${id}`);
+  }
+
+  /** PATCH /api/users/{id}/role — Admin — único mecanismo para cambiar el rol de un usuario */
+  changeRole(id: string, role: UserRole): Observable<ChangeRoleResponse> {
+    return this.http.patch<ChangeRoleResponse>(`${this.url}/${id}/role`, { role });
   }
 }

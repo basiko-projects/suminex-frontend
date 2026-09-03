@@ -1,0 +1,103 @@
+<p-dialog [visible]="true" header="Configura el producto" [modal]="true" [style]="{ width: '640px' }"
+  [draggable]="false" [closable]="true" (onHide)="closed.emit()">
+  <div class="flex flex-col gap-5">
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Producto</label>
+      <p-select [options]="productOpts" [ngModel]="producto()" (ngModelChange)="producto.set($event)"
+        optionLabel="label" optionValue="value" class="w-full" />
+      <span class="text-[0.72rem] text-sx-text-3">Comisión del producto: {{ comisionEnergiaPct() | number:'1.0-2'
+        }}%</span>
+    </div>
+
+    <div class="flex gap-1 border-b border-sx-border">
+      <button
+        class="py-2 px-3.5 border-none bg-transparent cursor-pointer text-[0.85rem] font-semibold border-b-2 -mb-px flex items-center gap-1.5"
+        [class.text-sx-primary]="feeMode() === 'Global'" [class.border-sx-primary]="feeMode() === 'Global'"
+        [class.text-sx-text-2]="feeMode() !== 'Global'" [class.border-transparent]="feeMode() !== 'Global'"
+        (click)="feeMode.set('Global')">Global</button>
+      <button
+        class="py-2 px-3.5 border-none bg-transparent cursor-pointer text-[0.85rem] font-semibold border-b-2 -mb-px flex items-center gap-1.5"
+        [class.text-sx-primary]="feeMode() === 'Periods'" [class.border-sx-primary]="feeMode() === 'Periods'"
+        [class.text-sx-text-2]="feeMode() !== 'Periods'" [class.border-transparent]="feeMode() !== 'Periods'"
+        (click)="feeMode.set('Periods')">
+        Por período <span class="w-1.5 h-1.5 rounded-full bg-sx-primary"></span>
+      </button>
+    </div>
+
+    @if (feeMode() === 'Global') {
+    <div class="flex flex-col gap-2 pt-[0.15rem]">
+      <div class="flex justify-between items-baseline text-[0.85rem] font-semibold text-sx-text">
+        <span>Fee Energía <small class="font-normal text-sx-text-3">€/MWh</small></span>
+        <strong class="text-sx-primary text-[0.95rem]">{{ feeEnergia() }}</strong>
+      </div>
+      <p-slider [ngModel]="feeEnergia()" (ngModelChange)="onFeeEnergiaChange($event)" [min]="0" [max]="50" />
+    </div>
+    <div class="flex flex-col gap-2 pt-[0.15rem]">
+      <div class="flex justify-between items-baseline text-[0.85rem] font-semibold text-sx-text">
+        <span>Fee Potencia <small class="font-normal text-sx-text-3">€/kW/año</small></span>
+        <strong class="text-sx-primary text-[0.95rem]">{{ feePotencia() }}</strong>
+      </div>
+      <p-slider [ngModel]="feePotencia()" (ngModelChange)="onFeePotenciaChange($event)" [min]="0" [max]="20" />
+    </div>
+    } @else {
+    @for (periodo of periodsPresent(); track periodo) {
+    <div class="flex flex-col gap-2 pt-[0.15rem]">
+      <div class="flex justify-between items-baseline text-[0.85rem] font-semibold text-sx-text">
+        <span>Fee Energía {{ periodo }} <small class="font-normal text-sx-text-3">€/MWh</small></span>
+        <strong class="text-sx-primary text-[0.95rem]">{{ feeEnergiaByPeriod()[periodIndex(periodo)] }}</strong>
+      </div>
+      <p-slider [ngModel]="feeEnergiaByPeriod()[periodIndex(periodo)]"
+        (ngModelChange)="setFeeEnergiaAt(periodIndex(periodo), $event)" [min]="0" [max]="50" />
+    </div>
+    <div class="flex flex-col gap-2 pt-[0.15rem]">
+      <div class="flex justify-between items-baseline text-[0.85rem] font-semibold text-sx-text">
+        <span>Fee Potencia {{ periodo }} <small class="font-normal text-sx-text-3">€/kW/año</small></span>
+        <strong class="text-sx-primary text-[0.95rem]">{{ feePotenciaByPeriod()[periodIndex(periodo)] }}</strong>
+      </div>
+      <p-slider [ngModel]="feePotenciaByPeriod()[periodIndex(periodo)]"
+        (ngModelChange)="setFeePotenciaAt(periodIndex(periodo), $event)" [min]="0" [max]="20" />
+    </div>
+    }
+    }
+
+    <div class="grid grid-cols-2 gap-4">
+      <div class="border border-sx-border rounded-[10px] p-4 flex flex-col gap-1">
+        <span class="text-[0.8rem] text-sx-text-2">Comisión comercial</span>
+        <strong class="text-[1.4rem] font-extrabold text-sx-text">{{ result().comision | number:'1.0-2' }}€</strong>
+        <span class="text-[0.78rem] font-semibold text-sx-green">+ 10% extra</span>
+      </div>
+      <div class="border border-sx-green bg-sx-green-bg rounded-[10px] p-4 flex flex-col gap-1">
+        <span class="text-[0.8rem] text-sx-text-2">Ahorro cliente</span>
+        <strong class="text-[1.4rem] font-extrabold text-sx-text">{{ result().ahorroEstudio | number:'1.0-2' }}€ al
+          mes</strong>
+        <span class="text-[0.85rem] font-bold text-sx-text">{{ result().ahorroXAnio | number:'1.0-2' }}€ al año</span>
+        <span class="text-[0.78rem] font-semibold text-sx-green">+{{ result().ahorroPorcent | number:'1.2-2' }}% de
+          ahorro</span>
+      </div>
+    </div>
+
+    <div class="border border-sx-border rounded-[10px] overflow-hidden">
+      <button
+        class="w-full flex justify-between items-center py-3.5 px-4 bg-sx-surface-2 border-none cursor-pointer text-[0.9rem] font-bold text-sx-text"
+        (click)="showPrices.set(!showPrices())">
+        <span><i class="pi pi-bolt text-sx-primary mr-1.5"></i> Precios ofertados</span>
+        <i class="pi" [class.pi-minus]="showPrices()" [class.pi-plus]="!showPrices()"></i>
+      </button>
+      @if (showPrices()) {
+      <div class="grid grid-cols-2 gap-2.5 p-4 text-[0.85rem] text-sx-text-2">
+        @for (p of result().periodos; track p.periodo) {
+        <span>Energía {{ p.periodo }}: <strong class="text-sx-primary">{{ p.precioEnergiaOferta }}</strong></span>
+        <span>Potencia {{ p.periodo }}: <strong class="text-sx-primary">{{ p.precioPotenciaOferta }}</strong></span>
+        }
+      </div>
+      }
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button label="Descargar PDF" icon="pi pi-file-pdf" severity="secondary" [outlined]="true" [disabled]="true"
+      title="Próximamente" />
+  </ng-template>
+</p-dialog>

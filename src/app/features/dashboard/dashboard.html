@@ -1,0 +1,192 @@
+<div class="max-w-300">
+
+  <!-- Greeting -->
+  <div class="mb-6">
+    <h1 class="text-[2.25rem] font-bold text-[#0F172A] mb-1 tracking-tight leading-[1.15]">Hola, {{ userName() }}</h1>
+    <p class="text-sm text-[#475569] m-0">Bienvenido a Suminex</p>
+  </div>
+
+  @if (loadError) {
+  <div class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+    <i class="pi pi-exclamation-circle"></i>
+    <span>{{ loadError }}</span>
+    <button class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1" (click)="load()"><i class="pi pi-refresh"></i> Reintentar</button>
+  </div>
+  }
+
+  <!-- Period filter -->
+  <div class="flex items-center gap-2 flex-wrap mb-6">
+    @for (p of periods; track p.key) {
+    @if (p.key === 'custom') {
+    <button [class]="periodBtnClasses(activePeriod() === 'custom')" (click)="customPop.toggle($event)">{{
+      p.label }}</button>
+    } @else {
+    <button [class]="periodBtnClasses(activePeriod() === p.key)" (click)="onPeriodChange(p.key)">{{ p.label
+      }}</button>
+    }
+    }
+  </div>
+
+  <p-popover #customPop>
+    <div class="flex flex-col gap-2.5 p-1 min-w-55">
+      <span class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Rango personalizado</span>
+      <p-datepicker [(ngModel)]="customFrom" placeholder="Desde" dateFormat="dd/mm/yy" [showIcon]="true" />
+      <p-datepicker [(ngModel)]="customTo" placeholder="Hasta" dateFormat="dd/mm/yy" [showIcon]="true" />
+      <div class="flex justify-end gap-2 mt-1">
+        <button type="button" class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2" (click)="customPop.hide()">Cancelar</button>
+        <button type="button" class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary" (click)="applyCustomRange(); customPop.hide()">Aplicar</button>
+      </div>
+    </div>
+  </p-popover>
+
+  <!-- Stat cards -->
+  @if (loading()) {
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-5">
+    @for (i of [1,2,3]; track i) {
+    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col"><p-skeleton height="108px" borderRadius="14px" /></div>
+    }
+  </div>
+  } @else {
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-5">
+
+    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col">
+      <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Suministros gestionados</span>
+      <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ totalSupplies }}</span>
+      <div class="flex items-center gap-2 mt-auto">
+        @if (suppliesTrend.hasData) {
+        <span [class]="pillClasses(suppliesTrend.good)">
+          <i class="pi text-[0.6rem]" [class.pi-arrow-up]="suppliesTrend.arrowUp" [class.pi-arrow-down]="!suppliesTrend.arrowUp"></i>
+          {{ suppliesTrend.pct }}%
+        </span>
+        <span class="text-[0.72rem] text-[#94A3B8]">Vs. período anterior</span>
+        } @else {
+        <span class="text-[0.72rem] text-[#94A3B8]">Sin datos del período anterior</span>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col">
+      <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Avg. order value</span>
+      <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ avgOrderValue | currency:'EUR':'symbol':'1.2-2' }}</span>
+      <div class="flex items-center gap-2 mt-auto">
+        @if (avgOrderTrend.hasData) {
+        <span [class]="pillClasses(avgOrderTrend.good)">
+          <i class="pi text-[0.6rem]" [class.pi-arrow-up]="avgOrderTrend.arrowUp" [class.pi-arrow-down]="!avgOrderTrend.arrowUp"></i>
+          {{ avgOrderDiffAbs | currency:'EUR':'symbol':'1.0-0' }}
+        </span>
+        <span class="text-[0.72rem] text-[#94A3B8]">Vs. período anterior</span>
+        } @else {
+        <span class="text-[0.72rem] text-[#94A3B8]">Sin datos del período anterior</span>
+        }
+      </div>
+    </div>
+
+    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col">
+      <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Facturación disponible</span>
+      <span class="text-[1.3rem] text-[#94A3B8] leading-none mb-3 tracking-normal">Próximamente</span>
+      <div class="flex items-center gap-2 mt-auto">
+        <span class="text-[0.72rem] text-[#94A3B8]">Aún no disponible desde el backend</span>
+      </div>
+    </div>
+
+  </div>
+  }
+
+  <!-- Bottom: chart + side actions -->
+  <div class="grid grid-cols-[3fr_2fr] max-[1100px]:grid-cols-1 gap-5 items-stretch mb-9">
+
+    <!-- Line chart -->
+    <div class="bg-white border border-black/10 rounded-2xl p-5 flex flex-col">
+      <div class="flex items-center gap-3 mb-3 flex-wrap">
+        <span class="text-sm font-bold text-[#0F172A]">Evolución</span>
+        <div class="flex items-center gap-3.5">
+          <button [class]="legendItemClasses(!showSupplies)" (click)="showSupplies = !showSupplies">
+            <span class="w-2 h-2 rounded-full shrink-0 bg-[#227CFF]"></span> Suministros creados
+          </button>
+          <button [class]="legendItemClasses(!showComparisons)" (click)="showComparisons = !showComparisons">
+            <span class="w-2 h-2 rounded-full shrink-0 bg-[#16A34A]"></span> Comparaciones
+          </button>
+        </div>
+        <span class="text-[0.78rem] text-[#94A3B8] ml-auto">{{ chartRangeLabel }}</span>
+      </div>
+
+      @if (loading()) {
+      <p-skeleton height="196px" borderRadius="10px" />
+      } @else if (chart.n === 0) {
+      <div class="flex items-center justify-center gap-2 h-49 text-[#94A3B8] text-[0.85rem]"><i class="pi pi-chart-line"></i> Sin datos para este período</div>
+      } @else {
+      <svg viewBox="0 0 560 196" width="100%" class="block">
+        <defs>
+          <linearGradient id="areaGradBlue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#227CFF" stop-opacity="0.16" />
+            <stop offset="100%" stop-color="#227CFF" stop-opacity="0.01" />
+          </linearGradient>
+          <linearGradient id="areaGradGreen" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#16A34A" stop-opacity="0.14" />
+            <stop offset="100%" stop-color="#16A34A" stop-opacity="0.01" />
+          </linearGradient>
+        </defs>
+
+        <!-- Horizontal grid lines + Y labels -->
+        @for (g of chart.gridLabels; track g.y) {
+        <line [attr.x1]="44" [attr.y1]="g.y" x2="530" [attr.y2]="g.y" stroke="#e2e8f0" stroke-width="0.8" />
+        <text x="40" [attr.y]="g.y + 3" text-anchor="end" font-size="9" fill="#94a3b8">{{ g.value }}</text>
+        }
+
+        <!-- Supplies series -->
+        @if (chart.suppliesArea) {
+        <path [attr.d]="chart.suppliesArea" fill="url(#areaGradBlue)" />
+        <path [attr.d]="chart.suppliesPath" fill="none" stroke="#227CFF" stroke-width="2" stroke-linecap="round" />
+        }
+        <!-- Comparisons series -->
+        @if (chart.comparisonsArea) {
+        <path [attr.d]="chart.comparisonsArea" fill="url(#areaGradGreen)" />
+        <path [attr.d]="chart.comparisonsPath" fill="none" stroke="#16A34A" stroke-width="2" stroke-linecap="round" />
+        }
+
+        <!-- X-axis labels -->
+        @for (xl of chart.xLabels; track xl.x) {
+        <text [attr.x]="xl.x" y="178" text-anchor="middle" font-size="9" fill="#94a3b8">{{ xl.label }}</text>
+        }
+      </svg>
+      }
+    </div>
+
+    <!-- Right column -->
+    <div class="flex flex-col gap-4">
+
+      <!-- Incidencias -->
+      <div class="bg-white border border-black/10 rounded-2xl p-5 flex flex-col">
+        <p class="text-sm font-bold text-[#0F172A] m-0 mb-1.5">Revisar incidencias</p>
+        <p class="text-[0.78rem] text-[#94A3B8] m-0 mb-4 leading-[1.45]">Analiza que tus suministros están optimizados</p>
+        <a routerLink="/comparison-history" class="inline-flex items-center justify-center py-2 px-4.5 bg-[#227CFF] text-white rounded-lg text-[0.82rem] font-semibold no-underline transition-colors w-fit mt-auto hover:bg-[#1A6FE8]">Ver incidencias</a>
+      </div>
+
+      <!-- Dark promo -->
+      <div class="flex-1 bg-black bg-[url('/card-dark-bg.svg')] bg-no-repeat bg-center bg-cover rounded-2xl p-5 flex flex-col min-h-38.75">
+        <p class="text-[0.95rem] font-bold text-white m-0 mb-1.5">Dar de alta nuevo suministro</p>
+        <p class="text-[0.78rem] text-white/45 m-0 mb-4 leading-[1.45]">Analiza que tus suministros están optimizados</p>
+        <a routerLink="/new-supply" class="inline-flex items-center justify-center py-2 px-4.5 bg-[#227CFF] text-white rounded-lg text-[0.82rem] font-semibold no-underline transition-colors w-fit mt-auto hover:bg-[#1A6FE8]">Nuevo suministro</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <h2 class="text-[0.78rem] font-bold text-sx-text-2 uppercase tracking-wide m-0 mb-4">Acciones rápidas</h2>
+  <div class="grid grid-cols-2 max-[720px]:grid-cols-1 gap-4">
+    @for (a of quickActions; track a.title) {
+    <a [routerLink]="a.route" class="bg-sx-surface border border-sx-border rounded-2xl py-5 px-5.5 flex items-center gap-4 no-underline transition-all group hover:border-sx-border-2 hover:shadow-(--sx-shadow)">
+      <div class="w-11 h-11 rounded-[11px] flex items-center justify-center shrink-0 bg-sx-surface-2 text-sx-text-2 border border-sx-border">
+        <i [class]="'pi ' + a.icon" class="text-[1.05rem]"></i>
+      </div>
+      <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+        <span class="text-base font-bold text-sx-text">{{ a.title }}</span>
+        <span class="text-[0.82rem] text-sx-text-2">{{ a.subtitle }}</span>
+      </div>
+      <span class="text-sx-text-3 text-[0.85rem] shrink-0 transition-all group-hover:text-sx-primary group-hover:translate-x-0.5"><i class="pi pi-chevron-right"></i></span>
+    </a>
+    }
+  </div>
+
+</div>
