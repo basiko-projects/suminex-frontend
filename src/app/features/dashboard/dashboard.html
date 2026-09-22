@@ -7,10 +7,10 @@
   </div>
 
   @if (loadError) {
-  <div class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
-    <i class="pi pi-exclamation-circle"></i>
+  <div class="flex items-center gap-3 py-3 px-4 mb-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+    <app-icon name="exclamation-circle" svgClass="w-4 h-4" />
     <span>{{ loadError }}</span>
-    <button class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1" (click)="load()"><i class="pi pi-refresh"></i> Reintentar</button>
+    <button class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-lg py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1" (click)="load()"><app-icon name="arrow-path" svgClass="w-4 h-4" /> Reintentar</button>
   </div>
   }
 
@@ -33,8 +33,8 @@
       <p-datepicker [(ngModel)]="customFrom" placeholder="Desde" dateFormat="dd/mm/yy" [showIcon]="true" />
       <p-datepicker [(ngModel)]="customTo" placeholder="Hasta" dateFormat="dd/mm/yy" [showIcon]="true" />
       <div class="flex justify-end gap-2 mt-1">
-        <button type="button" class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2" (click)="customPop.hide()">Cancelar</button>
-        <button type="button" class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary" (click)="applyCustomRange(); customPop.hide()">Aplicar</button>
+        <button type="button" class="py-1.5 px-3.5 rounded-lg text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2" (click)="customPop.hide()">Cancelar</button>
+        <button type="button" class="py-1.5 px-3.5 rounded-lg text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary" (click)="applyCustomRange(); customPop.hide()">Aplicar</button>
       </div>
     </div>
   </p-popover>
@@ -43,19 +43,19 @@
   @if (loading()) {
   <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-5">
     @for (i of [1,2,3]; track i) {
-    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col"><p-skeleton height="108px" borderRadius="14px" /></div>
+    <div class="bg-white border border-black/10 rounded-lg py-5 px-5.5 flex flex-col"><p-skeleton height="108px" borderRadius="14px" /></div>
     }
   </div>
   } @else {
   <div class="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-4 mb-5">
 
-    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col">
+    <div class="bg-white border border-black/10 rounded-lg py-5 px-5.5 flex flex-col">
       <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Suministros gestionados</span>
       <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ totalSupplies }}</span>
       <div class="flex items-center gap-2 mt-auto">
         @if (suppliesTrend.hasData) {
         <span [class]="pillClasses(suppliesTrend.good)">
-          <i class="pi text-[0.6rem]" [class.pi-arrow-up]="suppliesTrend.arrowUp" [class.pi-arrow-down]="!suppliesTrend.arrowUp"></i>
+          <app-icon [name]="suppliesTrend.arrowUp ? 'arrow-up' : 'arrow-down'" svgClass="w-2.5 h-2.5" />
           {{ suppliesTrend.pct }}%
         </span>
         <span class="text-[0.72rem] text-[#94A3B8]">Vs. período anterior</span>
@@ -65,13 +65,13 @@
       </div>
     </div>
 
-    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col">
+    <div class="bg-white border border-black/10 rounded-lg py-5 px-5.5 flex flex-col">
       <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Avg. order value</span>
       <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ avgOrderValue | currency:'EUR':'symbol':'1.2-2' }}</span>
       <div class="flex items-center gap-2 mt-auto">
         @if (avgOrderTrend.hasData) {
         <span [class]="pillClasses(avgOrderTrend.good)">
-          <i class="pi text-[0.6rem]" [class.pi-arrow-up]="avgOrderTrend.arrowUp" [class.pi-arrow-down]="!avgOrderTrend.arrowUp"></i>
+          <app-icon [name]="avgOrderTrend.arrowUp ? 'arrow-up' : 'arrow-down'" svgClass="w-2.5 h-2.5" />
           {{ avgOrderDiffAbs | currency:'EUR':'symbol':'1.0-0' }}
         </span>
         <span class="text-[0.72rem] text-[#94A3B8]">Vs. período anterior</span>
@@ -81,7 +81,7 @@
       </div>
     </div>
 
-    <div class="bg-white border border-black/10 rounded-2xl py-5 px-5.5 flex flex-col">
+    <div class="bg-white border border-black/10 rounded-lg py-5 px-5.5 flex flex-col">
       <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Facturación disponible</span>
       <span class="text-[1.3rem] text-[#94A3B8] leading-none mb-3 tracking-normal">Próximamente</span>
       <div class="flex items-center gap-2 mt-auto">
@@ -96,7 +96,7 @@
   <div class="grid grid-cols-[3fr_2fr] max-[1100px]:grid-cols-1 gap-5 items-stretch mb-9">
 
     <!-- Line chart -->
-    <div class="bg-white border border-black/10 rounded-2xl p-5 flex flex-col">
+    <div class="bg-white border border-black/10 rounded-lg p-5 flex flex-col">
       <div class="flex items-center gap-3 mb-3 flex-wrap">
         <span class="text-sm font-bold text-[#0F172A]">Evolución</span>
         <div class="flex items-center gap-3.5">
@@ -113,7 +113,7 @@
       @if (loading()) {
       <p-skeleton height="196px" borderRadius="10px" />
       } @else if (chart.n === 0) {
-      <div class="flex items-center justify-center gap-2 h-49 text-[#94A3B8] text-[0.85rem]"><i class="pi pi-chart-line"></i> Sin datos para este período</div>
+      <div class="flex items-center justify-center gap-2 h-49 text-[#94A3B8] text-[0.85rem]"><app-icon name="presentation-chart-line" svgClass="w-4 h-4" /> Sin datos para este período</div>
       } @else {
       <svg viewBox="0 0 560 196" width="100%" class="block">
         <defs>
@@ -156,14 +156,14 @@
     <div class="flex flex-col gap-4">
 
       <!-- Incidencias -->
-      <div class="bg-white border border-black/10 rounded-2xl p-5 flex flex-col">
+      <div class="bg-white border border-black/10 rounded-lg p-5 flex flex-col">
         <p class="text-sm font-bold text-[#0F172A] m-0 mb-1.5">Revisar incidencias</p>
         <p class="text-[0.78rem] text-[#94A3B8] m-0 mb-4 leading-[1.45]">Analiza que tus suministros están optimizados</p>
         <a routerLink="/comparison-history" class="inline-flex items-center justify-center py-2 px-4.5 bg-[#227CFF] text-white rounded-lg text-[0.82rem] font-semibold no-underline transition-colors w-fit mt-auto hover:bg-[#1A6FE8]">Ver incidencias</a>
       </div>
 
       <!-- Dark promo -->
-      <div class="flex-1 bg-black bg-[url('/card-dark-bg.svg')] bg-no-repeat bg-center bg-cover rounded-2xl p-5 flex flex-col min-h-38.75">
+      <div class="flex-1 bg-black bg-[url('/card-dark-bg.svg')] bg-no-repeat bg-center bg-cover rounded-lg p-5 flex flex-col min-h-38.75">
         <p class="text-[0.95rem] font-bold text-white m-0 mb-1.5">Dar de alta nuevo suministro</p>
         <p class="text-[0.78rem] text-white/45 m-0 mb-4 leading-[1.45]">Analiza que tus suministros están optimizados</p>
         <a routerLink="/new-supply" class="inline-flex items-center justify-center py-2 px-4.5 bg-[#227CFF] text-white rounded-lg text-[0.82rem] font-semibold no-underline transition-colors w-fit mt-auto hover:bg-[#1A6FE8]">Nuevo suministro</a>
@@ -176,15 +176,15 @@
   <h2 class="text-[0.78rem] font-bold text-sx-text-2 uppercase tracking-wide m-0 mb-4">Acciones rápidas</h2>
   <div class="grid grid-cols-2 max-[720px]:grid-cols-1 gap-4">
     @for (a of quickActions; track a.title) {
-    <a [routerLink]="a.route" class="bg-sx-surface border border-sx-border rounded-2xl py-5 px-5.5 flex items-center gap-4 no-underline transition-all group hover:border-sx-border-2 hover:shadow-(--sx-shadow)">
-      <div class="w-11 h-11 rounded-[11px] flex items-center justify-center shrink-0 bg-sx-surface-2 text-sx-text-2 border border-sx-border">
-        <i [class]="'pi ' + a.icon" class="text-[1.05rem]"></i>
+    <a [routerLink]="a.route" class="bg-sx-surface border border-sx-border rounded-lg py-5 px-5.5 flex items-center gap-4 no-underline transition-all group hover:border-sx-border-2 hover:shadow-(--sx-shadow)">
+      <div class="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-sx-surface-2 text-sx-text-2 border border-sx-border">
+        <app-icon [name]="a.icon" svgClass="w-4.5 h-4.5" />
       </div>
       <div class="flex flex-col gap-0.5 flex-1 min-w-0">
         <span class="text-base font-bold text-sx-text">{{ a.title }}</span>
         <span class="text-[0.82rem] text-sx-text-2">{{ a.subtitle }}</span>
       </div>
-      <span class="text-sx-text-3 text-[0.85rem] shrink-0 transition-all group-hover:text-sx-primary group-hover:translate-x-0.5"><i class="pi pi-chevron-right"></i></span>
+      <span class="text-sx-text-3 text-[0.85rem] shrink-0 transition-all group-hover:text-sx-primary group-hover:translate-x-0.5"><app-icon name="chevron-right" svgClass="w-4 h-4" /></span>
     </a>
     }
   </div>

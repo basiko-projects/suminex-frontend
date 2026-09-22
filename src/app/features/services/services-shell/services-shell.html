@@ -21,7 +21,7 @@
   @if (loadingTarifas()) {
   <div class="flex items-center gap-1.5 pt-3 mb-5 flex-wrap">
     @for (i of [1,2,3]; track i) { <div
-      class="w-16 h-7 rounded-full bg-sx-surface-2 animate-[skel-pulse_1.2s_ease-in-out_infinite_alternate]"></div> }
+      class="w-16 h-7 rounded-lg bg-sx-surface-2 animate-[skel-pulse_1.2s_ease-in-out_infinite_alternate]"></div> }
   </div>
   } @else if (!activeGroup()) {
   <div class="flex items-center gap-2.5 py-3.5 text-sx-text-3 text-[13px]">Selecciona un tipo de servicio</div>
@@ -29,9 +29,9 @@
   <div class="flex items-center gap-2.5 py-3.5 text-sx-text-3 text-[13px]">
     <span>No hay tarifas de {{ activeGroup()!.name }}.</span>
     <button
-      class="inline-flex items-center gap-1 py-1.25 px-2.5 rounded-full border border-sx-border-2 bg-sx-primary-bg text-sx-primary-text text-[11px] font-semibold cursor-pointer"
+      class="inline-flex items-center gap-1 py-1.25 px-2.5 rounded-lg border border-sx-border-2 bg-sx-primary-bg text-sx-primary-text text-[11px] font-semibold cursor-pointer"
       (click)="showNewTarifaForm = true">
-      <i class="pi pi-plus"></i> Nueva tarifa
+      <app-icon name="plus" svgClass="w-4 h-4" /> Nueva tarifa
     </button>
   </div>
   } @else {
@@ -44,9 +44,9 @@
     </div>
     }
     <button
-      class="w-7 h-7 rounded-full border-[1.5px] border-dashed border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center text-[11px] transition-all hover:border-sx-primary hover:text-sx-primary"
+      class="w-7 h-7 rounded-lg border-[1.5px] border-dashed border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center text-[11px] transition-all hover:border-sx-primary hover:text-sx-primary"
       (click)="showNewTarifaForm = true" title="Nueva tarifa">
-      <i class="pi pi-plus"></i>
+      <app-icon name="plus" svgClass="w-4 h-4" />
     </button>
   </div>
   }
@@ -58,7 +58,7 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-3.5">
       <div class="flex items-center gap-2.5">
-        <span class="py-1 px-2.5 rounded-md text-[11px] font-bold font-mono"
+        <span class="py-1 px-2.5 rounded-lg text-[11px] font-bold font-mono"
           [style.background]="typeBg(activeGroup()!.serviceType)" [style.color]="typeColor(activeGroup()!.serviceType)">
           {{ activeTarifa()!.code || activeTarifa()!.name }}
         </span>
@@ -98,17 +98,17 @@
         <td class="py-3.5 px-6 pr-12 align-middle text-sm">
           <div class="flex justify-center gap-1">
             <button
-              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-sx-border-2 hover:text-sx-text hover:bg-sx-surface-2"
+              class="w-6.5 h-6.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-sx-border-2 hover:text-sx-text hover:bg-sx-surface-2"
               title="Ver detalle" (click)="openProductView(p.id)">
-              @if (loadingDetailFor() === p.id) { <app-suminex-loader [size]="14" /> } @else { <i class="pi pi-eye"></i>
+              @if (loadingDetailFor() === p.id) { <app-suminex-loader [size]="14" /> } @else { <app-icon name="eye" svgClass="w-4 h-4" />
               }
             </button>
             <button
-              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
-              title="Editar" (click)="startEditProduct(p.id)"><i class="pi pi-pencil"></i></button>
+              class="w-6.5 h-6.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
+              title="Editar" (click)="startEditProduct(p.id)"><app-icon name="pencil" svgClass="w-4 h-4" /></button>
             <button
-              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FECACA] hover:text-[#DC2626] hover:bg-[#FEF2F2]"
-              title="Eliminar" (click)="deleteConfirmId.set(p.id)"><i class="pi pi-trash"></i></button>
+              class="w-6.5 h-6.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FECACA] hover:text-[#DC2626] hover:bg-[#FEF2F2]"
+              title="Eliminar" (click)="deleteConfirmId.set(p.id)"><app-icon name="trash" svgClass="w-4 h-4" /></button>
           </div>
         </td>
       </ng-template>
@@ -123,11 +123,11 @@
         <button
           class="inline-flex items-center gap-1.25 py-1.5 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer hover:bg-sx-primary"
           (click)="editingBoeData = null; showBoe = true">
-          <i class="pi pi-plus text-[10px]"></i> Nuevo BOE
+          <app-icon name="plus" svgClass="w-3.5 h-3.5" /> Nuevo BOE
         </button>
       </div>
       @if (activeTarifa()!.boePeriods?.length) {
-      <div class="border border-sx-border rounded-xl py-3.5 px-4 mb-2.5 flex flex-col gap-3">
+      <div class="border border-sx-border rounded-lg py-3.5 px-4 mb-2.5 flex flex-col gap-3">
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-[13px] font-bold text-sx-text">Potencia BOE actual</span>
@@ -137,9 +137,9 @@
           </div>
           <div class="flex items-center gap-2 flex-wrap">
             <button
-              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
+              class="w-6.5 h-6.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
               title="Editar" (click)="editingBoeData = buildEditBoe(); showBoe = true">
-              <i class="pi pi-pencil"></i>
+              <app-icon name="pencil" svgClass="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -150,7 +150,7 @@
               class="inline-block py-0.5 px-2 rounded text-[11px] font-bold bg-sx-surface-2 text-sx-text-2 border border-sx-border">{{
               b.period }}</span>
             <span
-              class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-md py-1 px-2 w-full text-center">{{
+              class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-lg py-1 px-2 w-full text-center">{{
               b.priceKwDay }}</span>
             <span class="text-[9px] text-sx-text-3 text-center mt-px">€/kW·día</span>
           </div>
@@ -158,8 +158,8 @@
         </div>
       </div>
       } @else {
-      <div class="flex items-center gap-2.5 py-8 justify-center text-sx-text-3 text-[13px]"><i
-          class="pi pi-bolt text-[22px]"></i><span>Sin períodos BOE registrados</span></div>
+      <div class="flex items-center gap-2.5 py-8 justify-center text-sx-text-3 text-[13px]">
+        <app-icon name="bolt" svgClass="w-5.5 h-5.5" /><span>Sin períodos BOE registrados</span></div>
       }
     </div>
     }
@@ -172,12 +172,12 @@
         <button
           class="inline-flex items-center gap-1.25 py-1.5 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer hover:bg-sx-primary"
           (click)="editingOmieData = null; showOmie = true">
-          <i class="pi pi-plus text-[10px]"></i> Nueva distribución
+          <app-icon name="plus" svgClass="w-3.5 h-3.5" /> Nueva distribución
         </button>
       </div>
       @if (activeTarifa()!.omieDistributions?.length) {
       @for (dist of activeTarifa()!.omieDistributions; track dist.id) {
-      <div class="border border-sx-border rounded-xl py-3.5 px-4 mb-2.5 flex flex-col gap-3">
+      <div class="border border-sx-border rounded-lg py-3.5 px-4 mb-2.5 flex flex-col gap-3">
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-[13px] font-bold text-sx-text">{{ dist.name }}</span>
@@ -193,9 +193,9 @@
             <span class="text-[11px] text-sx-text-3">{{ dist.validFrom }}{{ dist.validUntil ? ' → ' + dist.validUntil :
               '' }}</span>
             <button
-              class="w-6.5 h-6.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
+              class="w-6.5 h-6.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-[#FDE68A] hover:text-[#D97706] hover:bg-[rgba(217,119,6,0.08)]"
               title="Editar" (click)="editingOmieData = dist; showOmie = true">
-              <i class="pi pi-pencil"></i>
+              <app-icon name="pencil" svgClass="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -207,7 +207,7 @@
               class="inline-block py-0.5 px-2 rounded text-[11px] font-bold bg-sx-surface-2 text-sx-text-2 border border-sx-border">{{
               p.period }}</span>
             <span
-              class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-md py-1 px-2 w-full text-center">{{
+              class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-lg py-1 px-2 w-full text-center">{{
               p.factor }}</span>
           </div>
           }
@@ -218,8 +218,8 @@
       </div>
       }
       } @else {
-      <div class="flex items-center gap-2.5 py-8 justify-center text-sx-text-3 text-[13px]"><i
-          class="pi pi-chart-bar text-[22px]"></i><span>Sin distribuciones OMIE</span></div>
+      <div class="flex items-center gap-2.5 py-8 justify-center text-sx-text-3 text-[13px]">
+        <app-icon name="chart-bar" svgClass="w-5.5 h-5.5" /><span>Sin distribuciones OMIE</span></div>
       }
     </div>
     }
@@ -232,28 +232,28 @@
         <button
           class="inline-flex items-center gap-1.25 py-1.5 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer hover:bg-sx-primary"
           (click)="showProductoLuz = true">
-          <i class="pi pi-plus text-[10px]"></i> Nuevo producto
+          <app-icon name="plus" svgClass="w-3.5 h-3.5" /> Nuevo producto
         </button>
       </div>
       @if (activeTarifa()!.pricing; as pr) {
       <div class="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
         @if (pr.gasProductType) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Tipo gas</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.gasProductType }}</strong></div>
         }
         @if (pr.priceKwh != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Precio €/kWh</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.priceKwh }}</strong></div>
         }
         @if (pr.fixedTermMonthly != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Término fijo mensual</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.fixedTermMonthly }} €</strong></div>
         }
         @if (pr.indexMargin != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Margen índice</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.indexMargin }}</strong></div>
         }
@@ -271,32 +271,32 @@
       @if (activeTarifa()!.pricing; as pr) {
       <div class="grid gap-2.5 grid-cols-[repeat(auto-fill,minmax(160px,1fr))]">
         @if (pr.monthlyFee != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Cuota mensual</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.monthlyFee }} €</strong></div>
         }
         @if (pr.dataGb != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Datos</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.dataGb }} GB</strong></div>
         }
         @if (pr.network) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Red</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.network }}</strong></div>
         }
         @if (pr.speedDownMbps != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Bajada</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.speedDownMbps }} Mbps</strong></div>
         }
         @if (pr.speedUpMbps != null) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Subida</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.speedUpMbps }} Mbps</strong></div>
         }
         @if (pr.technology) {
-        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-[10px]"><span
+        <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Tecnología</span><strong
             class="text-sm font-semibold text-sx-text">{{ pr.technology }}</strong></div>
         }
@@ -326,9 +326,9 @@
   class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 backdrop-blur-[2px] animate-[fade-in_150ms_ease]"
   (click)="deleteConfirmId.set(null)">
   <div
-    class="bg-sx-surface rounded-2xl py-7 px-6 w-85 text-center shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out]"
+    class="bg-sx-surface rounded-lg py-7 px-6 w-85 text-center shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out]"
     (click)="$event.stopPropagation()">
-    <div class="text-[28px] text-[#F59E0B] mb-2.5"><i class="pi pi-exclamation-triangle"></i></div>
+    <div class="text-[28px] text-[#F59E0B] mb-2.5"><app-icon name="exclamation-triangle" svgClass="w-4 h-4" /></div>
     <h3 class="text-[15px] font-bold text-sx-text m-0 mb-1.5">Eliminar producto</h3>
     <p class="text-[13px] text-sx-text-3 m-0 mb-5">Esta acción no se puede deshacer. ¿Continuar?</p>
     <div class="flex justify-center gap-2.5">
@@ -350,7 +350,7 @@
   class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 backdrop-blur-[2px] animate-[fade-in_150ms_ease]"
   (click)="viewingProduct.set(null)">
   <div
-    class="bg-sx-surface rounded-2xl p-5 w-[min(92vw,480px)] md:w-[min(80vw,640px)] md:p-6.5 xl:w-[min(55vw,760px)] xl:p-8 max-h-[90vh] overflow-y-auto shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out] flex flex-col gap-3.5 md:gap-4.5 xl:gap-5.5"
+    class="bg-sx-surface rounded-lg p-5 w-[min(92vw,480px)] md:w-[min(80vw,640px)] md:p-6.5 xl:w-[min(55vw,760px)] xl:p-8 max-h-[90vh] overflow-y-auto shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out] flex flex-col gap-3.5 md:gap-4.5 xl:gap-5.5"
     (click)="$event.stopPropagation()">
     <div class="flex items-start justify-between gap-3">
       <div class="flex flex-col gap-2">
@@ -358,7 +358,7 @@
         <div class="flex items-center gap-1.5 flex-wrap">
           @if (activeTarifa()?.code) {
           <span
-            class="py-0.75 px-2.25 rounded-full text-[11px] font-bold bg-sx-primary-bg text-sx-primary-text border border-sx-border-2 tracking-wide">{{
+            class="py-0.75 px-2.25 rounded-lg text-[11px] font-bold bg-sx-primary-bg text-sx-primary-text border border-sx-border-2 tracking-wide">{{
             activeTarifa()!.code }}</span>
           }
           <span [class]="productTypeBadgeClasses(viewingProduct().type)">{{ typeLabel(viewingProduct().type) }}</span>
@@ -367,8 +367,8 @@
         </div>
       </div>
       <button
-        class="w-7.5 h-7.5 rounded-md border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 hover:text-[#DC2626] hover:border-[#FECACA] hover:bg-[#FEF2F2]"
-        (click)="viewingProduct.set(null)"><i class="pi pi-times text-[11px]"></i></button>
+        class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 hover:text-[#DC2626] hover:border-[#FECACA] hover:bg-[#FEF2F2]"
+        (click)="viewingProduct.set(null)"><app-icon name="x-mark" svgClass="w-3.5 h-3.5" /></button>
     </div>
     <div
       class="flex items-center gap-2.5 text-xs md:text-[13px] text-sx-text-2 bg-sx-surface-2 rounded-lg py-2 px-3 md:py-2.5 md:px-3.5 flex-wrap">
@@ -378,8 +378,8 @@
         ?? '—' }}</span>
     </div>
     <div class="flex flex-col gap-2.5">
-      <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2"><i
-          class="pi pi-bolt text-xs" style="color:#FACC15"></i> Energía (€/kWh)
+      <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2">
+        <app-icon name="bolt" svgClass="w-3 h-3" style="color:#FACC15" /> Energía (€/kWh)
         <span [class]="commissionBadgeClasses(viewingProduct().commissionEnergyPct)">{{
           commissionLabel(viewingProduct().commissionEnergyPct) }}</span>
       </div>
@@ -387,14 +387,14 @@
         @for (ep of viewingProduct().energyPeriods; track ep.period) {
         <div class="flex flex-col items-center gap-0.75"><span class="text-[10px] font-bold text-sx-text-3 uppercase">{{
             ep.period }}</span><span
-            class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-md py-1.25 px-2 w-full text-center">{{
+            class="text-xs font-semibold tabular-nums text-sx-text bg-sx-surface border border-sx-border rounded-lg py-1.25 px-2 w-full text-center">{{
             ep.priceKwh ?? '—' }}</span></div>
         }
       </div>
     </div>
     <div class="flex flex-col gap-2.5">
-      <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2"><i
-          class="pi pi-circle text-xs" style="color:#60A5FA"></i> Potencia (€/kW·día)
+      <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2">
+        <span class="w-2 h-2 rounded-full shrink-0" style="background-color:#60A5FA"></span> Potencia (€/kW·día)
         <span [class]="commissionBadgeClasses(viewingProduct().commissionPowerPct)">{{
           commissionLabel(viewingProduct().commissionPowerPct) }}</span>
       </div>

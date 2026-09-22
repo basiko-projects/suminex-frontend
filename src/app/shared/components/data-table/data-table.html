@@ -9,8 +9,8 @@
     <div class="flex items-center gap-3 shrink-0">
       @if (searchable) {
       <label
-        class="flex items-center gap-[0.45rem] bg-sx-surface border border-sx-border-2 rounded-full py-[0.45rem] px-3.5 cursor-text">
-        <i class="pi pi-search text-[0.8rem] text-sx-text-3"></i>
+        class="flex items-center gap-[0.45rem] bg-sx-surface border border-sx-border-2 rounded-lg py-[0.45rem] px-3.5 cursor-text">
+        <app-icon name="magnifying-glass" svgClass="w-3.5 h-3.5 text-sx-text-3" />
         <input type="text" placeholder="Buscar..."
           class="border-none outline-none bg-transparent text-[0.83rem] text-sx-text w-42.5 placeholder:text-sx-text-3"
           [(ngModel)]="searchValue" (input)="onSearch()" />
@@ -19,8 +19,8 @@
       <ng-content select="[dtActions]"></ng-content>
       @if (sortOptions.length) {
       <div
-        class="flex items-center gap-2 text-[0.83rem] cursor-pointer bg-sx-surface border border-sx-border-2 rounded-full py-[0.45rem] px-3.5">
-        <i class="pi pi-calendar text-[0.8rem] text-sx-text-3"></i>
+        class="flex items-center gap-2 text-[0.83rem] cursor-pointer bg-sx-surface border border-sx-border-2 rounded-lg py-[0.45rem] px-3.5">
+        <app-icon name="calendar" svgClass="w-3.5 h-3.5 text-sx-text-3" />
         <span class="text-sx-text-3 whitespace-nowrap">Ordenar por:</span>
         <select
           class="border-none outline-none bg-transparent text-[0.83rem] font-bold text-sx-text cursor-pointer appearance-none"
@@ -29,7 +29,7 @@
           <option [value]="o.value">{{ o.label }}</option>
           }
         </select>
-        <i class="pi pi-chevron-down text-[0.65rem] text-sx-text"></i>
+        <app-icon name="chevron-down" svgClass="w-3 h-3 text-sx-text" />
       </div>
       }
     </div>
@@ -37,7 +37,7 @@
 
   <!-- Table card -->
   <div
-    class="bg-sx-surface border border-sx-border rounded-[30px] overflow-hidden shadow-[0_10px_60px_0_rgba(226,236,249,0.50)]">
+    class="bg-sx-surface border border-sx-border rounded-lg overflow-hidden shadow-[0_10px_60px_0_rgba(226,236,249,0.50)]">
     <div class="overflow-x-auto">
       <table class="dt-table w-full border-collapse min-w-140">
         <thead>
@@ -53,7 +53,7 @@
                 @if (col.filterIcon) {
                 <button type="button" [class]="filterBtnClasses(!!col.filterActive)"
                   (click)="onFilterIconClick(col.key, $event)" [attr.title]="'Filtrar ' + col.label">
-                  <i class="pi pi-hourglass"></i>
+                  <app-icon name="funnel" svgClass="w-4 h-4" />
                 </button>
                 }
               </span>
@@ -76,7 +76,7 @@
           <tr class="transition-colors hover:bg-black/[0.018]">
             <td [attr.colspan]="columns.length" class="text-center">
               <div class="flex flex-col items-center gap-2.5 py-12 px-4 text-sx-text-3">
-                <i class="pi pi-inbox text-[2rem]"></i>
+                <app-icon name="inbox" svgClass="w-7 h-7" />
                 <span class="text-[0.855rem]">{{ emptyMessage }}</span>
               </div>
             </td>

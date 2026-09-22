@@ -55,15 +55,15 @@
 
   @if (status === 'success' && verificationWarning) {
   <div class="flex items-center gap-2 py-2.5 px-3.5 rounded-lg mb-6 -mt-4 bg-[#D97706]/10 border border-[#D97706]/30 text-[#B45309] text-[0.82rem] text-left max-w-[320px]">
-    <i class="pi pi-exclamation-triangle shrink-0"></i>
+    <app-icon name="exclamation-triangle" svgClass="w-4 h-4 shrink-0" />
     <span>{{ verificationWarning }} Podrás verificar la identidad más tarde desde el detalle del suministro.</span>
   </div>
   }
 
   @if (status === 'success') {
-  <a routerLink="/supplies" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-xl text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] no-underline mb-3 max-w-[320px]">Ver suministros</a>
+  <a routerLink="/supplies" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] no-underline mb-3 max-w-[320px]">Ver suministros</a>
   }
-  <button class="bg-transparent border-[1.5px] border-black/12 rounded-xl py-3.5 px-4 w-full max-w-[320px] text-[0.9rem] font-semibold text-[#475569] cursor-pointer transition-all hover:border-[#227CFF] hover:text-[#227CFF] hover:bg-[#EAF2FF]" (click)="retry.emit()">
+  <button class="bg-transparent border-[1.5px] border-black/12 rounded-lg py-3.5 px-4 w-full max-w-[320px] text-[0.9rem] font-semibold text-[#475569] cursor-pointer transition-all hover:border-[#227CFF] hover:text-[#227CFF] hover:bg-[#EAF2FF]" (click)="retry.emit()">
     {{ status === 'success' ? 'Dar de alta otro suministro' : 'Volver a intentarlo' }}
   </button>
 </div>

@@ -11,6 +11,7 @@ import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
+import { Icon } from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-user-form',
@@ -18,7 +19,7 @@ import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex
   imports: [
     FormsModule,
     DialogModule, ButtonModule, InputTextModule,
-    PasswordModule, SelectModule, MessageModule, ToggleSwitchModule, SuminexLoader,
+    PasswordModule, SelectModule, MessageModule, ToggleSwitchModule, SuminexLoader, Icon,
   ],
   templateUrl: './user-form.html',
 })

@@ -9,13 +9,14 @@ import { ServiceTariff } from '../../../core/models/service.model';
 import { LuzOcrResult } from '../../../core/models/comparison.model';
 import { FeeMode, Period } from '../../../core/models/comparator.models';
 import { ALL_PERIODS, computeComparison } from '../../../core/helpers/calculator.helpers';
+import { Icon } from '../icon/icon';
 
 /** El catálogo aún no expone commissionEnergyPct por producto — hardcodeado a 65% hasta que se añada en BD. */
 const DEFAULT_COMMISSION_PCT = 0.65;
 
 @Component({
   selector: 'app-configure-product',
-  imports: [DecimalPipe, FormsModule, ButtonModule, DialogModule, SelectModule, SliderModule],
+  imports: [DecimalPipe, FormsModule, ButtonModule, DialogModule, SelectModule, SliderModule, Icon],
   templateUrl: './configure-product.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

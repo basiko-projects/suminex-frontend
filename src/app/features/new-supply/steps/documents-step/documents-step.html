@@ -5,11 +5,11 @@
       (dragover)="$event.preventDefault()" (drop)="onDrop($event, 'idFront')">
       <input #idFrontInput type="file" accept="image/*,.pdf" hidden (change)="onFileSelect($event, 'idFront')" />
       @if (documents.idFront) {
-      <i [class]="'pi pi-check-circle ' + uploadIconClasses(true)"></i>
+      <app-icon name="check-circle" [svgClass]="uploadIconClasses(true)" />
       <p class="text-sm font-semibold text-[#16A34A] m-0 mb-0.5 break-all">{{ documents.idFront.name }}</p>
       <p class="text-[0.78rem] text-[#94A3B8] m-0">Haz clic para cambiar</p>
       } @else {
-      <i [class]="'pi pi-id-card ' + uploadIconClasses(false)"></i>
+      <app-icon name="identification" [svgClass]="uploadIconClasses(false)" />
       <p class="text-[0.9rem] font-bold text-[#0F172A] m-0 mb-1">DNI Anverso *</p>
       <p class="text-[0.78rem] text-[#94A3B8] m-0">Arrastra el archivo aquí o haz clic para seleccionar</p>
       <span class="inline-block mt-2 text-[0.72rem] text-[#CBD5E1]">JPG, PNG o PDF · Máx. 10MB</span>
@@ -23,11 +23,11 @@
       (dragover)="$event.preventDefault()" (drop)="onDrop($event, 'idBack')">
       <input #idBackInput type="file" accept="image/*,.pdf" hidden (change)="onFileSelect($event, 'idBack')" />
       @if (documents.idBack) {
-      <i [class]="'pi pi-check-circle ' + uploadIconClasses(true)"></i>
+      <app-icon name="check-circle" [svgClass]="uploadIconClasses(true)" />
       <p class="text-sm font-semibold text-[#16A34A] m-0 mb-0.5 break-all">{{ documents.idBack.name }}</p>
       <p class="text-[0.78rem] text-[#94A3B8] m-0">Haz clic para cambiar</p>
       } @else {
-      <i [class]="'pi pi-id-card ' + uploadIconClasses(false)"></i>
+      <app-icon name="identification" [svgClass]="uploadIconClasses(false)" />
       <p class="text-[0.9rem] font-bold text-[#0F172A] m-0 mb-1">DNI Reverso *</p>
       <p class="text-[0.78rem] text-[#94A3B8] m-0">Arrastra el archivo aquí o haz clic para seleccionar</p>
       <span class="inline-block mt-2 text-[0.72rem] text-[#CBD5E1]">JPG, PNG o PDF · Máx. 10MB</span>
@@ -36,5 +36,5 @@
     @if (documentsSubmitted && !documents.idBack) { <span class="text-[0.76rem] text-[#DC2626]">Este documento es obligatorio</span> }
   </div>
 
-  <button class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-xl text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]" (click)="submitDocuments()">Finalizar alta</button>
+  <button class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]" (click)="submitDocuments()">Siguiente</button>
 </div>

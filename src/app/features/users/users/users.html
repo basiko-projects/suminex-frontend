@@ -7,12 +7,12 @@
 
 @if (loadError) {
 <div
-  class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
-  <i class="pi pi-exclamation-circle"></i>
+  class="flex items-center gap-3 py-3 px-4 mb-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+  <app-icon name="exclamation-circle" svgClass="w-4 h-4" />
   <span>{{ loadError }}</span>
   <button
-    class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1"
-    (click)="load()"><i class="pi pi-refresh"></i> Reintentar</button>
+    class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-lg py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1"
+    (click)="load()"><app-icon name="arrow-path" svgClass="w-4 h-4" /> Reintentar</button>
 </div>
 }
 
@@ -78,26 +78,26 @@
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
     <div class="flex items-center justify-center gap-1">
       <button
-        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+        class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
         (click)="openEdit(u)" pTooltip="Editar">
-        <i class="pi pi-pencil"></i>
+        <app-icon name="pencil" svgClass="w-4 h-4" />
       </button>
       @if (u.role === 'Collaborator') {
       <button
-        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+        class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
         (click)="openFiscalProfile(u)" pTooltip="Datos fiscales">
-        <i class="pi pi-id-card"></i>
+        <app-icon name="identification" svgClass="w-4 h-4" />
       </button>
       <button
-        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+        class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
         (click)="openBilling(u)" pTooltip="Ver facturación">
-        <i class="pi pi-file-invoice"></i>
+        <app-icon name="document-text" svgClass="w-4 h-4" />
       </button>
       }
       <button
-        class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red [&_.pi]:text-xs"
+        class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red [&_.pi]:text-xs"
         (click)="confirmDelete(u)" pTooltip="Eliminar">
-        <i class="pi pi-trash"></i>
+        <app-icon name="trash" svgClass="w-4 h-4" />
       </button>
     </div>
   </td>

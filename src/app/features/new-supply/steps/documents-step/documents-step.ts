@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Output } from '@angular/core';
+import { Icon } from '../../../../shared/components/icon/icon';
 
 export interface SupplyDocuments {
   idFront: File;
@@ -8,6 +9,7 @@ export interface SupplyDocuments {
 @Component({
   selector: 'app-documents-step',
   standalone: true,
+  imports: [Icon],
   templateUrl: './documents-step.html',
 })
 export class DocumentsStep {
@@ -28,14 +30,14 @@ export class DocumentsStep {
   }
 
   uploadAreaClasses(done: unknown, error: boolean): string {
-    const base = 'border-2 rounded-[14px] py-8 px-6 flex flex-col items-center text-center cursor-pointer transition-all hover:border-[#227CFF] hover:bg-[#EAF2FF]';
+    const base = 'border-2 rounded-lg py-8 px-6 flex flex-col items-center text-center cursor-pointer transition-all hover:border-[#227CFF] hover:bg-[#EAF2FF]';
     if (done) return `${base} border-solid border-[#22C55E] bg-[#22C55E]/4`;
     if (error) return `${base} border-dashed border-[#EF4444] bg-[#FAFAFA]`;
     return `${base} border-dashed border-black/14 bg-[#FAFAFA]`;
   }
 
   uploadIconClasses(success: unknown): string {
-    return success ? 'text-[1.75rem] text-[#22C55E] mb-2.5' : 'text-[1.75rem] text-[#94A3B8] mb-2.5';
+    return success ? 'w-7 h-7 text-[#22C55E] mb-2.5' : 'w-7 h-7 text-[#94A3B8] mb-2.5';
   }
 
   submitDocuments() {

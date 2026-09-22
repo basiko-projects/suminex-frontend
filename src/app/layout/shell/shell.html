@@ -12,9 +12,9 @@
     <app-sidebar />
     @if (drawerOpen()) {
     <button
-      class="absolute top-6 right-0 translate-x-1/2 w-8 h-8 rounded-full border border-black/10 bg-white text-[#94A3B8] flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-500"
+      class="absolute top-6 right-0 translate-x-1/2 w-8 h-8 rounded-lg border border-black/10 bg-white text-[#94A3B8] flex items-center justify-center cursor-pointer shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-all hover:bg-red-50 hover:text-red-500 hover:border-red-500"
       (click)="closeSidebar()" aria-label="Cerrar menú">
-      <i class="pi pi-times"></i>
+      <app-icon name="x-mark" svgClass="w-4 h-4" />
     </button>
     }
   </div>

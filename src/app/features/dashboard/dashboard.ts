@@ -9,13 +9,14 @@ import { PopoverModule } from 'primeng/popover';
 import { AuthService } from '../../core/services/auth.service';
 import { StatsService } from '../../core/services/stats.service';
 import { DashboardKpi, DashboardTimeseriesPoint, StatsGroupBy } from '../../core/models/stats.model';
+import { Icon, IconName } from '../../shared/components/icon/icon';
 
 interface KpiDisplay { hasData: boolean; pct: number; arrowUp: boolean; good: boolean; }
 
 interface QuickAction {
   title:    string;
   subtitle: string;
-  icon:     string;
+  icon:     IconName;
   route:    string;
 }
 
@@ -27,7 +28,7 @@ function pad2(n: number): string { return String(n).padStart(2, '0'); }
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, CurrencyPipe, SkeletonModule, FormsModule, DatePickerModule, PopoverModule],
+  imports: [RouterLink, CurrencyPipe, SkeletonModule, FormsModule, DatePickerModule, PopoverModule, Icon],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
@@ -67,10 +68,10 @@ export class DashboardComponent implements OnInit {
   ];
 
   quickActions: QuickAction[] = [
-    { title: 'Nueva oferta',   subtitle: 'Crear tarifa de luz, gas o internet', icon: 'pi-bolt',       route: '/services' },
-    { title: 'Usuarios',       subtitle: 'Gestionar usuarios de la plataforma', icon: 'pi-users',      route: '/users' },
-    { title: 'Comparaciones',  subtitle: 'Ver actividad reciente de usuarios',  icon: 'pi-chart-bar',  route: '/comparison-history' },
-    { title: 'Suministros',    subtitle: 'Gestionar contratos activos',        icon: 'pi-file-check', route: '/supplies' },
+    { title: 'Nueva oferta',   subtitle: 'Crear tarifa de luz, gas o internet', icon: 'bolt',           route: '/services' },
+    { title: 'Usuarios',       subtitle: 'Gestionar usuarios de la plataforma', icon: 'users',          route: '/users' },
+    { title: 'Comparaciones',  subtitle: 'Ver actividad reciente de usuarios',  icon: 'chart-bar',      route: '/comparison-history' },
+    { title: 'Suministros',    subtitle: 'Gestionar contratos activos',        icon: 'document-check', route: '/supplies' },
   ];
 
   get chartRangeLabel(): string {
@@ -214,14 +215,14 @@ export class DashboardComponent implements OnInit {
   }
 
   periodBtnClasses(active: boolean): string {
-    const base = 'py-[0.45rem] px-4.5 rounded-full text-[0.845rem] cursor-pointer transition-all';
+    const base = 'py-[0.45rem] px-4.5 rounded-lg text-[0.845rem] cursor-pointer transition-all';
     return active
       ? `${base} bg-[#227CFF] border border-[#227CFF] text-white font-semibold`
       : `${base} border border-black/12 bg-white text-[#475569] font-medium hover:bg-[#F8FAFC] hover:text-[#0F172A]`;
   }
 
   pillClasses(good: boolean): string {
-    const base = 'inline-flex items-center gap-[3px] rounded-full text-[0.72rem] font-bold py-[0.2rem] px-2.25 whitespace-nowrap';
+    const base = 'inline-flex items-center gap-[3px] rounded-lg text-[0.72rem] font-bold py-[0.2rem] px-2.25 whitespace-nowrap';
     return good ? `${base} bg-[#16A34A]/10 text-[#16A34A]` : `${base} bg-[#DC2626]/10 text-[#DC2626]`;
   }
 

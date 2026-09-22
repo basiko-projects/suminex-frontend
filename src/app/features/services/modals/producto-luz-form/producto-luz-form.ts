@@ -6,11 +6,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ServicesService } from '../../../../core/services/services.service';
 import { SuminexLoader } from '../../../../shared/components/suminex-loader/suminex-loader';
+import { Icon } from '../../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-producto-luz-form',
   standalone: true,
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, SelectModule, SuminexLoader],
+  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, SelectModule, SuminexLoader, Icon],
   templateUrl: './producto-luz-form.html',
 })
 export class ProductoLuzFormComponent implements OnInit {

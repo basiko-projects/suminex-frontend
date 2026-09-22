@@ -9,11 +9,12 @@ import { ProductoLuzFormComponent } from '../modals/producto-luz-form/producto-l
 import { BoeLuzFormComponent } from '../modals/boe-luz-form/boe-luz-form';
 import { OmieLuzFormComponent } from '../modals/omie-luz-form/omie-luz-form';
 import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
+import { Icon, IconName } from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-tarifa-detail',
   standalone: true,
-  imports: [SlicePipe, FormsModule, TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, SuminexLoader],
+  imports: [SlicePipe, FormsModule, TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, SuminexLoader, Icon],
   templateUrl: './tarifa-detail.html',
 })
 export class TarifaDetailComponent implements OnInit {
@@ -58,9 +59,9 @@ export class TarifaDetailComponent implements OnInit {
     const m: Record<string, string> = { LUZ: '#FDE68A', GAS: '#A7F3D0', MOBILE: '#DDD6FE', INTERNET: '#BAE6FD' };
     return m[(this.detail()?.serviceType ?? '').toUpperCase()] ?? '#B9D9FF';
   }
-  get typeIcon() {
-    const m: Record<string, string> = { LUZ: 'pi-sun', GAS: 'pi-fire', MOBILE: 'pi-mobile', INTERNET: 'pi-wifi' };
-    return m[(this.detail()?.serviceType ?? '').toUpperCase()] ?? 'pi-bolt';
+  get typeIcon(): IconName {
+    const m: Record<string, IconName> = { LUZ: 'sun', GAS: 'fire', MOBILE: 'device-phone-mobile', INTERNET: 'wifi' };
+    return m[(this.detail()?.serviceType ?? '').toUpperCase()] ?? 'bolt';
   }
 
   get groupedBoe() {
@@ -106,21 +107,21 @@ export class TarifaDetailComponent implements OnInit {
   }
 
   statusChipClasses(isActive: boolean): string {
-    const base = 'inline-block py-[3px] px-2.5 rounded-full text-[11px] font-bold border';
+    const base = 'inline-block py-[3px] px-2.5 rounded-lg text-[11px] font-bold border';
     return isActive
       ? `${base} bg-sx-green-bg text-sx-green border-sx-border-2`
       : `${base} bg-sx-surface-2 text-sx-text-3 border-sx-border`;
   }
 
   tabBtnClasses(isActive: boolean): string {
-    const base = 'py-2 px-4 pb-[9px] border-none bg-transparent text-[13px] font-medium cursor-pointer border-b-2 -mb-px transition-all rounded-t-md focus-visible:outline-none focus-visible:shadow-none';
+    const base = 'py-2 px-4 pb-[9px] border-none bg-transparent text-[13px] font-medium cursor-pointer border-b-2 -mb-px transition-all rounded-t-lg focus-visible:outline-none focus-visible:shadow-none';
     return isActive
       ? `${base} text-sx-primary font-semibold border-b-sx-primary`
       : `${base} text-sx-text-2 border-b-transparent hover:text-sx-text hover:bg-sx-surface-2`;
   }
 
   typeBadgeClasses(type: string): string {
-    const base = 'inline-flex items-center py-[3px] px-2.5 rounded-full text-[0.7rem] font-bold border';
+    const base = 'inline-flex items-center py-[3px] px-2.5 rounded-lg text-[0.7rem] font-bold border';
     return type === 'INDEXED'
       ? `${base} bg-sx-primary-bg text-sx-primary-text border-sx-border-2`
       : `${base} bg-sx-surface-2 text-sx-text-2 border-sx-border`;

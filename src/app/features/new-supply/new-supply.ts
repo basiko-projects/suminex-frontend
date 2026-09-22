@@ -4,7 +4,7 @@ import { timeout } from 'rxjs/operators';
 import { ComparisonsService } from '../../core/services/comparisons.service';
 import { SuppliesService } from '../../core/services/supplies.service';
 import { ServiceType } from '../../core/models/service.model';
-import { ManualComparisonResponse } from '../../core/models/comparison.model';
+import { ExtractComparisonResponse } from '../../core/models/comparison.model';
 import { SupplyKind, SupplyOption } from '../../core/models/supply.model';
 import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
 import { SupplyTypeStep } from '../../shared/components/supply-type-step/supply-type-step';
@@ -14,8 +14,9 @@ import { HolderDataStep } from './steps/holder-data-step/holder-data-step';
 import { SupplyPointStep } from './steps/supply-point-step/supply-point-step';
 import { DocumentsStep, SupplyDocuments } from './steps/documents-step/documents-step';
 import { ResultStep } from './steps/result-step/result-step';
+import { Icon } from '../../shared/components/icon/icon';
 
-type Step = 1 | 2 | 3 | 4 | 5;
+type Step = 1 | 2 | 3 | 4;
 
 const GENERIC_ERROR = 'Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.';
 
@@ -23,7 +24,7 @@ const GENERIC_ERROR = 'Ocurrió un error inesperado. Por favor intenta de nuevo 
   selector: 'app-new-supply',
   standalone: true,
   imports: [
-    SuminexLoader, SupplyTypeStep, OwnershipStep, HolderDataStep, SupplyPointStep, DocumentsStep, ResultStep,
+    SuminexLoader, SupplyTypeStep, OwnershipStep, HolderDataStep, SupplyPointStep, DocumentsStep, ResultStep, Icon,
   ],
   templateUrl: './new-supply.html',
 })
@@ -55,40 +56,48 @@ export class NewSupplyComponent implements OnDestroy {
 
   comparisonLoading = signal(false);
   comparisonError = signal('');
-  comparisonResult = signal<ManualComparisonResponse | null>(null);
+  extractResult = signal<ExtractComparisonResponse | null>(null);
   holderPrefill = signal<Partial<HolderData> | null>(null);
   supplyPointPrefill = signal<Partial<SupplyPointData> | null>(null);
 
   supplyOptions: SupplyOption[] = [
-    { id: 'electricity', label: 'Suministro de luz',      description: 'Dar de alta nuevo suministro de luz',      icon: 'pi-bolt',       available: true  },
-    { id: 'gas',         label: 'Suministro de gas',      description: 'Dar de alta nuevo suministro de gas',      icon: 'pi-cloud',      available: true  },
-    { id: 'internet',    label: 'Suministro de Internet', description: 'Dar de alta nuevo suministro de internet', icon: 'pi-wifi',       available: true  },
-    { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'pi-circle',     available: false },
-    { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'pi-circle',     available: false },
-    { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'pi-circle',     available: false },
+    { id: 'electricity', label: 'Suministro de luz',      description: 'Dar de alta nuevo suministro de luz',      icon: 'bolt',      available: true  },
+    { id: 'gas',         label: 'Suministro de gas',      description: 'Dar de alta nuevo suministro de gas',      icon: 'cloud',     available: true  },
+    { id: 'internet',    label: 'Suministro de Internet', description: 'Dar de alta nuevo suministro de internet', icon: 'wifi',      available: true  },
+    { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'no-symbol', available: false },
+    { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'no-symbol', available: false },
+    { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'no-symbol', available: false },
   ];
 
   /** Finalizado de cada paso, se guarda acá porque register() lo necesita todo junto al final */
   private finalHolderData: HolderData | null = null;
-  private finalSupplyPointData: SupplyPointData | null = null;
+  private finalDocuments: SupplyDocuments | null = null;
 
   private requiresCups(): boolean {
     return this.selectedSupply() === 'electricity' || this.selectedSupply() === 'gas';
   }
 
+  /** Al elegir el tipo de suministro se pasa al paso de titular (por debajo) y de una se pide la factura, en modal. */
   selectSupply(kind: SupplyKind) {
     if (kind === null) return;
     this.selectedSupply.set(kind);
     this.step.set(2);
-  }
-
-  /** Con o sin cambio de titularidad, en ambos casos se pide la factura antes de seguir. */
-  selectOwnership(type: OwnershipChange) {
-    this.ownershipType.set(type);
     this.invoiceSubmitted = false;
     this.comparisonError.set('');
     this.revokeInvoicePreview();
     this.showInvoiceModal.set(true);
+  }
+
+  closeInvoiceModal() {
+    if (this.comparisonLoading()) return;
+    this.showInvoiceModal.set(false);
+  }
+
+  /** Con cambio de titular no tiene sentido prefillear con los datos del titular anterior leídos de la factura —
+   *  se completan a mano. Sin cambio sí se mantiene el prefill de OCR ya cargado al subir la factura. */
+  selectOwnership(type: OwnershipChange) {
+    this.ownershipType.set(type);
+    if (type === 'with-change') this.holderPrefill.set(null);
   }
 
   onInvoiceFileSelect(event: Event) {
@@ -123,15 +132,7 @@ export class NewSupplyComponent implements OnDestroy {
     this.invoicePreviewKind.set('other');
   }
 
-  closeInvoiceModal() {
-    if (this.comparisonLoading()) return;
-    this.showInvoiceModal.set(false);
-    this.ownershipType.set(null);
-    this.comparisonError.set('');
-    this.revokeInvoicePreview();
-  }
-
-  /** Llama a POST /api/comparisons: OCR + selección de tarifa + cálculo en una sola llamada (flujo Manual, sin TariffId). */
+  /** Llama a POST /api/comparisons/extract: solo OCR, sin comparar tarifas ni guardar nada (el alta ahora es directa, sin comparativa). */
   submitInvoice() {
     this.invoiceSubmitted = true;
     const file = this.invoiceFile();
@@ -142,30 +143,31 @@ export class NewSupplyComponent implements OnDestroy {
     this.comparisonLoading.set(true);
     const serviceType = this.supplyKindToServiceType[kind];
 
-    this.comparisonsSvc.createManual(file, serviceType).subscribe({
+    this.comparisonsSvc.extract(file, serviceType).subscribe({
       next: result => {
         this.comparisonLoading.set(false);
-        this.comparisonResult.set(result);
+        this.extractResult.set(result);
 
-        const holder = result.ocrData.holder;
+        const { luz, gas, internet } = result.ocrData;
+        const svcData = luz ?? gas ?? internet;
+        const titular = svcData?.titular;
         this.holderPrefill.set({
-          fullName: holder.name ?? '',
-          nationalId: holder.dni ?? '',
-          phoneNumber: holder.phone ?? '',
-          email: holder.email ?? '',
+          fullName: titular?.nombre ?? '',
+          nationalId: titular?.dni ?? '',
+          phoneNumber: titular?.telefono ?? '',
+          email: titular?.email ?? '',
         });
         this.supplyPointPrefill.set({
-          streetAddress: [holder.street, holder.number].filter(Boolean).join(' ').trim(),
-          floor: holder.floor ?? '',
-          door: holder.door ?? '',
-          postalCode: holder.postalCode ?? '',
-          province: holder.province ?? '',
-          city: holder.locality ?? '',
-          cups: result.ocrData.cups ?? '',
+          streetAddress: [titular?.calle, titular?.numero].filter(Boolean).join(' ').trim(),
+          floor: titular?.piso ?? '',
+          door: titular?.puerta ?? '',
+          postalCode: titular?.codigoPostal ?? '',
+          province: titular?.provincia ?? '',
+          city: titular?.municipio ?? '',
+          cups: luz?.cups ?? gas?.cups ?? '',
         });
 
         this.showInvoiceModal.set(false);
-        this.step.set(3);
       },
       error: (e) => {
         this.comparisonLoading.set(false);
@@ -180,63 +182,65 @@ export class NewSupplyComponent implements OnDestroy {
 
   onHolderSubmit(data: HolderData) {
     this.finalHolderData = data;
-    this.step.set(4);
+    this.step.set(3);
   }
 
-  onSupplyPointSubmit(data: SupplyPointData) {
-    this.finalSupplyPointData = data;
-    this.step.set(5);
+  onDocumentsSubmit(files: SupplyDocuments) {
+    this.finalDocuments = files;
+    this.step.set(4);
   }
 
   goBack() {
     const s = this.step();
+    /** Dentro del paso de titular, "volver" primero destapa la elección de titularidad antes de salir del paso */
+    if (s === 2 && this.ownershipType()) {
+      this.ownershipType.set(null);
+      return;
+    }
     if (s > 1) this.step.set((s - 1) as Step);
   }
 
-  /** POST /api/supplies/register-with-identity — único endpoint: crea el suministro y verifica identidad de una vez. */
-  onDocumentsSubmit(files: SupplyDocuments) {
+  /** POST /api/supplies/register-direct — alta directa sin comparativa; OcrDocumentId es solo trazabilidad opcional
+   *  y las fotos de DNI son opcionales (verificación best-effort, nunca bloquea el alta). */
+  onSupplyPointSubmit(supplyPointData: SupplyPointData) {
     const kind = this.selectedSupply();
-    const comparison = this.comparisonResult();
     const holderData = this.finalHolderData;
-    const supplyPointData = this.finalSupplyPointData;
-    if (!kind || !comparison || !holderData || !supplyPointData) {
+    if (!kind || !holderData) {
       this.submitError.set('Faltan datos para completar el alta. Vuelve a intentarlo desde el inicio.');
       this.status.set('error');
       return;
     }
+    const files = this.finalDocuments;
+    const ocrDocumentId = this.extractResult()?.ocrDocumentId;
 
     const form = new FormData();
-    form.append('tariffId', String(comparison.tariffId));
-    form.append('serviceType', this.supplyKindToServiceType[kind]);
-    form.append('originFlow', 'Manual');
-    form.append('estimatedSavings', String(comparison.annualSavings));
-    form.append('comparisonHistoryId', comparison.comparisonHistoryId);
-    if (comparison.ocrDocumentId) form.append('ocrDocumentId', comparison.ocrDocumentId);
-    form.append('holderName', holderData.fullName.trim());
-    form.append('holderDni', holderData.nationalId.trim());
-    form.append('holderPhone', `${holderData.phoneCountry}${holderData.phoneNumber.replace(/\D/g, '')}`);
-    form.append('holderEmail', holderData.email.trim());
-    form.append('isUserTheHolder', String(this.ownershipType() === 'without-change'));
+    form.append('ServiceType', this.supplyKindToServiceType[kind]);
+    if (ocrDocumentId) form.append('OcrDocumentId', ocrDocumentId);
+    form.append('HolderName', holderData.fullName.trim());
+    form.append('HolderDni', holderData.nationalId.trim());
+    form.append('HolderPhone', `${holderData.phoneCountry}${holderData.phoneNumber.replace(/\D/g, '')}`);
+    form.append('HolderEmail', holderData.email.trim());
+    form.append('IsUserTheHolder', String(this.ownershipType() === 'without-change'));
     const iban = supplyPointData.bankAccount.replace(/\s+/g, '');
-    if (iban) form.append('holderIban', iban);
-    form.append('street', supplyPointData.streetAddress.trim());
-    if (supplyPointData.floor.trim()) form.append('floor', supplyPointData.floor.trim());
-    if (supplyPointData.door.trim()) form.append('door', supplyPointData.door.trim());
-    form.append('postalCode', supplyPointData.postalCode.trim());
-    form.append('province', supplyPointData.province.trim());
-    form.append('locality', supplyPointData.city.trim());
+    if (iban) form.append('HolderIban', iban);
+    form.append('Street', supplyPointData.streetAddress.trim());
+    if (supplyPointData.floor.trim()) form.append('Floor', supplyPointData.floor.trim());
+    if (supplyPointData.door.trim()) form.append('Door', supplyPointData.door.trim());
+    form.append('PostalCode', supplyPointData.postalCode.trim());
+    form.append('Province', supplyPointData.province.trim());
+    form.append('Locality', supplyPointData.city.trim());
     if (this.requiresCups()) {
-      form.append('cups', supplyPointData.cups.trim());
+      form.append('Cups', supplyPointData.cups.trim());
     } else {
-      form.append('phoneToPort', supplyPointData.phoneToPort.replace(/\D/g, ''));
+      form.append('PhoneToPort', supplyPointData.phoneToPort.replace(/\D/g, ''));
     }
-    form.append('dniFront', files.idFront);
-    form.append('dniBack', files.idBack);
+    if (files?.idFront) form.append('DniFront', files.idFront);
+    if (files?.idBack) form.append('DniBack', files.idBack);
 
     this.submitError.set('');
     this.verificationWarning.set(null);
     this.registering.set(true);
-    this.suppliesSvc.registerWithIdentity(form).pipe(timeout(30000)).subscribe({
+    this.suppliesSvc.registerDirect(form).pipe(timeout(30000)).subscribe({
       next: (res) => {
         this.registering.set(false);
         if (!res.verificationSuccess) this.verificationWarning.set(res.verificationMessage ?? GENERIC_ERROR);
@@ -267,10 +271,10 @@ export class NewSupplyComponent implements OnDestroy {
     this.revokeInvoicePreview();
     this.comparisonLoading.set(false);
     this.comparisonError.set('');
-    this.comparisonResult.set(null);
+    this.extractResult.set(null);
     this.holderPrefill.set(null);
     this.supplyPointPrefill.set(null);
     this.finalHolderData = null;
-    this.finalSupplyPointData = null;
+    this.finalDocuments = null;
   }
 }

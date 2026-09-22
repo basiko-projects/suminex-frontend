@@ -9,13 +9,14 @@ import { computeSupplyComparison, SupplyComparisonResult } from '../../core/help
 import { ConfigureProduct } from '../../shared/components/configure-product/configure-product';
 import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
 import { SupplyTypeStep } from '../../shared/components/supply-type-step/supply-type-step';
+import { Icon } from '../../shared/components/icon/icon';
 
 type OcrStatus = 'idle' | 'uploading' | 'error' | 'done';
 
 @Component({
   selector: 'app-comparator',
   standalone: true,
-  imports: [DecimalPipe, ConfigureProduct, SuminexLoader, SupplyTypeStep],
+  imports: [DecimalPipe, ConfigureProduct, SuminexLoader, SupplyTypeStep, Icon],
   templateUrl: './comparator.html',
 })
 export class ComparatorComponent {
@@ -39,9 +40,9 @@ export class ComparatorComponent {
   uploadedInvoiceName = signal<string | null>(null);
 
   supplyOptions: SupplyOption[] = [
-    { id: 'electricity', label: 'Comparar luz',      description: 'Compara una factura de luz con nuestras tarifas',      icon: 'pi-bolt',   available: true  },
-    { id: 'gas',         label: 'Comparar gas',       description: 'Compara una factura de gas con nuestras tarifas',      icon: 'pi-cloud',  available: true  },
-    { id: 'internet',    label: 'Comparar internet',  description: 'Compara una factura de internet con nuestras tarifas', icon: 'pi-wifi',   available: true  },
+    { id: 'electricity', label: 'Comparar luz',      description: 'Compara una factura de luz con nuestras tarifas',      icon: 'bolt',   available: true  },
+    { id: 'gas',         label: 'Comparar gas',       description: 'Compara una factura de gas con nuestras tarifas',      icon: 'cloud',  available: true  },
+    { id: 'internet',    label: 'Comparar internet',  description: 'Compara una factura de internet con nuestras tarifas', icon: 'wifi',   available: true  },
   ];
 
   selectSupply(kind: SupplyKind) {
@@ -139,7 +140,7 @@ export class ComparatorComponent {
   }
 
   savingsClasses(negative: boolean): string {
-    const base = 'flex items-center gap-2 py-3 px-4 rounded-[10px] mb-5 text-[0.9rem] font-bold';
+    const base = 'flex items-center gap-2 py-3 px-4 rounded-lg mb-5 text-[0.9rem] font-bold';
     return negative ? `${base} bg-[#EF4444]/8 text-[#DC2626]` : `${base} bg-[#22C55E]/10 text-[#16A34A]`;
   }
 }

@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DataTableComponent, DataTableColumn } from '../../shared/data-table/data-table';
+import { DataTableComponent, DataTableColumn } from '../../shared/components/data-table/data-table';
+import { Icon } from '../../shared/components/icon/icon';
 import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
 import { FiscalProfileDialogService } from '../../shared/services/fiscal-profile-dialog.service';
 import { BillingContextService } from '../../shared/services/billing-context.service';
@@ -22,7 +23,7 @@ const GENERIC_ERROR = 'Ocurrió un error inesperado. Por favor intenta de nuevo 
 @Component({
   selector: 'app-billing',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, FormsModule, DataTableComponent, SuminexLoader],
+  imports: [CurrencyPipe, DatePipe, FormsModule, DataTableComponent, SuminexLoader, Icon],
   templateUrl: './billing.html',
 })
 export class BillingComponent implements OnInit, OnDestroy {
@@ -101,7 +102,14 @@ export class BillingComponent implements OnInit, OnDestroy {
       }
     } else {
       this.checkFiscalProfile();
-      this.loadHistory(1);
+      // Mismo flujo que el Admin, pero con el propio id sacado del token — sin selector de colaborador
+      const ownId = this.auth.getUserId();
+      if (ownId) {
+        this.selectedCollaboratorId.set(ownId);
+        this.checkAvailable();
+      } else {
+        this.loadHistory(1);
+      }
     }
   }
 
@@ -205,7 +213,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   trendBadgeClasses(percentChange: number): string {
-    const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold';
+    const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold';
     return percentChange >= 0 ? `${base} bg-sx-green-bg text-sx-green` : `${base} bg-sx-red-bg text-sx-red`;
   }
 
@@ -214,7 +222,7 @@ export class BillingComponent implements OnInit, OnDestroy {
   }
 
   pendingStatusClasses(status: string): string {
-    const base = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold';
+    const base = 'inline-flex items-center px-3 py-1 rounded-lg text-xs font-bold';
     return status === 'Cancelled' ? `${base} bg-sx-red-bg text-sx-red` : `${base} bg-sx-green-bg text-sx-green`;
   }
 }
