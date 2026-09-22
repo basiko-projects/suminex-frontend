@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, TemplateRef } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Icon } from '../icon/icon';
 
 export interface DataTableColumn {
   key: string;
@@ -19,7 +20,7 @@ export interface SortOption {
 @Component({
   selector: 'app-data-table',
   standalone: true,
-  imports: [NgTemplateOutlet, FormsModule],
+  imports: [NgTemplateOutlet, FormsModule, Icon],
   templateUrl: './data-table.html',
   host: { class: 'block' },
 })
@@ -84,7 +85,7 @@ export class DataTableComponent {
   }
 
   filterBtnClasses(active: boolean): string {
-    const base = 'w-5 h-5 rounded-md shrink-0 border-none bg-transparent inline-flex items-center justify-center cursor-pointer transition-all p-0 [&_.pi]:text-[0.72rem]';
+    const base = 'w-5 h-5 rounded-lg shrink-0 border-none bg-transparent inline-flex items-center justify-center cursor-pointer transition-all p-0 [&_.pi]:text-[0.72rem]';
     return active
       ? `${base} bg-sx-primary-bg text-sx-primary`
       : `${base} text-sx-text-3 hover:bg-sx-surface-2 hover:text-sx-primary`;

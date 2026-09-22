@@ -62,12 +62,12 @@
     }
 
     <div class="grid grid-cols-2 gap-4">
-      <div class="border border-sx-border rounded-[10px] p-4 flex flex-col gap-1">
+      <div class="border border-sx-border rounded-lg p-4 flex flex-col gap-1">
         <span class="text-[0.8rem] text-sx-text-2">Comisión comercial</span>
         <strong class="text-[1.4rem] font-extrabold text-sx-text">{{ result().comision | number:'1.0-2' }}€</strong>
         <span class="text-[0.78rem] font-semibold text-sx-green">+ 10% extra</span>
       </div>
-      <div class="border border-sx-green bg-sx-green-bg rounded-[10px] p-4 flex flex-col gap-1">
+      <div class="border border-sx-green bg-sx-green-bg rounded-lg p-4 flex flex-col gap-1">
         <span class="text-[0.8rem] text-sx-text-2">Ahorro cliente</span>
         <strong class="text-[1.4rem] font-extrabold text-sx-text">{{ result().ahorroEstudio | number:'1.0-2' }}€ al
           mes</strong>
@@ -77,12 +77,12 @@
       </div>
     </div>
 
-    <div class="border border-sx-border rounded-[10px] overflow-hidden">
+    <div class="border border-sx-border rounded-lg overflow-hidden">
       <button
         class="w-full flex justify-between items-center py-3.5 px-4 bg-sx-surface-2 border-none cursor-pointer text-[0.9rem] font-bold text-sx-text"
         (click)="showPrices.set(!showPrices())">
-        <span><i class="pi pi-bolt text-sx-primary mr-1.5"></i> Precios ofertados</span>
-        <i class="pi" [class.pi-minus]="showPrices()" [class.pi-plus]="!showPrices()"></i>
+        <span><app-icon name="bolt" svgClass="w-4 h-4 text-sx-primary mr-1.5" /> Precios ofertados</span>
+        <app-icon [name]="showPrices() ? 'minus' : 'plus'" svgClass="w-3.5 h-3.5" />
       </button>
       @if (showPrices()) {
       <div class="grid grid-cols-2 gap-2.5 p-4 text-[0.85rem] text-sx-text-2">

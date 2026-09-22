@@ -8,14 +8,15 @@ import { BoeLuzFormComponent } from '../modals/boe-luz-form/boe-luz-form';
 import { OmieLuzFormComponent } from '../modals/omie-luz-form/omie-luz-form';
 import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
 import { ButtonModule } from 'primeng/button';
-import { DataTableComponent, DataTableColumn } from '../../../shared/data-table/data-table';
+import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table';
+import { Icon } from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-services-shell',
   standalone: true,
   imports: [
     TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, SuminexLoader,
-    ButtonModule, DataTableComponent,
+    ButtonModule, DataTableComponent, Icon,
   ],
   templateUrl: './services-shell.html',
   host: { class: 'block' },
@@ -185,42 +186,42 @@ export class ServicesShellComponent implements OnInit {
   }
 
   typeTabClasses(active: boolean): string {
-    const base = 'inline-flex items-center gap-[7px] py-2 px-4 pb-[9px] border-none bg-transparent text-[13px] font-medium cursor-pointer border-b-2 -mb-px transition-all rounded-t-md';
+    const base = 'inline-flex items-center gap-[7px] py-2 px-4 pb-[9px] border-none bg-transparent text-[13px] font-medium cursor-pointer border-b-2 -mb-px transition-all rounded-t-lg';
     return active
       ? `${base} text-(--tc) font-semibold border-b-(--tc)`
       : `${base} text-sx-text-2 border-b-transparent hover:text-sx-text hover:bg-sx-surface-2`;
   }
 
   tarifaTabClasses(active: boolean): string {
-    const base = 'py-1.25 px-3.5 rounded-full border-[1.5px] text-xs font-semibold font-mono cursor-pointer transition-all';
+    const base = 'py-1.25 px-3.5 rounded-lg border-[1.5px] text-xs font-semibold font-mono cursor-pointer transition-all';
     return active
       ? `${base} bg-sx-primary-btn border-sx-primary-btn text-white`
       : `${base} border-sx-border bg-transparent text-sx-text-2 hover:border-sx-border-2 hover:text-sx-primary`;
   }
 
   contentTabClasses(active: boolean): string {
-    const base = 'py-[7px] px-3.5 pb-2 border-none bg-transparent text-[13px] font-medium cursor-pointer border-b-2 -mb-px transition-all rounded-t-md';
+    const base = 'py-[7px] px-3.5 pb-2 border-none bg-transparent text-[13px] font-medium cursor-pointer border-b-2 -mb-px transition-all rounded-t-lg';
     return active
       ? `${base} text-sx-primary font-semibold border-b-sx-primary`
       : `${base} text-sx-text-2 border-b-transparent hover:text-sx-text hover:bg-sx-surface-2`;
   }
 
   productTypeBadgeClasses(type: string): string {
-    const base = 'inline-block py-0.5 px-1.75 rounded-[5px] text-[11px] font-bold';
+    const base = 'inline-block py-0.5 px-1.75 rounded-lg text-[11px] font-bold';
     return type === 'INDEXED'
       ? `${base} bg-sx-primary-bg text-sx-primary-text`
       : `${base} bg-sx-surface-2 text-sx-text-2`;
   }
 
   statusChipClasses(isOn: boolean): string {
-    const base = 'inline-block py-0.5 px-2 rounded-full text-[11px] font-semibold border';
+    const base = 'inline-block py-0.5 px-2 rounded-lg text-[11px] font-semibold border';
     return isOn
       ? `${base} bg-sx-green-bg text-sx-green border-sx-border-2`
       : `${base} bg-sx-surface-2 text-sx-text-3 border-sx-border`;
   }
 
   pgValClasses(isBoe: boolean): string {
-    const base = 'text-xs font-semibold tabular-nums rounded-md py-1.25 px-2 w-full text-center';
+    const base = 'text-xs font-semibold tabular-nums rounded-lg py-1.25 px-2 w-full text-center';
     return isBoe
       ? `${base} text-sx-primary-text bg-sx-primary-bg border border-sx-border-2`
       : `${base} text-sx-text bg-sx-surface border border-sx-border`;
@@ -231,7 +232,7 @@ export class ServicesShellComponent implements OnInit {
   }
 
   commissionBadgeClasses(pct: number | null | undefined): string {
-    const base = 'ml-auto inline-block py-0.5 px-2 rounded-full text-[10px] font-bold tracking-wide';
+    const base = 'ml-auto inline-block py-0.5 px-2 rounded-lg text-[10px] font-bold tracking-wide';
     return pct !== null && pct !== undefined
       ? `${base} bg-sx-green-bg text-sx-green`
       : `${base} bg-sx-surface-2 text-sx-text-3`;

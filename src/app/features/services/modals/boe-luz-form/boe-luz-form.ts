@@ -6,11 +6,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ServicesService } from '../../../../core/services/services.service';
 import { CreateBoePeriodsDto } from '../../../../core/models/service.model';
 import { SuminexLoader } from '../../../../shared/components/suminex-loader/suminex-loader';
+import { Icon } from '../../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-boe-luz-form',
   standalone: true,
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, SuminexLoader],
+  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, SuminexLoader, Icon],
   templateUrl: './boe-luz-form.html',
 })
 export class BoeLuzFormComponent implements OnInit {

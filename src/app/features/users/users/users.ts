@@ -14,9 +14,10 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { PopoverModule, Popover } from 'primeng/popover';
-import { DataTableComponent, DataTableColumn } from '../../../shared/data-table/data-table';
+import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table';
 import { FiscalProfileDialogService } from '../../../shared/services/fiscal-profile-dialog.service';
 import { BillingContextService } from '../../../shared/services/billing-context.service';
+import { Icon } from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-users',
@@ -24,7 +25,7 @@ import { BillingContextService } from '../../../shared/services/billing-context.
   imports: [
     DatePipe, FormsModule,
     ButtonModule, TagModule, SelectModule, TooltipModule, ToastModule, ConfirmDialogModule, PopoverModule,
-    UserFormComponent, DataTableComponent,
+    UserFormComponent, DataTableComponent, Icon,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './users.html',
@@ -171,7 +172,7 @@ export class UsersComponent implements OnInit {
   }
 
   roleSelectClasses(role: string): string {
-    const base = 'py-1 px-2.5 rounded-full text-[0.69rem] font-bold uppercase tracking-wider border-none cursor-pointer';
+    const base = 'py-1 px-2.5 rounded-lg text-[0.69rem] font-bold uppercase tracking-wider border-none cursor-pointer';
     if (role === 'Collaborator') return `${base} bg-sx-green-bg text-sx-green`;
     if (role === 'Client')       return `${base} bg-sx-surface-2 text-sx-text-2`;
     return `${base} bg-sx-primary-bg text-sx-primary`;

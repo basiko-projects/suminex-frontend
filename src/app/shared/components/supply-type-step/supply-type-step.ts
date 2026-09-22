@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { SupplyKind, SupplyOption } from '../../../core/models/supply.model';
+import { Icon } from '../icon/icon';
 
 @Component({
   selector: 'app-supply-type-step',
   standalone: true,
+  imports: [Icon],
   templateUrl: './supply-type-step.html',
   styleUrl: './supply-type-step.css',
 })
@@ -12,7 +14,7 @@ export class SupplyTypeStep {
   @Output() select = new EventEmitter<SupplyKind>();
 
   supplyCardClasses(available: boolean): string {
-    const base = 'bg-white border-[1.5px] rounded-[14px] pt-6 px-5 pb-5 text-left cursor-pointer transition-all flex flex-col';
+    const base = 'bg-white border-[1.5px] rounded-lg pt-6 px-5 pb-5 text-left cursor-pointer transition-all flex flex-col';
     return available
       ? `${base} border-black/10 enabled:hover:border-[#227CFF] enabled:hover:shadow-[0_0_0_3px_rgba(34,124,255,0.10)] enabled:hover:-translate-y-px`
       : `${base} border-black/10 bg-[#F8FAFC] cursor-not-allowed`;
@@ -24,7 +26,7 @@ export class SupplyTypeStep {
   }
 
   iconCircleIconClasses(available: boolean): string {
-    return available ? 'text-[1.1rem] text-[#227CFF]' : 'text-[1.1rem] text-[#CBD5E1]';
+    return available ? 'w-4.5 h-4.5 text-[#227CFF]' : 'w-4.5 h-4.5 text-[#CBD5E1]';
   }
 
   dividerClasses(available: boolean): string {

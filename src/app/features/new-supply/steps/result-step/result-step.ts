@@ -1,10 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Icon } from '../../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-result-step',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Icon],
   templateUrl: './result-step.html',
 })
 export class ResultStep {

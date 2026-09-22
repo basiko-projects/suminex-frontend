@@ -2,11 +2,12 @@ import { Component, inject, Output, EventEmitter, signal, HostListener } from '@
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { FiscalProfileDialogService } from '../../shared/services/fiscal-profile-dialog.service';
+import { Icon, IconName } from '../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, Icon],
   templateUrl: './header.html',
 })
 export class HeaderComponent {
@@ -18,17 +19,17 @@ export class HeaderComponent {
   dropdownOpen   = signal(false);
   notifsOpen     = signal(false);
 
-  notifications = [
-    { id: 1,  type: 'info',    icon: 'pi-file-check', title: 'Nuevo suministro añadido',        desc: 'El suministro #1042 ha sido registrado correctamente.',  time: 'Hace 5 min',   unread: true  },
-    { id: 2,  type: 'success', icon: 'pi-check-circle', title: 'Comparación completada',         desc: 'Se ha finalizado la comparación de tarifas para cliente.', time: 'Hace 18 min',  unread: true  },
-    { id: 3,  type: 'warning', icon: 'pi-exclamation-triangle', title: 'Tarifa próxima a vencer', desc: 'La tarifa 2.0TD expira en 7 días. Revisa el contrato.',   time: 'Hace 1 h',     unread: true  },
-    { id: 4,  type: 'danger',  icon: 'pi-times-circle', title: 'Error en importación',           desc: 'No se pudo importar el archivo de suministros masivo.',   time: 'Hace 2 h',     unread: false },
-    { id: 5,  type: 'info',    icon: 'pi-users',        title: 'Nuevo usuario registrado',       desc: 'María García se ha unido al portal como agente.',         time: 'Hace 3 h',     unread: false },
-    { id: 6,  type: 'success', icon: 'pi-bolt',         title: 'Servicio activado',              desc: 'El servicio de luz para contrato #872 está activo.',      time: 'Hace 5 h',     unread: false },
-    { id: 7,  type: 'info',    icon: 'pi-chart-bar',    title: 'Reporte semanal disponible',     desc: 'El resumen de comparaciones de esta semana está listo.',  time: 'Hace 8 h',     unread: false },
-    { id: 8,  type: 'warning', icon: 'pi-clock',        title: 'Suministro pendiente',           desc: 'El suministro #998 lleva 3 días sin confirmación.',       time: 'Ayer 16:30',   unread: false },
-    { id: 9,  type: 'success', icon: 'pi-check-circle', title: 'Tarifa publicada',               desc: 'La tarifa PVPC Indexada 3.0TD ya está disponible.',       time: 'Ayer 12:00',   unread: false },
-    { id: 10, type: 'info',    icon: 'pi-info-circle',  title: 'Mantenimiento programado',       desc: 'El sistema estará en mantenimiento el domingo a las 2h.', time: 'Hace 2 días',  unread: false },
+  notifications: { id: number; type: string; icon: IconName; title: string; desc: string; time: string; unread: boolean }[] = [
+    { id: 1,  type: 'info',    icon: 'document-check', title: 'Nuevo suministro añadido',        desc: 'El suministro #1042 ha sido registrado correctamente.',  time: 'Hace 5 min',   unread: true  },
+    { id: 2,  type: 'success', icon: 'check-circle', title: 'Comparación completada',         desc: 'Se ha finalizado la comparación de tarifas para cliente.', time: 'Hace 18 min',  unread: true  },
+    { id: 3,  type: 'warning', icon: 'exclamation-triangle', title: 'Tarifa próxima a vencer', desc: 'La tarifa 2.0TD expira en 7 días. Revisa el contrato.',   time: 'Hace 1 h',     unread: true  },
+    { id: 4,  type: 'danger',  icon: 'x-circle', title: 'Error en importación',           desc: 'No se pudo importar el archivo de suministros masivo.',   time: 'Hace 2 h',     unread: false },
+    { id: 5,  type: 'info',    icon: 'users',        title: 'Nuevo usuario registrado',       desc: 'María García se ha unido al portal como agente.',         time: 'Hace 3 h',     unread: false },
+    { id: 6,  type: 'success', icon: 'bolt',         title: 'Servicio activado',              desc: 'El servicio de luz para contrato #872 está activo.',      time: 'Hace 5 h',     unread: false },
+    { id: 7,  type: 'info',    icon: 'chart-bar',    title: 'Reporte semanal disponible',     desc: 'El resumen de comparaciones de esta semana está listo.',  time: 'Hace 8 h',     unread: false },
+    { id: 8,  type: 'warning', icon: 'clock',        title: 'Suministro pendiente',           desc: 'El suministro #998 lleva 3 días sin confirmación.',       time: 'Ayer 16:30',   unread: false },
+    { id: 9,  type: 'success', icon: 'check-circle', title: 'Tarifa publicada',               desc: 'La tarifa PVPC Indexada 3.0TD ya está disponible.',       time: 'Ayer 12:00',   unread: false },
+    { id: 10, type: 'info',    icon: 'information-circle',  title: 'Mantenimiento programado',       desc: 'El sistema estará en mantenimiento el domingo a las 2h.', time: 'Hace 2 días',  unread: false },
   ];
 
   toggleDropdown(e: Event) {
@@ -49,20 +50,20 @@ export class HeaderComponent {
     this.notifsOpen.set(false);
   }
 
-  private pageMap: Record<string, { title: string; icon: string }> = {
-    '/dashboard':          { title: 'Panel de control', icon: 'pi-microsoft' },
-    '/users':              { title: 'Usuarios',         icon: 'pi-users' },
-    '/services':           { title: 'Servicios',        icon: 'pi-bolt' },
-    '/comparison-history': { title: 'Comparaciones',   icon: 'pi-chart-bar' },
-    '/supplies':           { title: 'Suministros',      icon: 'pi-file-check' },
+  private pageMap: Record<string, { title: string; icon: IconName }> = {
+    '/dashboard':          { title: 'Panel de control', icon: 'arrows-pointing-in' },
+    '/users':              { title: 'Usuarios',         icon: 'users' },
+    '/services':           { title: 'Servicios',        icon: 'bolt' },
+    '/comparison-history': { title: 'Comparaciones',   icon: 'chart-bar' },
+    '/supplies':           { title: 'Suministros',      icon: 'document-check' },
   };
 
   getPageTitle(): string {
     return this.pageMap[this.router.url]?.title ?? 'Portal Admin';
   }
 
-  getPageIcon(): string {
-    return this.pageMap[this.router.url]?.icon ?? 'pi-home';
+  getPageIcon(): IconName {
+    return this.pageMap[this.router.url]?.icon ?? 'home';
   }
 
   getInitial(): string {
@@ -78,7 +79,7 @@ export class HeaderComponent {
   }
 
   notifIconWrapClasses(type: string): string {
-    const base = 'w-8.5 h-8.5 rounded-[9px] shrink-0 flex items-center justify-center';
+    const base = 'w-8.5 h-8.5 rounded-lg shrink-0 flex items-center justify-center';
     const variants: Record<string, string> = {
       info:    'bg-[#EAF2FF] text-[#227CFF]',
       success: 'bg-[#16A34A]/10 text-[#16A34A]',

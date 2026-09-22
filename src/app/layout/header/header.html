@@ -6,13 +6,13 @@
     <button
       class="w-8.5 h-8.5 rounded-lg border border-black/10 bg-transparent text-[#475569] flex items-center justify-center cursor-pointer transition-all lg:hidden hover:bg-[#F8FAFC] hover:border-black/15"
       (click)="openSidebar.emit()" aria-label="Abrir menú">
-      <i class="pi pi-bars"></i>
+      <app-icon name="bars-3" svgClass="w-4 h-4" />
     </button>
 
     <div
-      class="flex items-center gap-[0.55rem] py-1.5 pr-3.5 pl-2 bg-[#EAF2FF] border border-[rgba(37,99,235,0.30)] rounded-[9px]">
-      <span class="w-6.5 h-6.5 bg-[#227CFF] rounded-md flex items-center justify-center shrink-0">
-        <i [class]="'pi ' + getPageIcon()" class="text-white text-[0.78rem]"></i>
+      class="flex items-center gap-[0.55rem] py-1.5 pr-3.5 pl-2 bg-[#EAF2FF] border border-[rgba(37,99,235,0.30)] rounded-lg">
+      <span class="w-6.5 h-6.5 bg-[#227CFF] rounded-lg flex items-center justify-center shrink-0">
+        <app-icon [name]="getPageIcon()" svgClass="w-3.5 h-3.5 text-white" />
       </span>
       <span class="text-[0.845rem] font-semibold text-[#1A6FE8]">{{ getPageTitle() }}</span>
     </div>
@@ -24,7 +24,7 @@
     <!-- Nuevo suministro button -->
     <a routerLink="/new-supply"
       class="inline-flex items-center gap-[0.45rem] py-[0.45rem] px-4 border border-black/15 rounded-lg bg-white text-[#475569] text-[0.82rem] font-medium no-underline transition-all whitespace-nowrap hover:bg-[#EAF2FF] hover:border-[#227CFF] hover:text-[#1A6FE8]">
-      <i class="pi pi-user-plus text-[0.82rem]"></i>
+      <app-icon name="user-plus" svgClass="w-3.5 h-3.5" />
       <span class="hidden sm:inline">Nuevo suministro</span>
     </a>
 
@@ -33,26 +33,26 @@
       <button
         class="w-8.5 h-8.5 rounded-lg border border-black/10 bg-transparent text-[#475569] flex items-center justify-center cursor-pointer transition-all relative hover:bg-[#F8FAFC] hover:border-black/15 hover:text-[#0F172A]"
         title="Notificaciones">
-        <i class="pi pi-bell"></i>
+        <app-icon name="bell" svgClass="w-4 h-4" />
         <span
-          class="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[0.6rem] font-bold min-w-4 h-4 rounded-full flex items-center justify-center px-0.75 border-2 border-white leading-none">{{
+          class="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[0.6rem] font-bold min-w-4 h-4 rounded-lg flex items-center justify-center px-0.75 border-2 border-white leading-none">{{
           notifications.length }}</span>
       </button>
 
       @if (notifsOpen()) {
       <div
-        class="absolute top-[calc(100%+10px)] w-75 -right-15 sm:w-85 sm:right-0 bg-white border border-black/10 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-200 overflow-hidden"
+        class="absolute top-[calc(100%+10px)] w-75 -right-15 sm:w-85 sm:right-0 bg-white border border-black/10 rounded-lg shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-200 overflow-hidden"
         (click)="$event.stopPropagation()">
         <div class="flex items-center justify-between pt-3.5 px-4 pb-3 border-b border-black/[0.07]">
           <span class="text-sm font-bold text-[#0F172A]">Notificaciones</span>
-          <span class="bg-[#EF4444] text-white text-[0.68rem] font-bold py-[0.1rem] px-[0.45rem] rounded-full">{{
+          <span class="bg-[#EF4444] text-white text-[0.68rem] font-bold py-[0.1rem] px-[0.45rem] rounded-lg">{{
             notifications.length }}</span>
         </div>
         <div class="max-h-90 overflow-y-auto">
           @for (n of notifications; track n.id) {
           <div [class]="notifItemClasses(n.unread)">
             <div [class]="notifIconWrapClasses(n.type)">
-              <i [class]="'pi ' + n.icon" class="text-[0.85rem]"></i>
+              <app-icon [name]="n.icon" svgClass="w-3.5 h-3.5" />
             </div>
             <div class="flex-1 min-w-0">
               <p
@@ -68,7 +68,7 @@
         </div>
         <div class="py-2.5 px-4 border-t border-black/[0.07]">
           <button
-            class="w-full py-2 bg-transparent border-none cursor-pointer text-[0.78rem] font-semibold text-[#227CFF] text-center rounded-md transition-colors hover:bg-[#EAF2FF]">Ver
+            class="w-full py-2 bg-transparent border-none cursor-pointer text-[0.78rem] font-semibold text-[#227CFF] text-center rounded-lg transition-colors hover:bg-[#EAF2FF]">Ver
             todas las notificaciones</button>
         </div>
       </div>
@@ -82,12 +82,12 @@
       <div
         class="w-8 h-8 rounded-full bg-[#16A34A] flex items-center justify-center text-[0.8rem] font-bold text-white shrink-0">
         {{ getInitial() }}</div>
-      <i class="pi pi-chevron-down text-[0.6rem] text-[#94A3B8] transition-transform hidden sm:inline-block"
-        [class.rotate-180]="dropdownOpen()"></i>
+      <app-icon name="chevron-down" svgClass="w-2.5 h-2.5 text-[#94A3B8] transition-transform hidden sm:inline-block"
+        [class.rotate-180]="dropdownOpen()" />
 
       @if (dropdownOpen()) {
       <div
-        class="absolute top-[calc(100%+10px)] right-0 min-w-50 bg-white border border-black/10 rounded-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.10)] z-200 overflow-hidden"
+        class="absolute top-[calc(100%+10px)] right-0 min-w-50 bg-white border border-black/10 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.10)] z-200 overflow-hidden"
         (click)="$event.stopPropagation()">
         <div class="py-3 px-4 flex flex-col gap-0.5">
           <span class="text-[0.82rem] font-semibold text-[#0F172A]">{{ auth.currentUser()?.name || 'Admin' }}</span>
@@ -97,14 +97,14 @@
         <button
           class="flex items-center gap-2.5 w-full py-2.5 px-4 bg-transparent border-none cursor-pointer text-[0.82rem] font-medium text-left transition-colors text-[#475569] hover:bg-[#F8FAFC]"
           (click)="profileDialog.open()">
-          <i class="pi pi-id-card text-[0.85rem]"></i>
+          <app-icon name="identification" svgClass="w-3.5 h-3.5" />
           Mi perfil
         </button>
         <div class="h-px bg-black/8"></div>
         <button
           class="flex items-center gap-2.5 w-full py-2.5 px-4 bg-transparent border-none cursor-pointer text-[0.82rem] font-medium text-left transition-colors text-[#DC2626] hover:bg-[#FEF2F2]"
           (click)="auth.logout()">
-          <i class="pi pi-sign-out text-[0.85rem]"></i>
+          <app-icon name="arrow-right-on-rectangle" svgClass="w-3.5 h-3.5" />
           Cerrar sesión
         </button>
       </div>

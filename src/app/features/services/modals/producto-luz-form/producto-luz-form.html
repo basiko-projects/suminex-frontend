@@ -9,7 +9,7 @@
   <div class="flex flex-col gap-[1.1rem]">
     <p class="text-[0.8rem] text-sx-text-3 m-0 mb-2">Configura los precios de energía y potencia</p>
 
-    @if (apiError) { <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.8rem]"><i class="pi pi-exclamation-circle"></i>{{ apiError }}</div> }
+    @if (apiError) { <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.8rem]"><app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ apiError }}</div> }
 
     <div class="grid grid-cols-3 gap-3">
       <div class="flex flex-col gap-1.5">
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Energy periods -->
-    <div class="border border-sx-border rounded-xl p-[0.9rem]">
+    <div class="border border-sx-border rounded-lg p-[0.9rem]">
       <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div>
           <span class="text-[0.85rem] font-semibold text-sx-text block">Precios de energía</span>
@@ -64,7 +64,7 @@
     </div>
 
     <!-- Power periods -->
-    <div class="border border-sx-border rounded-xl p-[0.9rem]">
+    <div class="border border-sx-border rounded-lg p-[0.9rem]">
       <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div>
           <span class="text-[0.85rem] font-semibold text-sx-text block">Potencia</span>
@@ -83,7 +83,7 @@
           </div>
         }
       </div>
-      <div class="flex items-center gap-1.5 mt-2.5 text-[0.72rem] text-sx-primary-text bg-sx-primary-bg py-2 px-2.5 rounded-md"><i class="pi pi-info-circle"></i> Los campos vacíos usarán automáticamente el BOE de la tarifa {{ tariffCode }}</div>
+      <div class="flex items-center gap-1.5 mt-2.5 text-[0.72rem] text-sx-primary-text bg-sx-primary-bg py-2 px-2.5 rounded-lg"><app-icon name="information-circle" svgClass="w-4 h-4" /> Los campos vacíos usarán automáticamente el BOE de la tarifa {{ tariffCode }}</div>
     </div>
   </div>
 
