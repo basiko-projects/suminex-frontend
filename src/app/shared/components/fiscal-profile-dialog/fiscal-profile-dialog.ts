@@ -8,6 +8,7 @@ import { FiscalProfileDialogService } from '../../services/fiscal-profile-dialog
 import { FiscalProfileService } from '../../../core/services/fiscal-profile.service';
 import { UpsertFiscalProfileDto } from '../../../core/models/fiscal-profile.model';
 import { SuminexLoader } from '../suminex-loader/suminex-loader';
+import { Icon } from '../icon/icon';
 
 const EMPTY_FORM: UpsertFiscalProfileDto = {
   taxId: '', businessName: '', fiscalStreet: '', fiscalCity: '', fiscalPostalCode: '', fiscalProvince: '',
@@ -17,7 +18,7 @@ const EMPTY_FORM: UpsertFiscalProfileDto = {
 @Component({
   selector: 'app-fiscal-profile-dialog',
   standalone: true,
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, ToggleSwitchModule, SuminexLoader],
+  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, ToggleSwitchModule, SuminexLoader, Icon],
   templateUrl: './fiscal-profile-dialog.html',
 })
 export class FiscalProfileDialog {

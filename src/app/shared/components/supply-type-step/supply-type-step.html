@@ -4,7 +4,7 @@
     (click)="option.available ? select.emit(option.id) : null">
     <div class="mb-5">
       <div [class]="iconCircleClasses(option.available)">
-        <i [class]="'pi ' + option.icon + ' ' + iconCircleIconClasses(option.available)"></i>
+        <app-icon [name]="option.icon" [svgClass]="iconCircleIconClasses(option.available)" />
       </div>
       <div [class]="dividerClasses(option.available)"></div>
     </div>

@@ -4,13 +4,13 @@
 <!-- Error banner -->
 @if (loadError) {
 <div
-  class="flex items-center gap-3 py-3 px-4 mb-4 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
-  <i class="pi pi-exclamation-circle"></i>
+  class="flex items-center gap-3 py-3 px-4 mb-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.85rem]">
+  <app-icon name="exclamation-circle" svgClass="w-4 h-4" />
   <span>{{ loadError }}</span>
   <button
-    class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-md py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1 hover:bg-sx-red-bg"
+    class="ml-auto bg-transparent border border-sx-red text-sx-red rounded-lg py-1 px-2.5 text-[0.8rem] cursor-pointer flex items-center gap-1 hover:bg-sx-red-bg"
     (click)="load()">
-    <i class="pi pi-refresh"></i> Reintentar
+    <app-icon name="arrow-path" svgClass="w-4 h-4" /> Reintentar
   </button>
 </div>
 }
@@ -24,7 +24,7 @@
   (filterIconClick)="onFilterIconClick($event, tipoPop, estadoPop)">
   <button dtActions type="button" [class]="dateFilterBtnClasses(!!(dateFrom || dateTo))"
     (click)="fechaPop.toggle($event)" title="Filtrar por fecha">
-    <i class="pi pi-calendar text-[0.85rem]"></i>
+    <app-icon name="calendar" svgClass="w-3.5 h-3.5" />
   </button>
 </app-data-table>
 
@@ -52,10 +52,10 @@
     <p-datepicker [(ngModel)]="dateTo" placeholder="Hasta" dateFormat="dd/mm/yy" [showIcon]="true" />
     <div class="flex justify-end gap-2 mt-1">
       <button type="button"
-        class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2"
+        class="py-1.5 px-3.5 rounded-lg text-[0.8rem] font-semibold cursor-pointer transition-all bg-transparent border border-sx-border text-sx-text-2 hover:bg-sx-surface-2"
         (click)="clear(); fechaPop.hide()">Limpiar</button>
       <button type="button"
-        class="py-1.5 px-3.5 rounded-[7px] text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary"
+        class="py-1.5 px-3.5 rounded-lg text-[0.8rem] font-semibold cursor-pointer transition-all bg-sx-primary-btn border border-sx-primary-btn text-white hover:bg-sx-primary"
         (click)="search(); fechaPop.hide()">Aplicar</button>
     </div>
   </div>
@@ -74,7 +74,7 @@
       }}</span></td>
   <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32] text-center">
     <span [class]="typeBadgeClasses(s.serviceType)">
-      <i [class]="'pi ' + typeIcon(s.serviceType)"></i>
+      <app-icon [name]="typeIcon(s.serviceType)" svgClass="w-3.5 h-3.5" />
       {{ s.serviceType }}
     </span>
   </td>
@@ -84,39 +84,20 @@
       }}</span>
   </td>
   <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32] text-center">
-    <span [class]="statusBadgeClasses(s.status)">
-      {{ statusLabel(s.status) }}
-    </span>
+    <select [class]="statusBadgeClasses(s.status)" [ngModel]="s.status"
+      [disabled]="s.status === 'Cancelled' || completingId() === s.id || cancellingId() === s.id"
+      (ngModelChange)="onStatusChange(s, $event)">
+      @for (o of statusSelectOptions(s.status); track o.value) {
+      <option [ngValue]="o.value">{{ o.label }}</option>
+      }
+    </select>
   </td>
   <td class="py-3.5 px-6 pr-12 align-middle text-sm font-medium text-[#292D32] text-center">
     <div class="flex items-center justify-center gap-1">
-      @if (s.status === 'InProgress') {
-      <button
-        class="w-8 h-8 rounded-lg border-none bg-transparent text-[#94A3B8] cursor-pointer inline-flex items-center justify-center transition-colors hover:text-sx-green disabled:opacity-50 disabled:cursor-not-allowed"
-        [disabled]="completingId() === s.id" (click)="completeSupply(s)"
-        title="Marcar como optimizado (deja el suministro facturable)">
-        @if (completingId() === s.id) {
-        <app-suminex-loader [size]="14" />
-        } @else {
-        <i class="pi pi-verified"></i>
-        }
-      </button>
-      }
-      @if (s.status !== 'Cancelled') {
-      <button
-        class="w-8 h-8 rounded-lg border-none bg-transparent text-[#94A3B8] cursor-pointer inline-flex items-center justify-center transition-colors hover:text-sx-red disabled:opacity-50 disabled:cursor-not-allowed"
-        [disabled]="cancellingId() === s.id" (click)="cancelSupply(s)" title="Dar de baja">
-        @if (cancellingId() === s.id) {
-        <app-suminex-loader [size]="14" />
-        } @else {
-        <i class="pi pi-times-circle"></i>
-        }
-      </button>
-      }
       <button
         class="w-8 h-8 rounded-lg border-none bg-transparent text-[#94A3B8] cursor-pointer inline-flex items-center justify-center transition-colors hover:text-[#227CFF]"
         (click)="openDetail(s)" title="Ver detalle">
-        <i class="pi pi-eye"></i>
+        <app-icon name="eye" svgClass="w-4 h-4" />
       </button>
     </div>
   </td>
@@ -128,7 +109,7 @@
   class="fixed inset-0 bg-black/55 backdrop-blur-[3px] flex items-center justify-center z-600 p-4 animate-[fade-in_150ms_ease]"
   (click)="viewingItem.set(null)">
   <div
-    class="bg-sx-surface border border-sx-border rounded-[20px] w-[min(92vw,660px)] min-[900px]:w-[min(75vw,820px)] max-h-[88vh] overflow-y-auto flex flex-col shadow-[0_24px_64px_rgba(15,23,42,0.18)] animate-[slide-down-in_200ms_ease-out]"
+    class="bg-sx-surface border border-sx-border rounded-lg w-[min(92vw,660px)] min-[900px]:w-[min(75vw,820px)] max-h-[88vh] overflow-y-auto flex flex-col shadow-[0_24px_64px_rgba(15,23,42,0.18)] animate-[slide-down-in_200ms_ease-out]"
     (click)="$event.stopPropagation()">
 
     <div class="flex items-start gap-4 py-6 px-7 border-b border-sx-border sticky top-0 z-2 bg-sx-surface">
@@ -137,19 +118,19 @@
         <div class="text-[0.78rem] text-sx-text-3">{{ viewingItem()!.userEmail }}</div>
         <div class="flex flex-wrap gap-1.5 mt-1.5">
           <span [class]="typeBadgeClasses(viewingItem()!.serviceType)">
-            <i [class]="'pi ' + typeIcon(viewingItem()!.serviceType)"></i>
+            <app-icon [name]="typeIcon(viewingItem()!.serviceType)" svgClass="w-3.5 h-3.5" />
             {{ viewingItem()!.serviceType }}
           </span>
           @if (viewingItem()!.tariffCode) {
           <code
-            class="font-mono text-[0.7rem] font-bold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-full border border-sx-border-2">{{ viewingItem()!.tariffCode }}</code>
+            class="font-mono text-[0.7rem] font-bold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-lg border border-sx-border-2">{{ viewingItem()!.tariffCode }}</code>
           }
           <span [class]="statusBadgeClasses(viewingItem()!.status)">
             {{ statusLabel(viewingItem()!.status) }}
           </span>
           @if (viewingItem()!.status === 'PendingIdentityVerification' || viewingItem()!.status === 'Pending') {
           <span class="inline-flex items-center gap-1.5 text-[0.75rem] text-sx-text-3">
-            <i class="pi pi-info-circle"></i>Pendiente de verificar identidad — todavía no se puede optimizar
+            <app-icon name="information-circle" svgClass="w-4 h-4" />Pendiente de verificar identidad — todavía no se puede optimizar
           </span>
           }
         </div>
@@ -162,7 +143,7 @@
         @if (completingId() === viewingItem()!.id) {
         <app-suminex-loader [size]="14" [onColor]="true" /> Optimizando...
         } @else {
-        <i class="pi pi-verified"></i> Marcar como optimizado
+        <app-icon name="check-badge" svgClass="w-4 h-4" /> Marcar como optimizado
         }
       </button>
       }
@@ -174,27 +155,27 @@
         @if (cancellingId() === viewingItem()!.id) {
         <app-suminex-loader [size]="14" /> Dando de baja...
         } @else {
-        <i class="pi pi-times-circle"></i> Dar de baja
+        <app-icon name="x-circle" svgClass="w-4 h-4" /> Dar de baja
         }
       </button>
       }
       <button
         class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 transition-all hover:text-sx-red hover:border-sx-red hover:bg-sx-red-bg"
-        (click)="viewingItem.set(null)"><i class="pi pi-times"></i></button>
+        (click)="viewingItem.set(null)"><app-icon name="x-mark" svgClass="w-4 h-4" /></button>
     </div>
     @if (completeError()) {
     <div class="flex items-center gap-2 py-2.5 px-3 mx-7 mt-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.82rem]">
-      <i class="pi pi-exclamation-circle"></i>{{ completeError() }}
+      <app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ completeError() }}
     </div>
     }
 
     <div class="py-6 px-7 pb-7 flex flex-col gap-6">
 
-      <div class="flex flex-wrap gap-px bg-sx-border border border-sx-border rounded-xl overflow-hidden">
+      <div class="flex flex-wrap gap-px bg-sx-border border border-sx-border rounded-lg overflow-hidden">
         <div class="flex-[1.5] min-w-45 flex items-center gap-3.5 py-4 px-6 bg-sx-green-bg">
           <div
-            class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-[#16A34A]/15 text-sx-green flex items-center justify-center text-base">
-            <i class="pi pi-sparkles"></i></div>
+            class="w-9.5 h-9.5 rounded-lg shrink-0 bg-[#16A34A]/15 text-sx-green flex items-center justify-center text-base">
+            <app-icon name="sparkles" svgClass="w-4 h-4" /></div>
           <div class="flex flex-col gap-0.5">
             <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Ahorro estimado</span>
             <span class="text-[1.35rem] font-extrabold text-sx-green tracking-[-0.01em]">{{
@@ -203,8 +184,8 @@
         </div>
         <div class="flex-1 min-w-37.5 flex items-center gap-3 py-4 px-5 bg-sx-surface">
           <div
-            class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center text-base">
-            <i class="pi pi-bolt"></i></div>
+            class="w-9.5 h-9.5 rounded-lg shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center text-base">
+            <app-icon name="bolt" svgClass="w-4 h-4" /></div>
           <div class="flex flex-col gap-0.5">
             <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Tarifa contratada</span>
             <span class="text-[0.9rem] font-bold text-sx-text">{{ viewingItem()!.serviceName }}</span>
@@ -212,12 +193,12 @@
         </div>
         <div class="flex-1 min-w-37.5 flex items-center gap-3 py-4 px-5 bg-sx-surface">
           <div
-            class="w-9.5 h-9.5 rounded-[11px] shrink-0 bg-sx-surface-2 text-sx-text-2 flex items-center justify-center text-base">
-            <i class="pi pi-sitemap"></i></div>
+            class="w-9.5 h-9.5 rounded-lg shrink-0 bg-sx-surface-2 text-sx-text-2 flex items-center justify-center text-base">
+            <app-icon name="flag" svgClass="w-4 h-4" /></div>
           <div class="flex flex-col gap-0.5">
             <span class="text-[0.68rem] font-semibold uppercase tracking-wide text-sx-text-3">Origen</span>
             <span
-              class="text-[0.75rem] font-semibold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-full border border-sx-border-2 w-fit">{{
+              class="text-[0.75rem] font-semibold text-sx-primary-text bg-sx-primary-bg py-0.75 px-2.5 rounded-lg border border-sx-border-2 w-fit">{{
               viewingItem()!.originFlow }}</span>
           </div>
         </div>
@@ -226,8 +207,7 @@
       <div class="flex flex-col gap-3.5">
         <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
           <span
-            class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i
-              class="pi pi-user text-[0.68rem]"></i></span> Titular
+            class="w-6 h-6 rounded-lg shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><app-icon name="user" svgClass="w-3 h-3" /></span> Titular
         </div>
         <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-3">
           <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
@@ -264,8 +244,7 @@
       <div class="flex flex-col gap-3.5">
         <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
           <span
-            class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i
-              class="pi pi-map-marker text-[0.68rem]"></i></span> Punto de suministro
+            class="w-6 h-6 rounded-lg shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><app-icon name="map-pin" svgClass="w-3 h-3" /></span> Punto de suministro
         </div>
         <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-3">
           <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border col-span-2">
@@ -302,8 +281,7 @@
       <div class="flex flex-col gap-3.5">
         <div class="text-[0.8rem] font-bold text-sx-text flex items-center gap-2">
           <span
-            class="w-6 h-6 rounded-[7px] shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><i
-              class="pi pi-info-circle text-[0.68rem]"></i></span> Información del registro
+            class="w-6 h-6 rounded-lg shrink-0 bg-sx-primary-bg text-sx-primary flex items-center justify-center"><app-icon name="information-circle" svgClass="w-3 h-3" /></span> Información del registro
         </div>
         <div class="grid grid-cols-2 gap-2.5 min-[600px]:grid-cols-3">
           <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">

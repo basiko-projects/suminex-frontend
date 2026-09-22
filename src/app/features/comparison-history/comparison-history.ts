@@ -10,7 +10,8 @@ import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { PopoverModule, Popover } from 'primeng/popover';
-import { DataTableComponent, DataTableColumn } from '../../shared/data-table/data-table';
+import { DataTableComponent, DataTableColumn } from '../../shared/components/data-table/data-table';
+import { Icon } from '../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-comparison-history',
@@ -18,7 +19,7 @@ import { DataTableComponent, DataTableColumn } from '../../shared/data-table/dat
   imports: [
     DatePipe, CurrencyPipe, DecimalPipe, FormsModule,
     ButtonModule, TagModule, SelectModule, DatePickerModule, TooltipModule, PopoverModule,
-    DataTableComponent,
+    DataTableComponent, Icon,
   ],
   templateUrl: './comparison-history.html',
 })

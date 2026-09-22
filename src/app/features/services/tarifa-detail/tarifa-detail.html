@@ -4,7 +4,7 @@
   <button
     class="inline-flex items-center gap-1.5 py-1.75 px-3.5 mb-5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 text-xs cursor-pointer transition-all hover:border-sx-border-2 hover:text-sx-primary"
     (click)="goBack()">
-    <i class="pi pi-arrow-left text-[11px]"></i> Volver a tarifas
+    <app-icon name="arrow-left" svgClass="w-3.5 h-3.5" /> Volver a tarifas
   </button>
 
   @if (loading()) {
@@ -16,9 +16,9 @@
   <!-- Header -->
   <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
     <div class="flex items-center gap-3">
-      <span class="inline-flex items-center gap-1.5 py-1.25 px-3 rounded-full text-xs font-bold font-mono"
+      <span class="inline-flex items-center gap-1.5 py-1.25 px-3 rounded-lg text-xs font-bold font-mono"
         [style.background]="typeBg" [style.color]="typeColor" [style.border]="'1px solid ' + typeBorder">
-        <i [class]="'pi ' + typeIcon" class="text-[11px]"></i>
+        <app-icon [name]="typeIcon" svgClass="w-2.75 h-2.75" />
         {{ d.tariffCode || d.serviceType }}
       </span>
       <div>
@@ -32,7 +32,7 @@
       <button
         class="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 text-xs cursor-pointer transition-all hover:border-sx-border-2 hover:text-sx-text hover:bg-sx-surface-2"
         (click)="showEditForm = true">
-        <i class="pi pi-pencil"></i> Editar tarifa
+        <app-icon name="pencil" svgClass="w-4 h-4" /> Editar tarifa
       </button>
     </div>
   </div>
@@ -56,16 +56,16 @@
         <button
           class="inline-flex items-center gap-1.5 py-1.75 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer transition-colors hover:bg-sx-primary"
           (click)="showProductoLuz = true">
-          <i class="pi pi-plus text-[10px]"></i> Nuevo producto
+          <app-icon name="plus" svgClass="w-3.5 h-3.5" /> Nuevo producto
         </button>
       </div>
       @if (!d.products?.length) {
       <div class="flex flex-col items-center gap-2.5 p-12 text-sx-text-3">
-        <i class="pi pi-box text-[28px]"></i>
+        <app-icon name="archive-box" svgClass="w-7 h-7" />
         <span class="text-[13px]">No hay productos para esta tarifa</span>
       </div>
       } @else {
-      <div class="border border-sx-border rounded-xl overflow-hidden">
+      <div class="border border-sx-border rounded-lg overflow-hidden">
         <table class="w-full border-collapse">
           <thead>
             <tr class="bg-sx-surface-2">
@@ -105,8 +105,8 @@
               <td class="py-2.5 px-5 border-b border-sx-border align-middle">
                 <div class="flex justify-end gap-1">
                   <button
-                    class="w-7.5 h-7.5 rounded-[7px] border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
-                    (click)="editProduct(p)"><i class="pi pi-pencil"></i></button>
+                    class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-xs"
+                    (click)="editProduct(p)"><app-icon name="pencil" svgClass="w-4 h-4" /></button>
                 </div>
               </td>
             </tr>
@@ -125,16 +125,16 @@
         <button
           class="inline-flex items-center gap-1.5 py-1.75 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer transition-colors hover:bg-sx-primary"
           (click)="showBoe = true">
-          <i class="pi pi-plus text-[10px]"></i> Nuevo período BOE
+          <app-icon name="plus" svgClass="w-3.5 h-3.5" /> Nuevo período BOE
         </button>
       </div>
       @if (!d.boePeriods?.length) {
       <div class="flex flex-col items-center gap-2.5 p-12 text-sx-text-3">
-        <i class="pi pi-bolt text-[28px]"></i>
+        <app-icon name="bolt" svgClass="w-7 h-7" />
         <span class="text-[13px]">No hay períodos BOE registrados</span>
       </div>
       } @else {
-      <div class="border border-sx-border rounded-xl overflow-hidden">
+      <div class="border border-sx-border rounded-lg overflow-hidden">
         <table class="w-full border-collapse">
           <thead>
             <tr class="bg-sx-surface-2">
@@ -176,16 +176,16 @@
         <button
           class="inline-flex items-center gap-1.5 py-1.75 px-3 rounded-lg bg-sx-primary-btn text-white border-none text-xs font-medium cursor-pointer transition-colors hover:bg-sx-primary"
           (click)="showOmie = true">
-          <i class="pi pi-plus text-[10px]"></i> Nueva distribución
+          <app-icon name="plus" svgClass="w-3.5 h-3.5" /> Nueva distribución
         </button>
       </div>
       @if (!d.omieDistributions?.length) {
       <div class="flex flex-col items-center gap-2.5 p-12 text-sx-text-3">
-        <i class="pi pi-chart-bar text-[28px]"></i>
+        <app-icon name="chart-bar" svgClass="w-7 h-7" />
         <span class="text-[13px]">No hay distribuciones OMIE registradas</span>
       </div>
       } @else {
-      <div class="border border-sx-border rounded-xl overflow-hidden">
+      <div class="border border-sx-border rounded-lg overflow-hidden">
         <table class="w-full border-collapse">
           <thead>
             <tr class="bg-sx-surface-2">
@@ -240,42 +240,42 @@
       </div>
       @if (d.mobileDetail) {
       <div class="grid grid-cols-3 gap-3">
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Cuota mensual</span><span
             class="text-sm font-semibold text-sx-text">{{ d.mobileDetail.monthlyFee }} €</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Datos</span><span
             class="text-sm font-semibold text-sx-text">{{ d.mobileDetail.dataGb ?? '∞' }} GB</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Minutos voz</span><span
             class="text-sm font-semibold text-sx-text">{{ d.mobileDetail.voiceMinutes ?? 'Ilimitados' }}</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Red</span><span
             class="text-sm font-semibold text-sx-text">{{ d.mobileDetail.network }}</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Permanencia</span><span
             class="text-sm font-semibold text-sx-text">{{ d.mobileDetail.permanenceMonths ?? 0 }} meses</span></div>
       </div>
       }
       @if (d.internetDetail) {
       <div class="grid grid-cols-3 gap-3">
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Cuota mensual</span><span
             class="text-sm font-semibold text-sx-text">{{ d.internetDetail.monthlyFee }} €</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Bajada</span><span
             class="text-sm font-semibold text-sx-text">{{ d.internetDetail.speedDownMbps }} Mbps</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Subida</span><span
             class="text-sm font-semibold text-sx-text">{{ d.internetDetail.speedUpMbps }} Mbps</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Tecnología</span><span
             class="text-sm font-semibold text-sx-text">{{ d.internetDetail.technology }}</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Router</span><span
             class="text-sm font-semibold text-sx-text">{{ d.internetDetail.routerIncluded ? 'Incluido' : 'No incluido'
             }}</span></div>
-        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-xl"><span
+        <div class="flex flex-col gap-1 p-3.5 bg-sx-surface border border-sx-border rounded-lg"><span
             class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">TV</span><span
             class="text-sm font-semibold text-sx-text">{{ d.internetDetail.includesTv ? 'Incluida' : 'No incluida'
             }}</span></div>

@@ -3,13 +3,13 @@
 
 @if (loadError) {
 <div
-  class="flex items-center gap-3 py-3.5 px-5 mb-5 rounded-[10px] bg-sx-red-bg border border-sx-red text-sx-red text-sm">
-  <i class="pi pi-exclamation-circle text-[1.1rem] shrink-0"></i>
+  class="flex items-center gap-3 py-3.5 px-5 mb-5 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-sm">
+  <app-icon name="exclamation-circle" svgClass="w-5 h-5 shrink-0" />
   <span class="flex-1 font-medium">{{ loadError }}</span>
   <button
-    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-md border border-sx-red bg-transparent text-sx-red text-[0.8rem] font-semibold cursor-pointer whitespace-nowrap transition-colors hover:bg-sx-red hover:text-white"
+    class="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-sx-red bg-transparent text-sx-red text-[0.8rem] font-semibold cursor-pointer whitespace-nowrap transition-colors hover:bg-sx-red hover:text-white"
     (click)="load()">
-    <i class="pi pi-refresh"></i> Reintentar
+    <app-icon name="arrow-path" svgClass="w-4 h-4" /> Reintentar
   </button>
 </div>
 }
@@ -27,13 +27,13 @@
 <ng-template #rowTpl let-p>
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12">
     <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-[9px] bg-sx-primary-bg border border-sx-border-2 text-sx-primary-text text-sm font-bold flex items-center justify-center shrink-0">{{ p.name.charAt(0) }}</div>
+      <div class="w-8 h-8 rounded-lg bg-sx-primary-bg border border-sx-border-2 text-sx-primary-text text-sm font-bold flex items-center justify-center shrink-0">{{ p.name.charAt(0) }}</div>
       <span class="font-semibold">{{ p.name }}</span>
     </div>
   </td>
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12"><code>{{ p.cif }}</code></td>
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
-    <span class="inline-flex items-center justify-center bg-sx-surface-2 border border-sx-border text-sx-text-2 text-xs font-semibold min-w-7 px-2 py-0.5 rounded-full">{{ p.serviceCount }}</span>
+    <span class="inline-flex items-center justify-center bg-sx-surface-2 border border-sx-border text-sx-text-2 text-xs font-semibold min-w-7 px-2 py-0.5 rounded-lg">{{ p.serviceCount }}</span>
   </td>
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-sx-text-2 text-[0.82rem]">{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
@@ -42,10 +42,10 @@
   <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
     <div class="flex justify-center gap-1">
       <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-[0.8rem]" (click)="edit(p)" title="Editar">
-        <i class="pi pi-pencil"></i>
+        <app-icon name="pencil" svgClass="w-4 h-4" />
       </button>
       <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red [&_.pi]:text-[0.8rem]" (click)="confirmDelete(p)" title="Desactivar">
-        <i class="pi pi-trash"></i>
+        <app-icon name="trash" svgClass="w-4 h-4" />
       </button>
     </div>
   </td>

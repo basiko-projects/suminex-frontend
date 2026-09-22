@@ -12,8 +12,9 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { DataTableComponent, DataTableColumn } from '../../shared/data-table/data-table';
+import { DataTableComponent, DataTableColumn } from '../../shared/components/data-table/data-table';
 import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { Icon } from '../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-providers',
@@ -22,7 +23,7 @@ import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-lo
     DatePipe, FormsModule,
     ButtonModule, DialogModule, InputTextModule,
     ToggleSwitchModule, TagModule, ToastModule, ConfirmDialogModule,
-    SuminexLoader, DataTableComponent,
+    SuminexLoader, DataTableComponent, Icon,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './providers.html',

@@ -24,15 +24,15 @@ export class SuppliesService {
     return this.http.get<SupplyListResponse>(this.url, { params });
   }
 
-  /** POST /api/supplies/register-with-identity — único endpoint de alta (reemplaza el viejo POST /api/supplies JSON,
-   *  que ya no existe). Multipart: crea el suministro y verifica identidad en una sola llamada; siempre 200 si los
-   *  datos base son válidos, aunque la identidad no matchee o falten las fotos (verificationSuccess: false). */
-  registerWithIdentity(formData: FormData): Observable<RegisterSupplyResponse> {
-    return this.http.post<RegisterSupplyResponse>(`${this.url}/register-with-identity`, formData);
+  /** POST /api/supplies/register-direct — reemplaza a register-with-identity: da de alta el suministro sin
+   *  comparativa de tarifa (OcrDocumentId es solo trazabilidad opcional) y verifica identidad si mandás las fotos
+   *  de DNI, pero no bloquea el alta si no las mandás o si la verificación falla (best-effort). Admin/Collaborator only. */
+  registerDirect(formData: FormData): Observable<RegisterSupplyResponse> {
+    return this.http.post<RegisterSupplyResponse>(`${this.url}/register-direct`, formData);
   }
 
   /** POST /api/supplies/verify-identity — para verificar identidad más tarde, sobre un suministro que ya quedó
-   *  en PendingIdentityVerification. Ya no se usa en el alta (ver registerWithIdentity).
+   *  en PendingIdentityVerification. Ya no se usa en el alta (ver registerDirect).
    *  holderDni: el DNI que el titular confirmó en el formulario — el backend lo compara contra el OCR de DniFront y falla si no coincide. */
   verifyIdentity(dniFront: File, dniBack: File, holderDni: string): Observable<VerifyIdentityResponse> {
     const formData = new FormData();

@@ -7,9 +7,9 @@
       {{ getInitial() }}</div>
     <div class="flex-1 flex flex-col gap-px min-w-0">
       <span
-        class="text-sm font-bold text-[#0F172A] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis">{{
+        class="text-[14px] font-bold text-[#0F172A] tracking-[-0.01em] whitespace-nowrap overflow-hidden text-ellipsis">{{
         auth.currentUser()?.name || 'Administrador' }}</span>
-      <span class="text-xs text-[#94A3B8] whitespace-nowrap overflow-hidden text-ellipsis">Bienvenido a Suminex</span>
+      <span class="text-[12px] text-[#94A3B8] whitespace-nowrap overflow-hidden text-ellipsis">Bienvenido a Suminex</span>
     </div>
   </div>
 
@@ -20,8 +20,12 @@
     @for (item of commercialItems; track item.route) {
     <a [routerLink]="item.route" routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="{exact: true}"
       [class]="navItemClasses(rla.isActive)">
-      <span class="w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0 bg-transparent transition-colors">
+      <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-transparent transition-colors">
+        @if (item.iconSet === 'hero') {
+        <app-icon [name]="asIconName(item.icon)" [svgClass]="navIconClasses(rla.isActive)" />
+        } @else {
         <i [class]="'pi ' + item.icon + ' ' + navIconClasses(rla.isActive)"></i>
+        }
       </span>
       <span class="flex-1">{{ item.label }}</span>
       @if (item.badge) {
@@ -36,8 +40,12 @@
     @for (item of adminItems; track item.route) {
     <a [routerLink]="item.route" routerLinkActive #rla="routerLinkActive" [routerLinkActiveOptions]="{exact: true}"
       [class]="navItemClasses(rla.isActive)">
-      <span class="w-7 h-7 rounded-[7px] flex items-center justify-center shrink-0 bg-transparent transition-colors">
+      <span class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-transparent transition-colors">
+        @if (item.iconSet === 'hero') {
+        <app-icon [name]="asIconName(item.icon)" [svgClass]="navIconClasses(rla.isActive)" />
+        } @else {
         <i [class]="'pi ' + item.icon + ' ' + navIconClasses(rla.isActive)"></i>
+        }
       </span>
       <span class="flex-1">{{ item.label }}</span>
       @if (item.badge) {
@@ -50,7 +58,7 @@
   </nav>
 
   <!-- Help box -->
-  <div class="m-2.5 py-3.5 px-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl shrink-0">
+  <div class="m-2.5 py-3.5 px-4 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg shrink-0">
     <p class="text-[0.82rem] font-semibold text-[#0F172A] m-0 mb-1">¿Necesitas ayuda?</p>
     <p class="text-[0.72rem] text-[#64748B] m-0 mb-3 leading-[1.4]">Estamos disponibles para ayudarte</p>
     <a href="mailto:soporte@suminex.es"

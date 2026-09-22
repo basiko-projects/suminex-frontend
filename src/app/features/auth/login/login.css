@@ -1,9 +1,20 @@
+/* 4 radial-gradients chained with commas overflow what Tailwind's arbitrary-value parser can
+   handle — the utility silently resolved to background-image: none, so it's real CSS instead. */
+.login-bg {
+  background:
+    radial-gradient(circle at top right, rgba(112, 144, 255, .5), transparent 20%),
+    radial-gradient(circle at top right, rgba(173, 232, 156, .5), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(112, 144, 255, .5), transparent 15%),
+    radial-gradient(circle at bottom left, rgba(173, 232, 156, .5), transparent 35%),
+    #f8faff;
+}
+
 /* :-webkit-autofill has no Tailwind equivalent — must stay real CSS */
 .login-input:-webkit-autofill,
 .login-input:-webkit-autofill:hover,
 .login-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #252525 inset !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-  caret-color: #FFFFFF;
+  -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  -webkit-text-fill-color: #0F172A !important;
+  caret-color: #0F172A;
   transition: background-color 5000s ease-in-out 0s;
 }

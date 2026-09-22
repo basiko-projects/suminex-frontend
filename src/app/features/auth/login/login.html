@@ -1,64 +1,116 @@
 <div
-  class="min-h-screen bg-[linear-gradient(180deg,#227CFF_0%,#1255CC_30%,#071230_65%,#030810_100%)] flex items-center justify-center font-sans p-6">
-  <div class="bg-[#161616] rounded-[20px] pt-11 px-9 pb-9 w-full max-w-105 shadow-[0_32px_80px_rgba(0,0,0,0.55)]">
+  class="login-bg h-screen w-screen grid grid-rows-[1fr_auto] font-sans">
 
-    <!-- Brand -->
-    <div class="mb-9 text-center">
-      <img src="/logo_suminex.svg" alt="Suminex" class="h-7.5 w-auto block mx-auto mb-4" />
-      <h1 class="text-[28px] font-bold text-white m-0 tracking-[-0.02em] leading-[1.2]">Iniciar sesión</h1>
-    </div>
+  <main
+    class="w-full h-full flex items-center justify-center gap-50 max-[980px]:gap-0 p-10 max-[980px]:p-6">
 
-    <!-- Form -->
-    <form class="flex flex-col gap-4" (submit)="$event.preventDefault(); login()">
+    <!-- Brand card — solo en pantallas grandes; en medianas/chicas se oculta, no se apila arriba -->
+    <section aria-label="Presentación Suminex"
+      class="hidden min-[981px]:flex flex-col bg-white
+      rounded-lg shadow-[0_24px_60px_rgba(80,110,160,0.12)]
+      w-160 h-169.25 py-12 px-19.25">
 
-      <div class="flex flex-col gap-1">
-        <div class="relative flex items-center">
-          <i class="pi pi-envelope absolute left-3.5 text-sm text-white/30 pointer-events-none"></i>
-          <input type="email" [(ngModel)]="email" name="email" placeholder="Correo" autocomplete="email"
+      <div class="flex items-center gap-2.5 mb-9">
+        <img src="/logo_suminex_dark.svg" alt="Suminex" class="h-6.5 w-auto block" />
+      </div>
+
+      <h1 class="text-[34px] font-extrabold tracking-[-0.035em] leading-[1.15] text-sx-text max-w-105 m-0">
+        Gestiona tus suministros desde una única plataforma
+      </h1>
+      <p class="mt-4.5 text-[15.5px] leading-[1.55] text-sx-text-2 max-w-100 m-0">
+        Compara tarifas, da de alta suministros y automatiza la facturación de tus colaboradores, todo en un solo lugar.
+      </p>
+
+      <!-- Reseña — carrusel con placeholders de estructura, sin testimonio real todavía -->
+      <div class="mt-auto bg-sx-surface-2 rounded-lg p-8 shadow-[0_10px_30px_rgba(80,110,160,0.06)] overflow-hidden">
+        @for (r of [reviews[currentReview()]]; track currentReview()) {
+        <div class="animate-[fade-in_400ms_ease]">
+          <app-icon name="chat-bubble-left" svgClass="w-5 h-5 text-sx-primary" />
+          <p class="mt-3.5 text-[0.86rem] italic leading-[1.55] text-sx-text-2 m-0">"{{ r.quote }}"</p>
+          <div class="flex items-center gap-3 mt-5">
+            <div class="w-11 h-11 rounded-full bg-white border border-sx-border shrink-0"></div>
+            <div>
+              <p class="text-[0.82rem] font-bold text-sx-text m-0 leading-tight">{{ r.name }}</p>
+              <p class="text-[0.74rem] text-sx-text-3 m-0 leading-tight">{{ r.role }}</p>
+            </div>
+          </div>
+        </div>
+        }
+      </div>
+
+      <div class="flex justify-center gap-1.75 pt-6">
+        @for (r of reviews; track $index; let i = $index) {
+        <button type="button" (click)="selectReview(i)" [attr.aria-label]="'Ver reseña ' + (i + 1)"
+          class="w-1.75 h-1.75 rounded-full border-none cursor-pointer p-0 transition-colors"
+          [class]="i === currentReview() ? 'bg-sx-text-3' : 'bg-sx-border-2'"></button>
+        }
+      </div>
+    </section>
+
+    <!-- Login form -->
+    <section
+      class="w-full max-w-90">
+
+      <h2 class="text-[32px] font-extrabold tracking-[-0.035em] mb-3 text-sx-text m-0">Iniciar sesión</h2>
+      <p class="text-sx-text-2 text-[15.5px] leading-normal mb-9 max-w-90">
+        Accede a la plataforma con tu usuario y contraseña de Suminex
+      </p>
+
+      <form (submit)="$event.preventDefault(); login()">
+
+        <div class="mb-5.5">
+          <label class="block text-sm font-medium text-sx-text-2 mb-2">Email</label>
+          <input type="email" [(ngModel)]="email" name="email" placeholder="tuemail@email.com" autocomplete="email"
             [class]="inputClasses(submitted && !email)" />
+          @if (submitted && !email) {
+          <span class="block mt-1.5 text-[0.76rem] text-sx-red">Este campo es obligatorio</span>
+          }
         </div>
-        @if (submitted && !email) {
-        <span class="text-[11px] text-[#F87171] pl-0.5">Este campo es obligatorio</span>
-        }
-      </div>
 
-      <div class="flex flex-col gap-1">
-        <div class="relative flex items-center">
-          <i class="pi pi-lock absolute left-3.5 text-sm text-white/30 pointer-events-none"></i>
-          <input [type]="showPwd() ? 'text' : 'password'" [(ngModel)]="password" name="password"
-            placeholder="Contraseña" autocomplete="current-password" [class]="inputClasses(submitted && !password)" />
-          <button
-            class="absolute right-3 bg-transparent border-none cursor-pointer text-white/30 p-1 flex items-center transition-colors hover:text-white/65"
-            type="button" (click)="showPwd.set(!showPwd())">
-            <i [class]="'pi ' + (showPwd() ? 'pi-eye-slash' : 'pi-eye')" class="text-[15px]"></i>
-          </button>
+        <div class="mb-5.5">
+          <label class="block text-sm font-medium text-sx-text-2 mb-2">Contraseña</label>
+          <div class="relative">
+            <input [type]="showPwd() ? 'text' : 'password'" [(ngModel)]="password" name="password"
+              placeholder="tucontraseña" autocomplete="current-password"
+              [class]="inputClasses(submitted && !password) + ' pr-11'" />
+            <button
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg border-none bg-transparent grid place-items-center cursor-pointer text-sx-text-3 transition-colors hover:text-sx-text-2"
+              type="button" (click)="showPwd.set(!showPwd())">
+              <app-icon [name]="showPwd() ? 'eye-slash' : 'eye'" svgClass="w-4 h-4" />
+            </button>
+          </div>
+          @if (submitted && !password) {
+          <span class="block mt-1.5 text-[0.76rem] text-sx-red">Este campo es obligatorio</span>
+          }
         </div>
-        @if (submitted && !password) {
-        <span class="text-[11px] text-[#F87171] pl-0.5">Este campo es obligatorio</span>
+
+        @if (error()) {
+        <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.82rem] mb-5.5">
+          <app-icon name="exclamation-circle" svgClass="w-3.5 h-3.5 shrink-0" />
+          <span>{{ error() }}</span>
+        </div>
         }
-      </div>
 
-      @if (error()) {
-      <div class="flex items-center gap-2 py-2.5 px-3 rounded-lg bg-[#EF4444]/12 border border-[#EF4444]/35 text-[#F87171] text-xs">
-        <i class="pi pi-exclamation-circle text-[13px] shrink-0"></i>
-        <span>{{ error() }}</span>
-      </div>
-      }
+        <button
+          class="w-[100%] min-[981px]:w-auto mt-2.5 h-11 px-5.5 border-none rounded-lg bg-sx-primary-btn text-white text-[14.5px] font-semibold cursor-pointer inline-flex items-center justify-center gap-2 transition-colors enabled:hover:bg-sx-primary active:translate-y-px disabled:opacity-55 disabled:cursor-not-allowed"
+          type="submit" [disabled]="loading() || !email || !password">
+          @if (loading()) {
+          <app-suminex-loader [size]="16" [onColor]="true" /> Verificando...
+          } @else {
+          Iniciar sesión
+          }
+        </button>
+      </form>
+    </section>
 
-      <button
-        class="w-full py-3.25 px-4 mt-2 bg-[#227CFF] text-white border-[1.5px] border-[#227CFF] rounded-[10px] text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all enabled:hover:bg-[#1A6FE8] enabled:hover:border-[#1A6FE8] disabled:opacity-50 disabled:cursor-not-allowed"
-        type="submit" [disabled]="loading()">
-        @if (loading()) {
-        <app-suminex-loader [size]="16" [onColor]="true" /> Verificando...
-        } @else {
-        Iniciar sesión
-        }
-      </button>
-    </form>
+  </main>
 
-    <p class="text-center mt-7 mb-0 text-xs text-white/35 leading-normal">
-      ¿Necesitas acceso?
-      <a href="mailto:soporte@suminex.es" class="text-[#227CFF] no-underline font-medium hover:underline">Contacta con soporte</a>
-    </p>
-  </div>
+  <footer
+    class="flex items-center justify-end max-[980px]:justify-center max-[980px]:flex-wrap max-[980px]:text-center
+    gap-7 px-10 max-[980px]:px-6 pt-4.5 pb-5.5 text-sx-text-3 text-[13px]">
+    <span class="inline-flex items-center gap-2">
+      <app-icon name="globe-alt" svgClass="w-4 h-4" /> Español (ES)
+    </span>
+    <span>Suminex {{ currentYear }} · Todos los derechos reservados.</span>
+  </footer>
 </div>

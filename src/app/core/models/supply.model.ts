@@ -1,3 +1,5 @@
+import { IconName } from '../../shared/components/icon/icon';
+
 export type SupplyStatus = 'PendingIdentityVerification' | 'Pending' | 'InProgress' | 'Optimized' | 'Cancelled';
 export type CategoryCode = 'LUZ' | 'GAS' | 'MOVIL' | 'INTERNET';
 
@@ -7,7 +9,7 @@ export interface SupplyOption {
   id: SupplyKind;
   label: string;
   description: string;
-  icon: string;
+  icon: IconName;
   available: boolean;
 }
 

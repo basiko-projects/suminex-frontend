@@ -12,8 +12,9 @@ import { PopoverModule, Popover } from 'primeng/popover';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { DataTableComponent, DataTableColumn, SortOption } from '../../shared/data-table/data-table';
+import { DataTableComponent, DataTableColumn, SortOption } from '../../shared/components/data-table/data-table';
 import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { Icon, IconName } from '../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-supplies',
@@ -21,7 +22,7 @@ import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-lo
   imports: [
     DatePipe, CurrencyPipe, FormsModule,
     SelectModule, DatePickerModule, TooltipModule, ButtonModule, PopoverModule, ConfirmDialogModule, ToastModule,
-    DataTableComponent, SuminexLoader,
+    DataTableComponent, SuminexLoader, Icon,
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './supplies.html',
@@ -119,9 +120,9 @@ export class SuppliesComponent implements OnInit {
     if (e.key === 'status') estadoPop.toggle(e.event);
   }
 
-  typeIcon(t: string): string {
-    const m: Record<string, string> = { LUZ: 'pi-sun', GAS: 'pi-fire', MOVIL: 'pi-mobile', INTERNET: 'pi-wifi' };
-    return m[t] ?? 'pi-bolt';
+  typeIcon(t: string): IconName {
+    const m: Record<string, IconName> = { LUZ: 'sun', GAS: 'fire', MOVIL: 'device-phone-mobile', INTERNET: 'wifi' };
+    return m[t] ?? 'bolt';
   }
 
   statusLabel(s: string): string {
@@ -143,7 +144,7 @@ export class SuppliesComponent implements OnInit {
   }
 
   typeBadgeClasses(type: string): string {
-    const base = 'inline-flex items-center gap-1 py-[3px] px-2.5 rounded-full text-[0.7rem] font-bold tracking-wide border';
+    const base = 'inline-flex items-center gap-1 py-[3px] px-2.5 rounded-lg text-[0.7rem] font-bold tracking-wide border';
     const variants: Record<string, string> = {
       luz:      'bg-[rgba(251,191,36,.12)] text-[#B8860B] border-[rgba(251,191,36,.3)]',
       gas:      'bg-[rgba(249,115,22,.12)] text-[#C2540A] border-[rgba(249,115,22,.3)]',
@@ -154,15 +155,29 @@ export class SuppliesComponent implements OnInit {
   }
 
   statusBadgeClasses(status: string): string {
-    const base = 'inline-flex items-center py-1 px-3 rounded-full text-[0.7rem] font-bold border';
+    const base = 'inline-flex items-center py-1 px-3 rounded-lg text-[0.7rem] font-bold border-none cursor-pointer uppercase tracking-wider';
     const variants: Record<string, string> = {
-      pendingidentityverification: 'bg-[rgba(100,116,139,.1)] border-[rgba(100,116,139,.3)] text-[#475569]',
-      pending:                     'bg-[rgba(100,116,139,.1)] border-[rgba(100,116,139,.3)] text-[#475569]',
-      inprogress:                  'bg-[rgba(217,119,6,.12)] border-[rgba(217,119,6,.3)] text-[#B45309]',
-      optimized:                   'bg-[rgba(22,163,74,.12)] border-[rgba(22,163,74,.3)] text-[#16A34A]',
-      cancelled:                   'bg-[rgba(220,38,38,.1)] border-[rgba(220,38,38,.3)] text-[#DC2626]',
+      pendingidentityverification: 'bg-[rgba(100,116,139,.1)] text-[#475569]',
+      pending:                     'bg-[rgba(100,116,139,.1)] text-[#475569]',
+      inprogress:                  'bg-[rgba(217,119,6,.12)] text-[#B45309]',
+      optimized:                   'bg-[rgba(22,163,74,.12)] text-[#16A34A]',
+      cancelled:                   'bg-[rgba(220,38,38,.1)] text-[#DC2626]',
     };
-    return `${base} ${variants[status.toLowerCase()] ?? variants['pending']}`;
+    return `${base} ${variants[status.toLowerCase()] ?? variants['pending']} disabled:opacity-60 disabled:cursor-not-allowed`;
+  }
+
+  /** Transiciones válidas desde cada estado — reflejan lo que el backend realmente acepta (complete solo desde InProgress, cancel en cualquier estado salvo ya cancelado) */
+  statusSelectOptions(status: SupplyStatus): { label: string; value: SupplyStatus }[] {
+    const opts = [{ label: this.statusLabel(status), value: status }];
+    if (status === 'InProgress') opts.push({ label: 'Optimizado', value: 'Optimized' as SupplyStatus });
+    if (status !== 'Cancelled') opts.push({ label: 'Cancelado', value: 'Cancelled' as SupplyStatus });
+    return opts;
+  }
+
+  onStatusChange(s: Supply, newStatus: SupplyStatus) {
+    if (newStatus === s.status) return;
+    if (newStatus === 'Optimized') this.completeSupply(s);
+    else if (newStatus === 'Cancelled') this.cancelSupply(s);
   }
 
   /** POST /api/supplies/{id}/complete — solo válido desde InProgress; deja el suministro facturable */
