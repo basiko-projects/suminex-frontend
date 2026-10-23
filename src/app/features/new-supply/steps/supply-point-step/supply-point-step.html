@@ -1,9 +1,17 @@
 <form class="flex flex-col gap-4.5" (submit)="$event.preventDefault(); submitForm()">
-  <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">Dirección del punto de suministro *</label>
-    <input type="text" [class]="formInputClasses(!!streetAddressError)" [(ngModel)]="supplyPointData.streetAddress" name="streetAddress"
-      placeholder="Calle" />
-    @if (streetAddressError) { <span class="text-[0.76rem] text-[#DC2626]">{{ streetAddressError }}</span> }
+  <div class="grid grid-cols-[1fr_140px] gap-4 max-[480px]:grid-cols-1">
+    <div class="flex flex-col gap-[0.45rem]">
+      <label class="text-[0.82rem] font-bold text-[#0F172A]">Dirección del punto de suministro *</label>
+      <input type="text" [class]="formInputClasses(!!streetAddressError)" [(ngModel)]="supplyPointData.streetAddress" name="streetAddress"
+        placeholder="Calle" />
+      @if (streetAddressError) { <span class="text-[0.76rem] text-[#DC2626]">{{ streetAddressError }}</span> }
+    </div>
+    <div class="flex flex-col gap-[0.45rem]">
+      <label class="text-[0.82rem] font-bold text-[#0F172A]">Número *</label>
+      <input type="text" [class]="formInputClasses(!!numberError)" [(ngModel)]="supplyPointData.number" name="number"
+        placeholder="Nº" />
+      @if (numberError) { <span class="text-[0.76rem] text-[#DC2626]">{{ numberError }}</span> }
+    </div>
   </div>
   <div class="grid grid-cols-2 gap-4 max-[480px]:grid-cols-1">
     <div class="flex flex-col gap-[0.45rem]">
@@ -50,5 +58,12 @@
       name="bankAccount" placeholder="ES35 3454 6753 2435 4434" />
     @if (bankAccountError) { <span class="text-[0.76rem] text-[#DC2626]">{{ bankAccountError }}</span> }
   </div>
-  <button type="submit" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]">Enviar firma al cliente</button>
+  <button type="submit" [disabled]="validatingIban()"
+    class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+    @if (validatingIban()) {
+    <app-basiko-loader [size]="18" [onColor]="true" /> Validando IBAN...
+    } @else {
+    Enviar firma al cliente
+    }
+  </button>
 </form>

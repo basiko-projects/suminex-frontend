@@ -1,0 +1,32 @@
+@if (loading) {
+<div class="flex items-center justify-center gap-2 py-12 text-[#64748B] text-sm">
+  <app-basiko-loader [size]="20" /> Cargando productos disponibles...
+</div>
+} @else if (error) {
+<div class="flex items-center gap-2 py-3 px-4 rounded-lg bg-[#EF4444]/8 border border-[#EF4444]/30 text-[#DC2626] text-sm">
+  <app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ error }}
+</div>
+} @else if (!products.length) {
+<div class="flex flex-col items-center gap-2 py-12 text-center text-[#64748B] text-sm max-w-110 mx-auto">
+  <app-icon name="exclamation-triangle" svgClass="w-6 h-6" />
+  <span>No hay productos con comisión fija disponibles para este tipo de suministro.</span>
+  <span class="text-xs text-[#94A3B8]">Un alta directa (sin comparativa) solo puede usar productos con comisión
+    fija — si el producto que buscas tiene comisión por porcentaje, da de alta este suministro desde el Comparador en
+    su lugar.</span>
+</div>
+} @else {
+<div class="flex flex-col gap-2.5 max-w-170">
+  @for (p of products; track p.id) {
+  <button type="button"
+    class="flex items-center justify-between gap-3 py-3.5 px-4.5 rounded-lg border-[1.5px] border-black/10 bg-white text-left cursor-pointer transition-all hover:border-[#227CFF] hover:shadow-[0_0_0_3px_rgba(34,124,255,0.10)]"
+    (click)="select.emit(p.id)">
+    <div class="flex flex-col gap-0.5 min-w-0">
+      <span class="text-[0.95rem] font-bold text-[#0F172A]">{{ p.name }}</span>
+      <span class="text-[0.78rem] text-[#64748B]">{{ p.tariffName }}{{ p.providerName ? ' · ' + p.providerName : ''
+        }}</span>
+    </div>
+    <span class="text-[0.82rem] font-bold text-[#16A34A] shrink-0">{{ p.fixedCommissionAmount }} €</span>
+  </button>
+  }
+</div>
+}

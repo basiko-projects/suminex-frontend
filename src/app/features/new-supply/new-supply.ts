@@ -3,12 +3,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { timeout } from 'rxjs/operators';
 import { ComparisonsService } from '../../core/services/comparisons.service';
 import { SuppliesService } from '../../core/services/supplies.service';
+import { ServicesService } from '../../core/services/services.service';
 import { ServiceType } from '../../core/models/service.model';
 import { ExtractComparisonResponse } from '../../core/models/comparison.model';
 import { SupplyKind, SupplyOption } from '../../core/models/supply.model';
-import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loader';
 import { SupplyTypeStep } from '../../shared/components/supply-type-step/supply-type-step';
 import { HolderData, OwnershipChange, SupplyPointData } from './new-supply.types';
+import { ProductSelectStep, EligibleProduct } from './steps/product-select-step/product-select-step';
 import { OwnershipStep } from './steps/ownership-step/ownership-step';
 import { HolderDataStep } from './steps/holder-data-step/holder-data-step';
 import { SupplyPointStep } from './steps/supply-point-step/supply-point-step';
@@ -24,13 +26,15 @@ const GENERIC_ERROR = 'Ocurrió un error inesperado. Por favor intenta de nuevo 
   selector: 'app-new-supply',
   standalone: true,
   imports: [
-    SuminexLoader, SupplyTypeStep, OwnershipStep, HolderDataStep, SupplyPointStep, DocumentsStep, ResultStep, Icon,
+    BasikoLoader, SupplyTypeStep, ProductSelectStep, OwnershipStep, HolderDataStep, SupplyPointStep, DocumentsStep,
+    ResultStep, Icon,
   ],
   templateUrl: './new-supply.html',
 })
 export class NewSupplyComponent implements OnDestroy {
   private comparisonsSvc = inject(ComparisonsService);
   private suppliesSvc = inject(SuppliesService);
+  private servicesSvc = inject(ServicesService);
   private sanitizer = inject(DomSanitizer);
 
   private readonly supplyKindToServiceType: Record<'electricity' | 'gas' | 'internet', ServiceType> = {
@@ -60,6 +64,12 @@ export class NewSupplyComponent implements OnDestroy {
   holderPrefill = signal<Partial<HolderData> | null>(null);
   supplyPointPrefill = signal<Partial<SupplyPointData> | null>(null);
 
+  /** Alta directa exige elegir un producto con comisión fija antes de poder dar de alta — ver POST /api/supplies/register-direct */
+  selectedProductId = signal<number | null>(null);
+  loadingProducts = signal(false);
+  eligibleProducts = signal<EligibleProduct[]>([]);
+  productsError = signal('');
+
   supplyOptions: SupplyOption[] = [
     { id: 'electricity', label: 'Suministro de luz',      description: 'Dar de alta nuevo suministro de luz',      icon: 'bolt',      available: true  },
     { id: 'gas',         label: 'Suministro de gas',      description: 'Dar de alta nuevo suministro de gas',      icon: 'cloud',     available: true  },
@@ -77,15 +87,54 @@ export class NewSupplyComponent implements OnDestroy {
     return this.selectedSupply() === 'electricity' || this.selectedSupply() === 'gas';
   }
 
-  /** Al elegir el tipo de suministro se pasa al paso de titular (por debajo) y de una se pide la factura, en modal. */
+  /** Al elegir el tipo de suministro se abre el modal de factura encima del Step 1 — recién se avanza
+   *  al Step 2 cuando el OCR termina con éxito (ver submitInvoice). Si se cierra el modal sin subir nada,
+   *  el usuario simplemente se queda en el Step 1, que nunca llegó a abandonarse. */
   selectSupply(kind: SupplyKind) {
     if (kind === null) return;
     this.selectedSupply.set(kind);
-    this.step.set(2);
     this.invoiceSubmitted = false;
     this.comparisonError.set('');
     this.revokeInvoicePreview();
     this.showInvoiceModal.set(true);
+  }
+
+  /** Se llama tras leer la factura por OCR — filtra el selector de producto a la tarifa real leída (ej. 2.0TD/3.0TD).
+   *  Solo LUZ trae tarifa por OCR; en GAS/INTERNET se listan todos los productos elegibles del tipo, sin filtrar. */
+  private loadEligibleProducts(kind: SupplyKind, tariffCode?: string | null) {
+    if (kind === null) return;
+    this.loadingProducts.set(true);
+    this.productsError.set('');
+    this.eligibleProducts.set([]);
+    const targetType = this.supplyKindToServiceType[kind];
+    const normalize = (v: string | null | undefined) => (v ?? '').trim().toUpperCase();
+
+    this.servicesSvc.getServices().subscribe({
+      next: groups => {
+        const group = groups.find(g => g.serviceType === targetType);
+        const allTariffs = group?.tariffs ?? [];
+        const matchingTariffs = tariffCode
+          ? allTariffs.filter(t => normalize(t.code) === normalize(tariffCode))
+          : [];
+        const pool = matchingTariffs.length ? matchingTariffs : allTariffs;
+
+        const eligible = pool.flatMap(t =>
+          (t.products ?? [])
+            .filter(p => p.isActive && p.fixedCommissionAmount != null)
+            .map(p => ({ ...p, tariffName: t.code ?? t.name }))
+        );
+        this.eligibleProducts.set(eligible);
+        this.loadingProducts.set(false);
+      },
+      error: () => {
+        this.loadingProducts.set(false);
+        this.productsError.set('No se pudieron cargar los productos disponibles. Inténtalo de nuevo.');
+      },
+    });
+  }
+
+  onProductSelected(productId: number) {
+    this.selectedProductId.set(productId);
   }
 
   closeInvoiceModal() {
@@ -158,7 +207,8 @@ export class NewSupplyComponent implements OnDestroy {
           email: titular?.email ?? '',
         });
         this.supplyPointPrefill.set({
-          streetAddress: [titular?.calle, titular?.numero].filter(Boolean).join(' ').trim(),
+          streetAddress: titular?.calle ?? '',
+          number: titular?.numero ?? '',
           floor: titular?.piso ?? '',
           door: titular?.puerta ?? '',
           postalCode: titular?.codigoPostal ?? '',
@@ -167,7 +217,9 @@ export class NewSupplyComponent implements OnDestroy {
           cups: luz?.cups ?? gas?.cups ?? '',
         });
 
+        this.loadEligibleProducts(kind, luz?.tarifa);
         this.showInvoiceModal.set(false);
+        this.step.set(2);
       },
       error: (e) => {
         this.comparisonLoading.set(false);
@@ -192,9 +244,13 @@ export class NewSupplyComponent implements OnDestroy {
 
   goBack() {
     const s = this.step();
-    /** Dentro del paso de titular, "volver" primero destapa la elección de titularidad antes de salir del paso */
+    /** Dentro del paso 2, "volver" retrocede de a un sub-paso: titular → titularidad → producto → tipo de suministro */
     if (s === 2 && this.ownershipType()) {
       this.ownershipType.set(null);
+      return;
+    }
+    if (s === 2 && this.selectedProductId()) {
+      this.selectedProductId.set(null);
       return;
     }
     if (s > 1) this.step.set((s - 1) as Step);
@@ -213,17 +269,27 @@ export class NewSupplyComponent implements OnDestroy {
     const files = this.finalDocuments;
     const ocrDocumentId = this.extractResult()?.ocrDocumentId;
 
+    const productId = this.selectedProductId();
+    if (!productId) {
+      this.submitError.set('Falta elegir el producto contratado. Vuelve a intentarlo desde el inicio.');
+      this.status.set('error');
+      return;
+    }
+
     const form = new FormData();
     form.append('ServiceType', this.supplyKindToServiceType[kind]);
+    form.append('ProductId', String(productId));
     if (ocrDocumentId) form.append('OcrDocumentId', ocrDocumentId);
     form.append('HolderName', holderData.fullName.trim());
     form.append('HolderDni', holderData.nationalId.trim());
     form.append('HolderPhone', `${holderData.phoneCountry}${holderData.phoneNumber.replace(/\D/g, '')}`);
     form.append('HolderEmail', holderData.email.trim());
     form.append('IsUserTheHolder', String(this.ownershipType() === 'without-change'));
+    form.append('IsHolderChange', String(this.ownershipType() === 'with-change'));
     const iban = supplyPointData.bankAccount.replace(/\s+/g, '');
     if (iban) form.append('HolderIban', iban);
     form.append('Street', supplyPointData.streetAddress.trim());
+    form.append('Number', supplyPointData.number.trim());
     if (supplyPointData.floor.trim()) form.append('Floor', supplyPointData.floor.trim());
     if (supplyPointData.door.trim()) form.append('Door', supplyPointData.door.trim());
     form.append('PostalCode', supplyPointData.postalCode.trim());
@@ -240,7 +306,7 @@ export class NewSupplyComponent implements OnDestroy {
     this.submitError.set('');
     this.verificationWarning.set(null);
     this.registering.set(true);
-    this.suppliesSvc.registerDirect(form).pipe(timeout(30000)).subscribe({
+    this.suppliesSvc.registerDirect(form).pipe(timeout(35000)).subscribe({
       next: (res) => {
         this.registering.set(false);
         if (!res.verificationSuccess) this.verificationWarning.set(res.verificationMessage ?? GENERIC_ERROR);
@@ -276,5 +342,9 @@ export class NewSupplyComponent implements OnDestroy {
     this.supplyPointPrefill.set(null);
     this.finalHolderData = null;
     this.finalDocuments = null;
+    this.selectedProductId.set(null);
+    this.loadingProducts.set(false);
+    this.eligibleProducts.set([]);
+    this.productsError.set('');
   }
 }

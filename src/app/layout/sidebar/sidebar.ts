@@ -31,6 +31,7 @@ export class SidebarComponent {
 
   adminItems: NavItem[] = [
     { label: 'Servicios',    icon: 'pi-bolt', route: '/services' },
+    { label: 'Proveedores',  icon: 'building-storefront', iconSet: 'hero', route: '/providers' },
     { label: 'Estadísticas', icon: 'chart-pie', iconSet: 'hero', route: '/stats' },
     { label: 'Usuarios',     icon: 'user',      iconSet: 'hero', route: '/users' },
   ];

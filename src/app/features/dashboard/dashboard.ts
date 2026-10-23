@@ -38,12 +38,13 @@ export class DashboardComponent implements OnInit {
   userName = computed(() => this.auth.currentUser()?.name || 'Administrador');
 
   loading      = signal(true);
-  activePeriod = signal<Period>('week');
+  activePeriod = signal<Period>('month');
   loadError    = '';
 
-  totalSupplies   = 0;
-  avgOrderValue   = 0;
-  avgOrderDiffAbs = 0;
+  totalSupplies         = 0;
+  avgOrderValue         = 0;
+  avgOrderDiffAbs       = 0;
+  availableToInvoice    = 0;
 
   private readonly emptyTrend: KpiDisplay = { hasData: false, pct: 0, arrowUp: true, good: true };
   suppliesTrend: KpiDisplay = this.emptyTrend;
@@ -197,11 +198,12 @@ export class DashboardComponent implements OnInit {
 
     this.stats.getDashboard({ from: toDateParam(start), to: toDateParam(end), groupBy: this.groupBy })
       .pipe(finalize(() => this.loading.set(false))).subscribe({
-        next: ({ summary, timeseries }) => {
+        next: ({ summary, timeseries, availableToInvoiceThisMonth }) => {
           this.timeseries    = timeseries ?? [];
           this.totalSupplies = summary.managedSupplies.value;
           this.avgOrderValue = summary.avgOrderValue.value;
           this.avgOrderDiffAbs = Math.abs(summary.avgOrderValue.value - summary.avgOrderValue.previousValue);
+          this.availableToInvoice = availableToInvoiceThisMonth ?? 0;
 
           this.suppliesTrend = this.kpiDisplay(summary.managedSupplies);
           this.avgOrderTrend = this.kpiDisplay(summary.avgOrderValue);

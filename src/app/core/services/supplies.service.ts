@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { CancelSupplyResponse, CompleteSupplyResponse, LinkIdentityResponse, RegisterSupplyResponse, Supply, SupplyFilters, SupplyListResponse, VerifyIdentityResponse } from '../models/supply.model';
+import { CancelSupplyResponse, CompleteSupplyResponse, ExternalSubmissionStatus, LinkIdentityResponse, RegisterSupplyResponse, Supply, SupplyFilters, SupplyListResponse, ValidationResult, VerifyIdentityResponse } from '../models/supply.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -42,7 +42,8 @@ export class SuppliesService {
     return this.http.post<VerifyIdentityResponse>(`${this.url}/verify-identity`, formData);
   }
 
-  /** POST /api/supplies/{id}/complete — solo desde InProgress; pasa el suministro a Optimized (ya facturable) */
+  /** POST /api/supplies/{id}/complete — solo desde InProgress; pasa el suministro a Optimized (ya facturable).
+   *  Sin body — el producto ya quedó guardado desde el alta directa (ver registerDirect). */
   complete(id: string): Observable<CompleteSupplyResponse> {
     return this.http.post<CompleteSupplyResponse>(`${this.url}/${id}/complete`, null);
   }
@@ -52,8 +53,29 @@ export class SuppliesService {
     return this.http.post<LinkIdentityResponse>(`${this.url}/${id}/link-identity`, { dniFrontDocumentId, dniBackDocumentId });
   }
 
+  /** POST /api/supplies/validate-iban — nunca mandar iban vacío: el backend lo intenta validar igual contra Gana,
+   *  Gana lo rechaza y el código actual lo confunde con un error de red, devolviendo isValid:true falso-positivo. */
+  validateIban(iban: string): Observable<ValidationResult> {
+    return this.http.post<ValidationResult>(`${this.url}/validate-iban`, { iban, integrationCode: null });
+  }
+
+  /** POST /api/supplies/validate-phone — mismo cuidado que validateIban: nunca mandar phoneNumber vacío. */
+  validatePhone(prefix: string, phoneNumber: string): Observable<ValidationResult> {
+    return this.http.post<ValidationResult>(`${this.url}/validate-phone`, { prefix, phoneNumber, integrationCode: null });
+  }
+
   /** POST /api/supplies/{id}/cancel — da de baja el suministro; funciona en cualquier estado, incluido Optimized */
   cancel(id: string, reason?: string): Observable<CancelSupplyResponse> {
     return this.http.post<CancelSupplyResponse>(`${this.url}/${id}/cancel`, { reason: reason ?? null });
+  }
+
+  /** GET /api/supplies/{id}/external-submission — 404 si nunca se intentó un envío (proveedor sin integración, el caso normal) */
+  getExternalSubmission(id: string): Observable<ExternalSubmissionStatus> {
+    return this.http.get<ExternalSubmissionStatus>(`${this.url}/${id}/external-submission`);
+  }
+
+  /** POST /api/supplies/{id}/external-submission/retry — sin body; solo funciona si el estado actual es Failed */
+  retryExternalSubmission(id: string): Observable<ExternalSubmissionStatus> {
+    return this.http.post<ExternalSubmissionStatus>(`${this.url}/${id}/external-submission/retry`, null);
   }
 }

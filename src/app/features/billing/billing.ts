@@ -3,7 +3,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DataTableComponent, DataTableColumn } from '../../shared/components/data-table/data-table';
 import { Icon } from '../../shared/components/icon/icon';
-import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loader';
 import { FiscalProfileDialogService } from '../../shared/services/fiscal-profile-dialog.service';
 import { BillingContextService } from '../../shared/services/billing-context.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -17,13 +17,13 @@ interface GeneratedInvoice {
   pdfUrl: string;
 }
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 const GENERIC_ERROR = 'Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.';
 
 @Component({
   selector: 'app-billing',
   standalone: true,
-  imports: [CurrencyPipe, DatePipe, FormsModule, DataTableComponent, SuminexLoader, Icon],
+  imports: [CurrencyPipe, DatePipe, FormsModule, DataTableComponent, BasikoLoader, Icon],
   templateUrl: './billing.html',
 })
 export class BillingComponent implements OnInit, OnDestroy {

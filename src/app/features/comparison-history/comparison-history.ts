@@ -32,7 +32,7 @@ export class ComparisonHistoryComponent implements OnInit {
   loading    = signal(true);
   loadError  = '';
   page       = 1;
-  pageSize   = 20;
+  pageSize   = 10;
 
   get tableColumns(): DataTableColumn[] {
     return [

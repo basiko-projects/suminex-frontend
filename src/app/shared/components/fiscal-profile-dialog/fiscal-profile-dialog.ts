@@ -7,7 +7,7 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { FiscalProfileDialogService } from '../../services/fiscal-profile-dialog.service';
 import { FiscalProfileService } from '../../../core/services/fiscal-profile.service';
 import { UpsertFiscalProfileDto } from '../../../core/models/fiscal-profile.model';
-import { SuminexLoader } from '../suminex-loader/suminex-loader';
+import { BasikoLoader } from '../basiko-loader/basiko-loader';
 import { Icon } from '../icon/icon';
 
 const EMPTY_FORM: UpsertFiscalProfileDto = {
@@ -18,7 +18,7 @@ const EMPTY_FORM: UpsertFiscalProfileDto = {
 @Component({
   selector: 'app-fiscal-profile-dialog',
   standalone: true,
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, ToggleSwitchModule, SuminexLoader, Icon],
+  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, ToggleSwitchModule, BasikoLoader, Icon],
   templateUrl: './fiscal-profile-dialog.html',
 })
 export class FiscalProfileDialog {

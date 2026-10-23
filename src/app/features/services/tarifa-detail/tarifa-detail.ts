@@ -3,24 +3,28 @@ import { ActivatedRoute } from '@angular/router';
 import { Location, SlicePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ServicesService } from '../../../core/services/services.service';
+import { ProvidersService } from '../../../core/services/providers.service';
 import { ServiceDetail } from '../../../core/models/service.model';
 import { TarifaFormComponent } from '../modals/tarifa-form/tarifa-form';
 import { ProductoLuzFormComponent } from '../modals/producto-luz-form/producto-luz-form';
 import { BoeLuzFormComponent } from '../modals/boe-luz-form/boe-luz-form';
 import { OmieLuzFormComponent } from '../modals/omie-luz-form/omie-luz-form';
-import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../../shared/components/basiko-loader/basiko-loader';
 import { Icon, IconName } from '../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-tarifa-detail',
   standalone: true,
-  imports: [SlicePipe, FormsModule, TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, SuminexLoader, Icon],
+  imports: [SlicePipe, FormsModule, TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, BasikoLoader, Icon],
   templateUrl: './tarifa-detail.html',
 })
 export class TarifaDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private location = inject(Location);
   private svc = inject(ServicesService);
+  private providersSvc = inject(ProvidersService);
+
+  integratedProviderIds = signal<Set<string>>(new Set());
 
   loading = signal(true);
   activeTab = signal('productos');
@@ -90,11 +94,20 @@ export class TarifaDetailComponent implements OnInit {
       },
       error: () => { this.loading.set(false); this.location.back(); },
     });
+    this.providersSvc.getAll().subscribe({
+      next: providers => {
+        this.integratedProviderIds.set(new Set(providers.filter(p => p.externalIntegrationCode).map(p => p.id)));
+      },
+    });
   }
 
   goBack() { this.location.back(); }
 
   editProduct(p: any) { this.editingProduct = p; }
+
+  missingExternalTariff(p: any): boolean {
+    return !!p.providerId && this.integratedProviderIds().has(p.providerId) && !p.externalTariffId;
+  }
 
   onTarifaSaved() {
     this.showEditForm = false;

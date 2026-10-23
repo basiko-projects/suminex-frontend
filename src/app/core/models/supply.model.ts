@@ -24,6 +24,8 @@ export interface Supply {
   holderDni:            string;
   holderIban:           string;
   isUserTheHolder:      boolean;
+  /** true = con cambio de titularidad (manda codigo_cambio "MZ" a Gana), false = alta nueva (manda "CZ") */
+  isHolderChange:       boolean;
   serviceType:          CategoryCode;
   serviceName:          string;
   tariffCode:           string;
@@ -52,6 +54,28 @@ export interface CompleteSupplyResponse {
   id:          string;
   status:      SupplyStatus;
   optimizedAt: string;
+}
+
+/** Respuesta de POST /api/supplies/validate-iban y /validate-phone */
+export interface ValidationResult {
+  isValid: boolean;
+  message: string;
+}
+
+export type ExternalSubmissionStatusValue = 'Pending' | 'Submitted' | 'Confirmed' | 'Failed';
+
+/** Respuesta de GET /api/supplies/{id}/external-submission y de su retry — 404 si nunca se intentó un envío
+ *  (el caso normal: el producto del suministro no tiene proveedor con integración externa activa). */
+export interface ExternalSubmissionStatus {
+  supplyId:               string;
+  integrationCode:        string;
+  status:                 ExternalSubmissionStatusValue;
+  externalContractId:     string | null;
+  externalContractNumber: string | null;
+  errorMessage:           string | null;
+  attemptCount:           number;
+  lastAttemptAt:          string | null;
+  confirmedAt:            string | null;
 }
 
 /** Respuesta de POST /api/supplies/{id}/cancel — Admin, o el Collaborator dueño; funciona en cualquier estado incluido Optimized */

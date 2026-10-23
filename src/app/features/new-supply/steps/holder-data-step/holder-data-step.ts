@@ -1,11 +1,13 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HolderData } from '../../new-supply.types';
+import { SuppliesService } from '../../../../core/services/supplies.service';
+import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko-loader';
 
 @Component({
   selector: 'app-holder-data-step',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, BasikoLoader],
   templateUrl: './holder-data-step.html',
 })
 export class HolderDataStep implements OnInit {
@@ -13,8 +15,12 @@ export class HolderDataStep implements OnInit {
   /** No se llama "submit": colisiona con el evento nativo del <form> interno y hace bubbling hacia el padre */
   @Output() submitted = new EventEmitter<HolderData>();
 
+  private suppliesSvc = inject(SuppliesService);
+
   holderData: HolderData = { fullName: '', nationalId: '', phoneCountry: '+34', phoneNumber: '', email: '' };
   holderSubmitted = false;
+  validatingPhone = signal(false);
+  private phoneServerError: string | null = null;
 
   ngOnInit() {
     if (this.initialData) this.holderData = { ...this.holderData, ...this.initialData };
@@ -41,7 +47,8 @@ export class HolderDataStep implements OnInit {
   get phoneError(): string | null {
     if (!this.holderSubmitted) return null;
     if (!this.holderData.phoneNumber.trim()) return 'Este campo es obligatorio';
-    return this.isValidPhone() ? null : 'Introduce un número de teléfono válido';
+    if (!this.isValidPhone()) return 'Introduce un número de teléfono válido';
+    return this.phoneServerError;
   }
 
   get emailError(): string | null {
@@ -52,6 +59,7 @@ export class HolderDataStep implements OnInit {
   }
 
   onPhoneNumberInput(value: string) {
+    this.phoneServerError = null;
     const maxDigits = this.holderData.phoneCountry === '+34' ? 9 : 15;
     this.holderData.phoneNumber = value.replace(/\D/g, '').slice(0, maxDigits);
   }
@@ -72,6 +80,22 @@ export class HolderDataStep implements OnInit {
   submitForm() {
     this.holderSubmitted = true;
     if (this.fullNameError || this.dniError || this.phoneError || this.emailError) return;
-    this.submitted.emit(this.holderData);
+    if (this.validatingPhone()) return;
+
+    this.validatingPhone.set(true);
+    const prefix = this.holderData.phoneCountry.replace('+', '');
+    const digits = this.holderData.phoneNumber.replace(/\D/g, '');
+    this.suppliesSvc.validatePhone(prefix, digits).subscribe({
+      next: res => {
+        this.validatingPhone.set(false);
+        if (!res.isValid) { this.phoneServerError = res.message; return; }
+        this.submitted.emit(this.holderData);
+      },
+      // Si el validador en sí falla (red, 401, etc.) no bloqueamos el alta — es una ayuda, no un gate duro
+      error: () => {
+        this.validatingPhone.set(false);
+        this.submitted.emit(this.holderData);
+      },
+    });
   }
 }

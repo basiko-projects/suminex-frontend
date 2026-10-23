@@ -22,10 +22,10 @@ const REFRESH_TTL_DAYS = 30;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly TOKEN_KEY   = 'suminex_token';
-  private readonly REFRESH_KEY = 'suminex_refresh';
-  private readonly USER_KEY    = 'suminex_user';
-  private readonly USERID_KEY  = 'suminex_userid';
+  private readonly TOKEN_KEY   = 'basiko_token';
+  private readonly REFRESH_KEY = 'basiko_refresh';
+  private readonly USER_KEY    = 'basiko_user';
+  private readonly USERID_KEY  = 'basiko_userid';
 
   isLoggedIn  = signal(!!this.getCookie(this.TOKEN_KEY));
   currentUser = signal<{ email: string; name: string } | null>(this.getStoredUser());
@@ -74,15 +74,27 @@ export class AuthService {
   }
 
   logout() {
-    this.deleteCookie(this.TOKEN_KEY);
-    this.deleteCookie(this.REFRESH_KEY);
-    this.deleteCookie(this.USER_KEY);
-    this.deleteCookie(this.USERID_KEY);
-    this.isLoggedIn.set(false);
-    this.currentUser.set(null);
-    this.userId.set(null);
-    this.userRole.set(null);
-    this.router.navigate(['/login']);
+    const refreshToken = this.getRefreshToken();
+    const finish = () => {
+      this.deleteCookie(this.TOKEN_KEY);
+      this.deleteCookie(this.REFRESH_KEY);
+      this.deleteCookie(this.USER_KEY);
+      this.deleteCookie(this.USERID_KEY);
+      this.isLoggedIn.set(false);
+      this.currentUser.set(null);
+      this.userId.set(null);
+      this.userRole.set(null);
+      this.router.navigate(['/login']);
+    };
+
+    if (!refreshToken) { finish(); return; }
+
+    // Revoca el refresh token en el backend — si falla (401/400/red caída) igual
+    // cerramos la sesión localmente, no queremos dejar al usuario atascado.
+    this.http.post<void>(`${environment.apiUrl}/auth/logout`, { refreshToken }).subscribe({
+      next: finish,
+      error: finish,
+    });
   }
 
   getRole(): string | null {

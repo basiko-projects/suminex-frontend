@@ -3,17 +3,16 @@ import { finalize } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProvidersService } from '../../core/services/providers.service';
-import { Provider, ProviderForm } from '../../core/models/provider.model';
+import { Provider, ExternalIntegrationCode } from '../../core/models/provider.model';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
-import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { TagModule } from 'primeng/tag';
+import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { DataTableComponent, DataTableColumn } from '../../shared/components/data-table/data-table';
-import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loader';
 import { Icon } from '../../shared/components/icon/icon';
 
 @Component({
@@ -21,9 +20,9 @@ import { Icon } from '../../shared/components/icon/icon';
   standalone: true,
   imports: [
     DatePipe, FormsModule,
-    ButtonModule, DialogModule, InputTextModule,
-    ToggleSwitchModule, TagModule, ToastModule, ConfirmDialogModule,
-    SuminexLoader, DataTableComponent, Icon,
+    ButtonModule, DialogModule, InputTextModule, SelectModule,
+    ToastModule, ConfirmDialogModule,
+    BasikoLoader, DataTableComponent, Icon,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './providers.html',
@@ -40,26 +39,35 @@ export class ProvidersComponent implements OnInit {
   isEdit = false;
   saving = signal(false);
   selectedProvider: Provider | null = null;
-  form: ProviderForm & { isActive?: boolean } = { name: '', cif: '', isActive: true };
+
+  name = '';
+  logoFile: File | null = null;
+  logoPreviewUrl: string | null = null;
+  externalIntegrationCode: ExternalIntegrationCode | null = null;
+  submitted = false;
+
+  integrationOpts: { label: string; value: ExternalIntegrationCode | null }[] = [
+    { label: 'Ninguno',      value: null },
+    { label: 'GanaEnergia',  value: 'GanaEnergia' },
+  ];
 
   page = signal(1);
-  pageSize = signal(20);
+  pageSize = signal(10);
   searchTerm = signal('');
 
   tableColumns: DataTableColumn[] = [
-    { key: 'name',     label: 'Nombre' },
-    { key: 'cif',      label: 'CIF' },
-    { key: 'services', label: 'Servicios', align: 'center' },
-    { key: 'created',  label: 'Alta' },
-    { key: 'status',   label: 'Estado',   align: 'center' },
-    { key: 'actions',  label: 'Acciones', align: 'center', width: '100px' },
+    { key: 'logo',        label: '' },
+    { key: 'name',        label: 'Nombre' },
+    { key: 'integration', label: 'Integración', align: 'center' },
+    { key: 'created',     label: 'Alta' },
+    { key: 'actions',     label: 'Acciones', align: 'center', width: '100px' },
   ];
 
   filtered = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const list = this.providers();
     if (!term) return list;
-    return list.filter(p => p.name.toLowerCase().includes(term) || p.cif.toLowerCase().includes(term));
+    return list.filter(p => p.name.toLowerCase().includes(term));
   });
 
   filteredTotal = computed(() => this.filtered().length);
@@ -86,28 +94,48 @@ export class ProvidersComponent implements OnInit {
 
   openNew() {
     this.isEdit = false;
-    this.form = { name: '', cif: '', isActive: true };
+    this.submitted = false;
+    this.name = '';
+    this.logoFile = null;
+    this.logoPreviewUrl = null;
+    this.externalIntegrationCode = null;
     this.dialogVisible = true;
   }
 
   edit(p: Provider) {
     this.isEdit = true;
+    this.submitted = false;
     this.selectedProvider = p;
-    this.form = { name: p.name, cif: p.cif, isActive: p.isActive };
+    this.name = p.name;
+    this.logoFile = null;
+    this.logoPreviewUrl = p.logoUrl;
+    this.externalIntegrationCode = p.externalIntegrationCode ?? null;
     this.dialogVisible = true;
   }
 
+  onLogoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.logoFile = file;
+    this.logoPreviewUrl = URL.createObjectURL(file);
+  }
+
   save() {
-    if (!this.form.name || !this.form.cif) {
-      this.msg.add({ severity: 'warn', summary: 'Campos requeridos', detail: 'Nombre y CIF son obligatorios.' });
-      return;
-    }
+    this.submitted = true;
+    if (!this.name || (!this.isEdit && !this.logoFile)) return;
+
+    const form = new FormData();
+    form.append('Name', this.name);
+    if (this.logoFile) form.append('Logo', this.logoFile);
+    form.append('ExternalIntegrationCode', this.externalIntegrationCode ?? '');
+
     this.saving.set(true);
     const obs$ = this.isEdit
-      ? this.svc.update(this.selectedProvider!.id, this.form)
-      : this.svc.create(this.form);
+      ? this.svc.update(this.selectedProvider!.id, form)
+      : this.svc.create(form);
 
-    (obs$ as any).subscribe({
+    obs$.subscribe({
       next: () => {
         this.msg.add({ severity: 'success', summary: 'Guardado', detail: `Proveedor ${this.isEdit ? 'actualizado' : 'creado'} correctamente.` });
         this.dialogVisible = false;
@@ -123,15 +151,15 @@ export class ProvidersComponent implements OnInit {
 
   confirmDelete(p: Provider) {
     this.confirm.confirm({
-      message: `¿Desactivar el proveedor <strong>${p.name}</strong>?`,
-      header: 'Confirmar acción',
+      message: `¿Eliminar el proveedor <strong>${p.name}</strong>? Esta acción no se puede deshacer.`,
+      header: 'Confirmar eliminación',
       icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Desactivar',
+      acceptLabel: 'Eliminar',
       rejectLabel: 'Cancelar',
       accept: () => {
         this.svc.delete(p.id).subscribe({
-          next: () => { this.msg.add({ severity: 'success', summary: 'Desactivado', detail: 'Proveedor desactivado.' }); this.load(); },
-          error: () => this.msg.add({ severity: 'error', summary: 'Error', detail: 'No se pudo desactivar.' }),
+          next: () => { this.msg.add({ severity: 'success', summary: 'Eliminado', detail: 'Proveedor eliminado.' }); this.load(); },
+          error: () => this.msg.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar.' }),
         });
       },
     });

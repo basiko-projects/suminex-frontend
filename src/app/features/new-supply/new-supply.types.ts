@@ -10,6 +10,7 @@ export interface HolderData {
 
 export interface SupplyPointData {
   streetAddress: string;
+  number: string;
   floor: string;
   door: string;
   postalCode: string;

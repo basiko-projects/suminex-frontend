@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { ServiceDetail, ServiceGroup, CreateServiceDto, CreateBoePeriodsDto, CreateOmieDistributionDto } from '../models/service.model';
+import { ServiceDetail, ServiceGroup, CreateServiceDto, CreateServiceResponse, CreateBoePeriodsDto, CreateOmieDistributionDto, GanaSyncResult } from '../models/service.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -10,7 +10,7 @@ export class ServicesService {
 
   constructor(private http: HttpClient) {}
 
-  /** GET /api/services → array de ServiceGroup (Luz, Gas, Móvil, Internet con sus tarifas) */
+  /** GET /api/services → array plano de ServiceGroup (uno por servicio, cada uno con sus tarifas) */
   getServices(): Observable<ServiceGroup[]> {
     return this.http.get<ServiceGroup[]>(this.url);
   }
@@ -19,8 +19,8 @@ export class ServicesService {
     return this.http.get<ServiceDetail>(`${this.url}/${id}`);
   }
 
-  create(body: CreateServiceDto): Observable<any> {
-    return this.http.post(this.url, body);
+  create(body: CreateServiceDto): Observable<CreateServiceResponse> {
+    return this.http.post<CreateServiceResponse>(this.url, body);
   }
 
   update(id: number, body: Partial<ServiceDetail>): Observable<any> {
@@ -65,5 +65,10 @@ export class ServicesService {
 
   updateOmieDistribution(tariffId: number, distributionId: number, dto: any): Observable<any> {
     return this.http.put(`${environment.apiUrl}/tariffs/${tariffId}/omie-distributions/${distributionId}`, dto);
+  }
+
+  /** POST /api/admin/gana-tariffs/sync — Admin, sin body. Siempre 200; revisar warnings[] igual. */
+  syncGanaTariffs(): Observable<GanaSyncResult> {
+    return this.http.post<GanaSyncResult>(`${environment.apiUrl}/admin/gana-tariffs/sync`, null);
   }
 }

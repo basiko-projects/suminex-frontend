@@ -27,7 +27,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-[1.1rem] mb-7 items-stretch">
     <div class="bg-sx-surface border border-sx-border rounded-lg px-6 py-5 flex flex-col gap-1.5 justify-center">
       @if (loadingAvailable()) {
-      <div class="flex items-center gap-2 text-sx-text-3 text-sm"><app-suminex-loader [size]="20" /> Consultando disponible...</div>
+      <div class="flex items-center gap-2 text-sx-text-3 text-sm"><app-basiko-loader [size]="20" /> Consultando disponible...</div>
       } @else if (availableError()) {
       <div class="flex items-center gap-2 text-sx-red text-sm"><app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ availableError() }}</div>
       } @else if (available(); as a) {
@@ -54,7 +54,7 @@
       class="inline-flex items-center justify-center gap-2 min-w-52.5 py-4 px-6 bg-sx-primary-btn text-white border-none rounded-lg text-base font-bold text-center cursor-pointer transition-colors enabled:hover:bg-sx-primary disabled:opacity-55 disabled:cursor-not-allowed"
       [disabled]="!available() || available()!.items.length === 0 || generating()" (click)="generate()">
       @if (generating()) {
-      <app-suminex-loader [size]="18" [onColor]="true" /> Generando...
+      <app-basiko-loader [size]="18" [onColor]="true" /> Generando...
       } @else {
       <app-icon name="document-plus" svgClass="w-4 h-4" /> Generar autofactura
       }
@@ -115,7 +115,7 @@
   } @else {
   <!-- Historial de facturas ya generadas -->
   <app-data-table [columns]="tableColumns"
-    [rows]="historyItems()" [total]="historyTotal()" [page]="historyPage()" [pageSize]="20" [loading]="historyLoading()"
+    [rows]="historyItems()" [total]="historyTotal()" [page]="historyPage()" [pageSize]="10" [loading]="historyLoading()"
     [searchable]="false" [rowTemplate]="rowTpl" emptyMessage="No hay facturas todavía"
     (pageChange)="onHistoryPageChange($event)">
   </app-data-table>
