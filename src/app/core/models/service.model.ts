@@ -32,10 +32,17 @@ export interface ServiceTariffProduct {
   isActive: boolean;
   /* Campos de precio por período — el listado agrupado no los documenta explícitamente;
      se leen de forma defensiva (undefined si el backend no los incluye aquí). */
-  commissionEnergyPct?: number | null;
-  commissionPowerPct?:  number | null;
-  energyPeriods?:       EnergyPeriodDto[];
-  powerPeriods?:        PowerPeriodDto[];
+  commissionEnergyPct?:   number | null;
+  commissionPowerPct?:    number | null;
+  fixedCommissionAmount?: number | null;
+  providerId?:            string | null;
+  providerName?:          string | null;
+  providerLogoUrl?:       string | null;
+  /** Id de tarifa en el catálogo de la integración externa (ej. Gana) — sin esto, un producto de un
+   *  proveedor con integración activa nunca se puede enviar (el suministro queda en Failed). */
+  externalTariffId?:      string | null;
+  energyPeriods?:         EnergyPeriodDto[];
+  powerPeriods?:          PowerPeriodDto[];
 }
 
 export interface ServiceTariffBoePeriod {
@@ -59,6 +66,7 @@ export interface ServiceTariff {
   id:                 number;
   name:               string;
   code:               string | null;
+  isActive?:          boolean;
   pricing?:           ServiceTariffPricing;
   products?:          ServiceTariffProduct[];
   boePeriods?:        ServiceTariffBoePeriod[];
@@ -91,10 +99,10 @@ export interface ServiceFilters {
 }
 
 export interface ServiceGroupedResponse {
-  luz:      ServiceListItem[];
-  gas:      ServiceListItem[];
-  mobile:   ServiceListItem[];
-  internet: ServiceListItem[];
+  luz:      ServiceGroup[];
+  gas:      ServiceGroup[];
+  mobile:   ServiceGroup[];
+  internet: ServiceGroup[];
 }
 
 /* ── Create DTOs ── */
@@ -111,15 +119,20 @@ export interface PowerPeriodDto {
 }
 
 export interface ProductDto {
-  id?:                 number;         // requerido en PUT, omitido en POST
-  name:                string;
-  productType:         'INDEXED' | 'FIXED';
-  commissionEnergyPct: number | null;
-  commissionPowerPct:  number | null;
-  validFrom:           string;
-  validUntil:          string | null;
-  energyPeriods:       EnergyPeriodDto[];
-  powerPeriods:        PowerPeriodDto[];
+  id?:                    number;         // requerido en PUT, omitido en POST
+  name:                   string;
+  productType:            'INDEXED' | 'FIXED';
+  commissionEnergyPct:    number | null;
+  commissionPowerPct:     number | null;
+  fixedCommissionAmount:  number | null;
+  providerId:             string | null;
+  providerName?:          string | null;   // solo lectura — viene poblado en GET, no se manda al crear/editar
+  providerLogoUrl?:       string | null;    // solo lectura
+  externalTariffId:       string | null;
+  validFrom:              string;
+  validUntil:             string | null;
+  energyPeriods:          EnergyPeriodDto[];
+  powerPeriods:           PowerPeriodDto[];
 }
 
 export interface GasTierDto {
@@ -159,20 +172,30 @@ export interface InternetDetailDto {
   includesTv:       boolean;
 }
 
+/** Respuesta de POST /api/admin/gana-tariffs/sync — siempre 200 , incluso si algo falló del lado de Gana;
+ *  hay que revisar siempre warnings.length > 0, no solo los contadores. */
+export interface GanaSyncResult {
+  luzTariffsCreated:   number;
+  luzProductsCreated:  number;
+  luzProductsUpdated:  number;
+  luzSkipped:          number;
+  gasTariffsCreated:   number;
+  gasDetailsCreated:   number;
+  gasDetailsUpdated:   number;
+  gasSkipped:          number;
+  warnings:            string[];
+}
+
 export interface CreateServiceDto {
   name:        string;
   serviceType: ServiceType;
-  tariffCode:  string | null;
-  validFrom:   string | null;
-  validUntil:  string | null;
-  // LUZ
-  products?:       ProductDto[];
-  // GAS
-  gasDetail?:      GasDetailDto;
-  // MOBILE
-  mobileDetail?:   MobileDetailDto;
-  // INTERNET
-  internetDetail?: InternetDetailDto;
+}
+
+export interface CreateServiceResponse {
+  id:          string;
+  name:        string;
+  serviceType: ServiceType;
+  createdAt:   string;
 }
 
 /* ── BOE / OMIE ── */

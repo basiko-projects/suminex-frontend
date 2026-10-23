@@ -5,13 +5,13 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ServicesService } from '../../../../core/services/services.service';
 import { ServiceListItem } from '../../../../core/models/service.model';
-import { SuminexLoader } from '../../../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko-loader';
 import { Icon } from '../../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-tarifa-form',
   standalone: true,
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, SuminexLoader, Icon],
+  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, BasikoLoader, Icon],
   templateUrl: './tarifa-form.html',
 })
 export class TarifaFormComponent implements OnInit {

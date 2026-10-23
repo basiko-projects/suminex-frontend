@@ -31,7 +31,7 @@ export class DataTableComponent {
   @Input() rows: any[] = [];
   @Input() total = 0;
   @Input() page = 1;
-  @Input() pageSize = 20;
+  @Input() pageSize = 10;
   @Input() loading = false;
   @Input() searchable = true;
   @Input() sortOptions: SortOption[] = [];
@@ -48,6 +48,7 @@ export class DataTableComponent {
   searchValue   = '';
   sortValue     = '';
   pageSizeValue = this.pageSize;
+  goToPageValue: number | null = null;
   readonly skeletonRows    = [1, 2, 3, 4, 5, 6, 7, 8];
   readonly pageSizeOptions = [1, 10, 20, 50, 100];
 
@@ -73,6 +74,10 @@ export class DataTableComponent {
   }
 
   goTo(p: number) { if (p >= 1 && p <= this.totalPages) this.pageChange.emit(p); }
+  onGoToPage() {
+    if (this.goToPageValue != null) this.goTo(this.goToPageValue);
+    this.goToPageValue = null;
+  }
   prev() { if (this.page > 1)               this.pageChange.emit(this.page - 1); }
   next() { if (this.page < this.totalPages) this.pageChange.emit(this.page + 1); }
   onSearch() { this.searchChange.emit(this.searchValue); }

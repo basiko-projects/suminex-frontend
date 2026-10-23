@@ -5,7 +5,7 @@
     <div class="flex flex-col gap-1.5">
       <label class="text-[0.72rem] font-bold uppercase tracking-wide text-sx-text-3">Producto</label>
       <p-select [options]="productOpts" [ngModel]="producto()" (ngModelChange)="producto.set($event)"
-        optionLabel="label" optionValue="value" class="w-full" />
+        optionLabel="label" optionValue="value" [appendTo]="'body'" class="w-full" />
       <span class="text-[0.72rem] text-sx-text-3">Comisión del producto: {{ comisionEnergiaPct() | number:'1.0-2'
         }}%</span>
     </div>

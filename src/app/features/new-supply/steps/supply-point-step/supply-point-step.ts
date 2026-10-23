@@ -1,12 +1,14 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupplyPointData } from '../../new-supply.types';
 import { SupplyKind } from '../../../../core/models/supply.model';
+import { SuppliesService } from '../../../../core/services/supplies.service';
+import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko-loader';
 
 @Component({
   selector: 'app-supply-point-step',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, BasikoLoader],
   templateUrl: './supply-point-step.html',
 })
 export class SupplyPointStep implements OnInit {
@@ -15,12 +17,16 @@ export class SupplyPointStep implements OnInit {
   /** No se llama "submit": colisiona con el evento nativo del <form> interno y hace bubbling hacia el padre */
   @Output() submitted = new EventEmitter<SupplyPointData>();
 
+  private suppliesSvc = inject(SuppliesService);
+
   supplyPointData: SupplyPointData = {
-    streetAddress: '', floor: '', door: '',
+    streetAddress: '', number: '', floor: '', door: '',
     postalCode: '', province: '', city: '',
     cups: '', bankAccount: '', phoneToPort: '',
   };
   supplyPointSubmitted = false;
+  validatingIban = signal(false);
+  private ibanServerError: string | null = null;
 
   ngOnInit() {
     if (this.initialData) this.supplyPointData = { ...this.supplyPointData, ...this.initialData };
@@ -29,6 +35,11 @@ export class SupplyPointStep implements OnInit {
   get streetAddressError(): string | null {
     if (!this.supplyPointSubmitted) return null;
     return this.supplyPointData.streetAddress.trim() ? null : 'Este campo es obligatorio';
+  }
+
+  get numberError(): string | null {
+    if (!this.supplyPointSubmitted) return null;
+    return this.supplyPointData.number.trim() ? null : 'Este campo es obligatorio';
   }
 
   get postalCodeError(): string | null {
@@ -67,7 +78,8 @@ export class SupplyPointStep implements OnInit {
     if (!this.supplyPointSubmitted) return null;
     const iban = this.supplyPointData.bankAccount.replace(/\s+/g, '');
     if (!iban) return 'Este campo es obligatorio';
-    return /^ES\d{22}$/i.test(iban) ? null : 'Introduce un IBAN español válido';
+    if (!/^ES\d{22}$/i.test(iban)) return 'Introduce un IBAN español válido';
+    return this.ibanServerError;
   }
 
   onPhoneToPortInput(value: string) {
@@ -75,6 +87,7 @@ export class SupplyPointStep implements OnInit {
   }
 
   onBankAccountInput(value: string) {
+    this.ibanServerError = null;
     this.supplyPointData.bankAccount = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24);
   }
 
@@ -91,8 +104,23 @@ export class SupplyPointStep implements OnInit {
 
   submitForm() {
     this.supplyPointSubmitted = true;
-    if (this.streetAddressError || this.postalCodeError || this.provinceError
+    if (this.streetAddressError || this.numberError || this.postalCodeError || this.provinceError
       || this.cityError || this.cupsError || this.phoneToPortError || this.bankAccountError) return;
-    this.submitted.emit(this.supplyPointData);
+    if (this.validatingIban()) return;
+
+    this.validatingIban.set(true);
+    const iban = this.supplyPointData.bankAccount.replace(/\s+/g, '');
+    this.suppliesSvc.validateIban(iban).subscribe({
+      next: res => {
+        this.validatingIban.set(false);
+        if (!res.isValid) { this.ibanServerError = res.message; return; }
+        this.submitted.emit(this.supplyPointData);
+      },
+      // Si el validador en sí falla (red, 401, etc.) no bloqueamos el alta — es una ayuda, no un gate duro
+      error: () => {
+        this.validatingIban.set(false);
+        this.submitted.emit(this.supplyPointData);
+      },
+    });
   }
 }

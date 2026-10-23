@@ -18,9 +18,17 @@
   <app-supply-type-step [options]="supplyOptions" (select)="selectSupply($event)" />
   }
 
-  <!-- ─── STEP 2: Datos del nuevo titular (titularidad + datos, fusionados) — la factura se pide en modal apenas se llega acá ─── -->
+  <!-- ─── STEP 2: Producto → titularidad → datos del nuevo titular — la factura se pide en modal apenas se elige el producto ─── -->
   @if (step() === 2) {
-  @if (!ownershipType()) {
+  @if (!selectedProductId()) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">¿Qué producto contrató?</h1>
+    <p class="text-sm text-[#64748B] m-0">Solo se pueden dar de alta directa productos con comisión fija</p>
+  </div>
+
+  <app-product-select-step [products]="eligibleProducts()" [loading]="loadingProducts()" [error]="productsError()"
+    (select)="onProductSelected($event)" />
+  } @else if (!ownershipType()) {
   <div class="mb-8">
     <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">¿Con o sin cambio de titularidad?</h1>
     <p class="text-sm text-[#64748B] m-0">Selecciona cómo deseas realizar el alta del suministro</p>
@@ -121,7 +129,7 @@
       <button class="w-full py-3.5 px-4 mt-5 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors shrink-0 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed enabled:hover:bg-[#1A6FE8]"
         [disabled]="comparisonLoading()" (click)="submitInvoice()">
         @if (comparisonLoading()) {
-        <app-suminex-loader [size]="18" [onColor]="true" />
+        <app-basiko-loader [size]="18" [onColor]="true" />
         <span>Procesando factura...</span>
         } @else {
         <span>Continuar</span>
@@ -134,7 +142,7 @@
   <!-- ─── Dando de alta el suministro ─── -->
   @if (registering()) {
   <div class="flex flex-col items-center justify-center text-center py-24 gap-4">
-    <app-suminex-loader [size]="40" />
+    <app-basiko-loader [size]="40" />
     <p class="text-[0.95rem] text-[#64748B] m-0">Dando de alta el suministro...</p>
   </div>
   }

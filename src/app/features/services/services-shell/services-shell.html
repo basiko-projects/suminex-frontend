@@ -1,13 +1,31 @@
 <div>
 
   <!-- Título -->
-  <div class="mb-5">
-    <h1 class="text-xl font-bold text-sx-text mb-0.5">Servicios</h1>
-    <p class="text-xs text-sx-text-3 m-0">Gestiona las tarifas de todos los suministros</p>
+  <div class="mb-5 flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-sx-text mb-0.5">Servicios</h1>
+      <p class="text-xs text-sx-text-3 m-0">Gestiona las tarifas de todos los suministros</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button
+        class="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-lg border border-sx-border-2 bg-transparent text-sx-text-2 text-[0.8rem] font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-sx-surface-2"
+        [disabled]="syncingGana()" (click)="syncGana()">
+        @if (syncingGana()) {
+        <app-basiko-loader [size]="14" /> Sincronizando...
+        } @else {
+        <app-icon name="arrow-path" svgClass="w-4 h-4" /> Sincronizar con Gana
+        }
+      </button>
+      <button
+        class="inline-flex items-center gap-1.5 py-2 px-3.5 rounded-lg border border-sx-border-2 bg-sx-primary-bg text-sx-primary-text text-[0.8rem] font-semibold cursor-pointer hover:bg-sx-primary-bg/70"
+        (click)="showNewServiceForm = true">
+        <app-icon name="plus" svgClass="w-4 h-4" /> Nuevo servicio
+      </button>
+    </div>
   </div>
 
   <!-- Nivel 1: tipo de servicio -->
-  <div class="flex gap-0.5 border-b border-sx-border">
+  <div class="flex gap-0.5 border-b border-sx-border flex-wrap">
     @for (g of serviceGroups(); track g.id) {
     <button [class]="typeTabClasses(activeGroupId() === g.id)" [style.--tc]="typeColor(g.serviceType)"
       (click)="selectGroup(g)">
@@ -58,10 +76,6 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-3.5">
       <div class="flex items-center gap-2.5">
-        <span class="py-1 px-2.5 rounded-lg text-[11px] font-bold font-mono"
-          [style.background]="typeBg(activeGroup()!.serviceType)" [style.color]="typeColor(activeGroup()!.serviceType)">
-          {{ activeTarifa()!.code || activeTarifa()!.name }}
-        </span>
         <span class="text-[15px] font-semibold text-sx-text">{{ activeTarifa()!.name }}</span>
       </div>
     </div>
@@ -88,8 +102,30 @@
       <ng-template #prodRowTpl let-p>
         <td class="py-3.5 px-6 pl-12 align-middle text-sm font-semibold text-sx-text">{{ p.name }}</td>
         <td class="py-3.5 px-6 align-middle text-sm">
-          <div class="flex justify-center"><span [class]="productTypeBadgeClasses(p.type)">{{ typeLabel(p.type)
-              }}</span></div>
+          <div class="flex justify-center"><span class="text-sx-text-2">{{ typeLabel(p.type) }}</span></div>
+        </td>
+        <td class="py-3.5 px-6 align-middle text-sm">
+          <div class="flex justify-center"><span class="text-sx-text-2">{{ p.fixedCommissionAmount != null ? (p.fixedCommissionAmount + ' €') : '—' }}</span></div>
+        </td>
+        <td class="py-3.5 px-6 align-middle text-sm">
+          <div class="flex justify-center items-center gap-1.5">
+            @if (p.providerName) {
+            <span class="inline-flex items-center gap-1.25 text-xs text-sx-text-2">
+              @if (p.providerLogoUrl) {
+              <img [src]="p.providerLogoUrl" [alt]="p.providerName" class="w-4 h-4 rounded object-contain" />
+              }
+              {{ p.providerName }}
+            </span>
+            } @else {
+            <span class="text-xs text-sx-text-3">—</span>
+            }
+            @if (missingExternalTariff(p)) {
+            <span class="inline-flex items-center gap-1 px-1.75 py-0.5 rounded-lg text-[10px] font-bold bg-[#FEF3C7] text-[#B45309]"
+              title="Este producto no tiene tarifa de Gana asignada — los suministros con este producto no se podrán enviar">
+              <app-icon name="exclamation-triangle" svgClass="w-2.75 h-2.75" /> Falta tarifa de Gana
+            </span>
+            }
+          </div>
         </td>
         <td class="py-3.5 px-6 align-middle text-sm">
           <div class="flex justify-center"><span [class]="statusChipClasses(p.isActive)">{{ p.isActive ? 'Activo' :
@@ -100,7 +136,7 @@
             <button
               class="w-6.5 h-6.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 flex items-center justify-center cursor-pointer transition-all [&_.pi]:text-[10px] hover:border-sx-border-2 hover:text-sx-text hover:bg-sx-surface-2"
               title="Ver detalle" (click)="openProductView(p.id)">
-              @if (loadingDetailFor() === p.id) { <app-suminex-loader [size]="14" /> } @else { <app-icon name="eye" svgClass="w-4 h-4" />
+              @if (loadingDetailFor() === p.id) { <app-basiko-loader [size]="14" /> } @else { <app-icon name="eye" svgClass="w-4 h-4" />
               }
             </button>
             <button
@@ -316,6 +352,65 @@
   (saved)="onTarifaSaved()" (cancelled)="showNewTarifaForm = false" />
 }
 
+@if (showNewServiceForm) {
+<app-nuevo-servicio-form (saved)="onServiceSaved()" (cancelled)="showNewServiceForm = false" />
+}
+
+<!-- Resultado de la sincronización con Gana -->
+@if (ganaSyncResult(); as res) {
+<div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 backdrop-blur-[2px] animate-[fade-in_150ms_ease]"
+  (click)="closeGanaSyncResult()">
+  <div class="bg-sx-surface rounded-lg p-6 w-[min(92vw,520px)] max-h-[85vh] overflow-y-auto shadow-[0_20px_40px_rgba(0,0,0,0.18)] animate-[slide-up-in_180ms_ease-out] flex flex-col gap-4"
+    (click)="$event.stopPropagation()">
+    <div class="flex items-start justify-between gap-3">
+      <span class="text-lg font-bold text-sx-text">Sincronización con Gana</span>
+      <button class="w-7.5 h-7.5 rounded-lg border border-sx-border bg-transparent text-sx-text-3 cursor-pointer flex items-center justify-center shrink-0 hover:text-[#DC2626] hover:border-[#FECACA] hover:bg-[#FEF2F2]"
+        (click)="closeGanaSyncResult()"><app-icon name="x-mark" svgClass="w-3.5 h-3.5" /></button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2.5">
+      <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface-2 rounded-lg">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Luz</span>
+        <span class="text-[0.8rem] text-sx-text">{{ res.luzTariffsCreated }} tarifas creadas · {{ res.luzProductsCreated }} productos creados · {{ res.luzProductsUpdated }} actualizados · {{ res.luzSkipped }} omitidos</span>
+      </div>
+      <div class="flex flex-col gap-1 py-3 px-3.5 bg-sx-surface-2 rounded-lg">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-sx-text-3">Gas</span>
+        <span class="text-[0.8rem] text-sx-text">{{ res.gasTariffsCreated }} tarifas creadas · {{ res.gasDetailsCreated }} detalles creados · {{ res.gasDetailsUpdated }} actualizados · {{ res.gasSkipped }} omitidos</span>
+      </div>
+    </div>
+
+    @if (res.warnings.length) {
+    <div class="flex flex-col gap-1.5">
+      <span class="text-[0.8rem] font-bold text-sx-amber flex items-center gap-1.5">
+        <app-icon name="exclamation-triangle" svgClass="w-4 h-4" /> Avisos ({{ res.warnings.length }})
+      </span>
+      <ul class="flex flex-col gap-1.5 m-0 pl-4 text-[0.8rem] text-sx-text-2">
+        @for (w of res.warnings; track w) { <li>{{ w }}</li> }
+      </ul>
+    </div>
+    } @else {
+    <div class="flex items-center gap-2 text-[0.8rem] text-sx-green">
+      <app-icon name="check-circle" svgClass="w-4 h-4" /> Todo sincronizado sin avisos
+    </div>
+    }
+  </div>
+</div>
+}
+
+@if (ganaSyncError()) {
+<div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 backdrop-blur-[2px] animate-[fade-in_150ms_ease]"
+  (click)="closeGanaSyncResult()">
+  <div class="bg-sx-surface rounded-lg p-6 w-[min(92vw,420px)] shadow-[0_20px_40px_rgba(0,0,0,0.18)] flex flex-col gap-3"
+    (click)="$event.stopPropagation()">
+    <div class="flex items-center gap-2 text-sx-red text-sm font-semibold">
+      <app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ ganaSyncError() }}
+    </div>
+    <button class="self-end py-1.5 px-3.5 rounded-lg border border-sx-border-2 bg-transparent text-sx-text-2 text-[0.8rem] font-semibold cursor-pointer hover:bg-sx-surface-2"
+      (click)="closeGanaSyncResult()">Cerrar</button>
+  </div>
+</div>
+}
+
 @if ((showProductoLuz || editingProduct()) && activeTarifa()) {
 <app-producto-luz-form [tariffId]="activeTarifa()!.id" [tariffCode]="activeTarifa()!.code ?? ''"
   [editProduct]="editingProduct()" (saved)="onProductSaved()" (cancelled)="closeProductoForm()" />
@@ -338,7 +433,7 @@
       <button
         class="flex items-center gap-1.5 py-2 px-4.5 rounded-lg bg-[#DC2626] text-white border-none text-[13px] font-semibold cursor-pointer transition-colors hover:enabled:bg-[#B91C1C] disabled:opacity-60 disabled:cursor-not-allowed"
         (click)="doDeleteProduct()" [disabled]="deleting()">
-        @if (deleting()) { <app-suminex-loader [size]="14" /> } Eliminar
+        @if (deleting()) { <app-basiko-loader [size]="14" /> } Eliminar
       </button>
     </div>
   </div>
@@ -364,6 +459,16 @@
           <span [class]="productTypeBadgeClasses(viewingProduct().type)">{{ typeLabel(viewingProduct().type) }}</span>
           <span [class]="statusChipClasses(viewingProduct().isActive)">{{ viewingProduct().isActive ? 'Activo' :
             'Inactivo' }}</span>
+          <span [class]="commissionBadgeClasses(viewingProduct().fixedCommissionAmount)">{{
+            commissionLabel(viewingProduct().fixedCommissionAmount) }}</span>
+          @if (viewingProduct().providerName) {
+          <span class="inline-flex items-center gap-1.25 py-0.5 px-2 rounded-lg text-[10px] font-bold tracking-wide bg-sx-surface-2 text-sx-text-2">
+            @if (viewingProduct().providerLogoUrl) {
+            <img [src]="viewingProduct().providerLogoUrl" [alt]="viewingProduct().providerName" class="w-3 h-3 rounded object-contain" />
+            }
+            {{ viewingProduct().providerName }}
+          </span>
+          }
         </div>
       </div>
       <button
@@ -380,8 +485,6 @@
     <div class="flex flex-col gap-2.5">
       <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2">
         <app-icon name="bolt" svgClass="w-3 h-3" style="color:#FACC15" /> Energía (€/kWh)
-        <span [class]="commissionBadgeClasses(viewingProduct().commissionEnergyPct)">{{
-          commissionLabel(viewingProduct().commissionEnergyPct) }}</span>
       </div>
       <div class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(72px,1fr))]">
         @for (ep of viewingProduct().energyPeriods; track ep.period) {
@@ -395,8 +498,6 @@
     <div class="flex flex-col gap-2.5">
       <div class="flex items-center gap-1.5 text-xs md:text-[13px] font-bold text-sx-text-2">
         <span class="w-2 h-2 rounded-full shrink-0" style="background-color:#60A5FA"></span> Potencia (€/kW·día)
-        <span [class]="commissionBadgeClasses(viewingProduct().commissionPowerPct)">{{
-          commissionLabel(viewingProduct().commissionPowerPct) }}</span>
       </div>
       <div class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(72px,1fr))]">
         @for (pp of viewingProduct().powerPeriods; track pp.period) {

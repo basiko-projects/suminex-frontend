@@ -19,17 +19,19 @@
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Tipo *</label>
-        <p-select [options]="productTypeOpts" [(ngModel)]="form.productType" optionLabel="label" optionValue="value" class="w-full" />
+        <p-select [options]="productTypeOpts" [(ngModel)]="form.productType" optionLabel="label" optionValue="value" [appendTo]="'body'" class="w-full" />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Proveedor</label>
+        <p-select [options]="providerOpts" [(ngModel)]="form.providerId" optionLabel="label" optionValue="value"
+          [placeholder]="loadingProv() ? 'Cargando...' : 'Sin proveedor'" [showClear]="true" [disabled]="loadingProv()"
+          [appendTo]="'body'" class="w-full" />
       </div>
     </div>
-    <div class="grid grid-cols-4 gap-3">
+    <div class="grid grid-cols-3 gap-3">
       <div class="flex flex-col gap-1.5">
-        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Comisión energía %</label>
-        <input pInputText type="number" [(ngModel)]="form.commissionEnergyPct" placeholder="—" step="0.01" class="w-full" />
-      </div>
-      <div class="flex flex-col gap-1.5">
-        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Comisión potencia %</label>
-        <input pInputText type="number" [(ngModel)]="form.commissionPowerPct" placeholder="—" step="0.01" class="w-full" />
+        <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Comisión fija (€)</label>
+        <input pInputText type="number" [(ngModel)]="form.fixedCommissionAmount" placeholder="—" step="0.01" class="w-full" />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Válido desde</label>
@@ -40,6 +42,15 @@
         <input pInputText type="date" [(ngModel)]="form.validUntil" class="w-full" />
       </div>
     </div>
+
+    @if (selectedProviderHasIntegration) {
+    <div class="flex flex-col gap-1.5">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">ID de tarifa en Gana</label>
+      <input pInputText [(ngModel)]="form.externalTariffId" placeholder="Ej: 6230a46702ca7e0f6349cde2" class="w-full" />
+      <span class="text-[0.72rem] text-sx-text-3">El _id del catálogo de Gana (GET /v1/tarifas). Sin esto, los
+        suministros con este producto no se podrán enviar a Gana.</span>
+    </div>
+    }
 
     <!-- Energy periods -->
     <div class="border border-sx-border rounded-lg p-[0.9rem]">
@@ -92,7 +103,7 @@
     <p-button [label]="editProduct ? 'Guardar cambios' : 'Crear producto'" icon="pi pi-check"
               (onClick)="submit()" [loading]="saving()">
       <ng-template pTemplate="loadingicon">
-        <app-suminex-loader [size]="14" [onColor]="true" />
+        <app-basiko-loader [size]="14" [onColor]="true" />
       </ng-template>
     </p-button>
   </ng-template>

@@ -10,7 +10,7 @@ import { PasswordModule } from 'primeng/password';
 import { SelectModule } from 'primeng/select';
 import { MessageModule } from 'primeng/message';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../../shared/components/basiko-loader/basiko-loader';
 import { Icon } from '../../../shared/components/icon/icon';
 
 @Component({
@@ -19,7 +19,7 @@ import { Icon } from '../../../shared/components/icon/icon';
   imports: [
     FormsModule,
     DialogModule, ButtonModule, InputTextModule,
-    PasswordModule, SelectModule, MessageModule, ToggleSwitchModule, SuminexLoader, Icon,
+    PasswordModule, SelectModule, MessageModule, ToggleSwitchModule, BasikoLoader, Icon,
   ],
   templateUrl: './user-form.html',
 })

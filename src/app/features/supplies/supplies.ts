@@ -3,7 +3,7 @@ import { DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { SuppliesService } from '../../core/services/supplies.service';
-import { Supply, SupplyStatus, CategoryCode } from '../../core/models/supply.model';
+import { Supply, SupplyStatus, CategoryCode, ExternalSubmissionStatus } from '../../core/models/supply.model';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
@@ -13,7 +13,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DataTableComponent, DataTableColumn, SortOption } from '../../shared/components/data-table/data-table';
-import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loader';
 import { Icon, IconName } from '../../shared/components/icon/icon';
 
 @Component({
@@ -22,7 +22,7 @@ import { Icon, IconName } from '../../shared/components/icon/icon';
   imports: [
     DatePipe, CurrencyPipe, FormsModule,
     SelectModule, DatePickerModule, TooltipModule, ButtonModule, PopoverModule, ConfirmDialogModule, ToastModule,
-    DataTableComponent, SuminexLoader, Icon,
+    DataTableComponent, BasikoLoader, Icon,
   ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './supplies.html',
@@ -38,11 +38,15 @@ export class SuppliesComponent implements OnInit {
   loading     = signal(true);
   loadError   = '';
   page        = 1;
-  pageSize    = 20;
+  pageSize    = 10;
   viewingItem = signal<Supply | null>(null);
   completingId  = signal<string | null>(null);
   completeError = signal('');
   cancellingId  = signal<string | null>(null);
+
+  externalSubmission        = signal<ExternalSubmissionStatus | null>(null);
+  loadingExternalSubmission = signal(false);
+  retryingExternalSubmission = signal(false);
 
   filterStatus:   SupplyStatus | null = null;
   filterCategory: CategoryCode | null = null;
@@ -109,7 +113,37 @@ export class SuppliesComponent implements OnInit {
   search() { this.page = 1; this.load(); }
   clear()  { this.filterStatus = null; this.filterCategory = null; this.dateFrom = null; this.dateTo = null; this.search(); }
 
-  openDetail(s: Supply) { this.viewingItem.set(s); this.completeError.set(''); }
+  openDetail(s: Supply) {
+    this.viewingItem.set(s);
+    this.completeError.set('');
+    this.loadExternalSubmission(s.id);
+  }
+
+  /** GET /api/supplies/{id}/external-submission — 404 es el caso normal (proveedor sin integración), no se muestra como error */
+  private loadExternalSubmission(supplyId: string) {
+    this.externalSubmission.set(null);
+    this.loadingExternalSubmission.set(true);
+    this.svc.getExternalSubmission(supplyId).subscribe({
+      next: res => { this.externalSubmission.set(res); this.loadingExternalSubmission.set(false); },
+      error: () => { this.externalSubmission.set(null); this.loadingExternalSubmission.set(false); },
+    });
+  }
+
+  retryExternalSubmission() {
+    const s = this.viewingItem();
+    if (!s || this.retryingExternalSubmission()) return;
+    this.retryingExternalSubmission.set(true);
+    this.svc.retryExternalSubmission(s.id).subscribe({
+      next: res => {
+        this.externalSubmission.set(res);
+        this.retryingExternalSubmission.set(false);
+      },
+      error: (e) => {
+        this.retryingExternalSubmission.set(false);
+        this.msg.add({ severity: 'error', summary: 'Error', detail: e?.error?.message ?? 'No se pudo reintentar el envío.' });
+      },
+    });
+  }
 
   onPageChange(p: number)        { this.page = p; this.load(); }
   onSortChange(_sort: string)    { this.page = 1; this.load(); }
@@ -180,7 +214,8 @@ export class SuppliesComponent implements OnInit {
     else if (newStatus === 'Cancelled') this.cancelSupply(s);
   }
 
-  /** POST /api/supplies/{id}/complete — solo válido desde InProgress; deja el suministro facturable */
+  /** POST /api/supplies/{id}/complete — solo válido desde InProgress; deja el suministro facturable.
+   *  Sin body — el producto (si aplica) ya quedó guardado desde el alta directa. */
   completeSupply(s: Supply) {
     if (this.completingId()) return;
     this.completingId.set(s.id);

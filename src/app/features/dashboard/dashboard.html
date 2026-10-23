@@ -3,7 +3,7 @@
   <!-- Greeting -->
   <div class="mb-6">
     <h1 class="text-[2.25rem] font-bold text-[#0F172A] mb-1 tracking-tight leading-[1.15]">Hola, {{ userName() }}</h1>
-    <p class="text-sm text-[#475569] m-0">Bienvenido a Suminex</p>
+    <p class="text-sm text-[#475569] m-0">Bienvenido a Basiko</p>
   </div>
 
   @if (loadError) {
@@ -83,9 +83,9 @@
 
     <div class="bg-white border border-black/10 rounded-lg py-5 px-5.5 flex flex-col">
       <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Facturación disponible</span>
-      <span class="text-[1.3rem] text-[#94A3B8] leading-none mb-3 tracking-normal">Próximamente</span>
+      <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ availableToInvoice | currency:'EUR':'symbol':'1.2-2' }}</span>
       <div class="flex items-center gap-2 mt-auto">
-        <span class="text-[0.72rem] text-[#94A3B8]">Aún no disponible desde el backend</span>
+        <span class="text-[0.72rem] text-[#94A3B8]">Pendiente de facturar este mes</span>
       </div>
     </div>
 

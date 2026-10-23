@@ -141,7 +141,7 @@
         [disabled]="completingId() === viewingItem()!.id" (click)="completeSupply(viewingItem()!)"
         title="Confirma que la comercializadora ya activó el cambio y lo deja facturable">
         @if (completingId() === viewingItem()!.id) {
-        <app-suminex-loader [size]="14" [onColor]="true" /> Optimizando...
+        <app-basiko-loader [size]="14" [onColor]="true" /> Optimizando...
         } @else {
         <app-icon name="check-badge" svgClass="w-4 h-4" /> Marcar como optimizado
         }
@@ -153,7 +153,7 @@
         [disabled]="cancellingId() === viewingItem()!.id" (click)="cancelSupply(viewingItem()!)"
         title="Dar de baja este suministro">
         @if (cancellingId() === viewingItem()!.id) {
-        <app-suminex-loader [size]="14" /> Dando de baja...
+        <app-basiko-loader [size]="14" /> Dando de baja...
         } @else {
         <app-icon name="x-circle" svgClass="w-4 h-4" /> Dar de baja
         }
@@ -167,6 +167,34 @@
     <div class="flex items-center gap-2 py-2.5 px-3 mx-7 mt-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.82rem]">
       <app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ completeError() }}
     </div>
+    }
+
+    <!-- Envío a comercializadora externa (ej. Gana) — nada si 404 (proveedor sin integración, el caso normal) -->
+    @if (loadingExternalSubmission()) {
+    <div class="flex items-center gap-2 py-2.5 px-3 mx-7 mt-4 rounded-lg bg-sx-surface-2 text-sx-text-3 text-[0.82rem]">
+      <app-basiko-loader [size]="14" /> Consultando estado de envío...
+    </div>
+    } @else if (externalSubmission(); as sub) {
+      @if (sub.status === 'Confirmed') {
+      <div class="flex items-center gap-2.5 py-2.5 px-3 mx-7 mt-4 rounded-lg bg-sx-green-bg border border-sx-green text-sx-green text-[0.82rem]">
+        <app-icon name="check-circle" svgClass="w-4 h-4" />
+        <span>Enviado a {{ sub.integrationCode }}{{ sub.externalContractNumber ? ' · contrato nº ' + sub.externalContractNumber : '' }}</span>
+      </div>
+      } @else if (sub.status === 'Failed') {
+      <div class="flex items-center gap-2.5 py-2.5 px-3 mx-7 mt-4 rounded-lg bg-sx-red-bg border border-sx-red text-sx-red text-[0.82rem] flex-wrap">
+        <app-icon name="exclamation-circle" svgClass="w-4 h-4 shrink-0" />
+        <span class="flex-1">No se pudo enviar a {{ sub.integrationCode }}{{ sub.errorMessage ? ': ' + sub.errorMessage : '' }}</span>
+        <button
+          class="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-lg border border-sx-red bg-transparent text-sx-red text-[0.78rem] font-semibold cursor-pointer whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+          [disabled]="retryingExternalSubmission()" (click)="retryExternalSubmission()">
+          @if (retryingExternalSubmission()) {
+          <app-basiko-loader [size]="12" /> Reintentando...
+          } @else {
+          <app-icon name="arrow-path" svgClass="w-3.5 h-3.5" /> Reintentar
+          }
+        </button>
+      </div>
+      }
     }
 
     <div class="py-6 px-7 pb-7 flex flex-col gap-6">
@@ -237,6 +265,11 @@
             <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">¿Usuario = titular?</span>
             <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.isUserTheHolder ? 'Sí' :
               'No' }}</span>
+          </div>
+          <div class="flex flex-col gap-1 pb-2.5 border-b border-sx-border">
+            <span class="text-[0.66rem] font-semibold uppercase tracking-wide text-sx-text-3">Tipo de alta</span>
+            <span class="text-[0.83rem] font-semibold text-sx-text break-all">{{ viewingItem()!.isHolderChange ?
+              'Cambio de titularidad' : 'Alta nueva' }}</span>
           </div>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../../shared/components/basiko-loader/basiko-loader';
 import { Icon } from '../../../shared/components/icon/icon';
 
 interface Review {
@@ -16,7 +16,7 @@ const REVIEW_INTERVAL_MS = 5000;
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, SuminexLoader, Icon],
+  imports: [FormsModule, BasikoLoader, Icon],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -32,11 +32,11 @@ export class LoginComponent implements OnDestroy {
   showPwd = signal(false);
   readonly currentYear = new Date().getFullYear();
 
-  /** Placeholders de estructura — reemplazar por reseñas reales de clientes de Suminex cuando existan */
+  /** Placeholders de estructura — reemplazar por reseñas reales de clientes de Basiko cuando existan */
   reviews: Review[] = [
-    { quote: 'Aquí va la reseña de un cliente sobre cómo Suminex simplificó la gestión de sus suministros.', name: 'Nombre del cliente', role: 'Cargo · Empresa' },
-    { quote: 'Aquí va otra reseña destacando el tiempo que ahorró gracias a Suminex.', name: 'Nombre del cliente', role: 'Cargo · Empresa' },
-    { quote: 'Aquí va una tercera reseña sobre lo fácil que es gestionar la facturación con Suminex.', name: 'Nombre del cliente', role: 'Cargo · Empresa' },
+    { quote: 'Aquí va la reseña de un cliente sobre cómo Basiko simplificó la gestión de sus suministros.', name: 'Nombre del cliente', role: 'Cargo · Empresa' },
+    { quote: 'Aquí va otra reseña destacando el tiempo que ahorró gracias a Basiko.', name: 'Nombre del cliente', role: 'Cargo · Empresa' },
+    { quote: 'Aquí va una tercera reseña sobre lo fácil que es gestionar la facturación con Basiko.', name: 'Nombre del cliente', role: 'Cargo · Empresa' },
   ];
   currentReview = signal(0);
   private reviewTimer = setInterval(() => this.nextReview(), REVIEW_INTERVAL_MS);

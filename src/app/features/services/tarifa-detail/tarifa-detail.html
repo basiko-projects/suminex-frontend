@@ -9,7 +9,7 @@
 
   @if (loading()) {
   <div class="flex items-center gap-2.5 p-10 text-sx-text-3 text-[13px]">
-    <app-suminex-loader [size]="28" /><span>Cargando tarifa…</span>
+    <app-basiko-loader [size]="28" /><span>Cargando tarifa…</span>
   </div>
   } @else if (detail(); as d) {
 
@@ -80,10 +80,10 @@
                 Vigencia</th>
               <th
                 class="py-2.25 px-5 text-left text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 border-b border-sx-border">
-                Comisión E%</th>
+                Comisión</th>
               <th
                 class="py-2.25 px-5 text-left text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 border-b border-sx-border">
-                Comisión P%</th>
+                Proveedor</th>
               <th
                 class="py-2.25 px-5 text-right text-[0.68rem] font-bold uppercase tracking-wide text-sx-text-3 border-b border-sx-border">
                 Acciones</th>
@@ -99,9 +99,27 @@
               <td class="py-2.5 px-5 border-b border-sx-border align-middle text-sx-text-3 text-xs">{{ p.validFrom |
                 slice:0:10 }}{{ p.validUntil ? ' → ' + (p.validUntil | slice:0:10) : '' }}</td>
               <td class="py-2.5 px-5 border-b border-sx-border align-middle text-sx-text-3 text-xs">{{
-                p.commissionEnergyPct !== null ? (p.commissionEnergyPct! * 100) + '%' : '—' }}</td>
-              <td class="py-2.5 px-5 border-b border-sx-border align-middle text-sx-text-3 text-xs">{{
-                p.commissionPowerPct !== null ? (p.commissionPowerPct! * 100) + '%' : '—' }}</td>
+                p.fixedCommissionAmount != null ? (p.fixedCommissionAmount + ' €') : '—' }}</td>
+              <td class="py-2.5 px-5 border-b border-sx-border align-middle text-xs">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  @if (p.providerName) {
+                  <span class="inline-flex items-center gap-1.25 text-sx-text-2">
+                    @if (p.providerLogoUrl) {
+                    <img [src]="p.providerLogoUrl" [alt]="p.providerName" class="w-4 h-4 rounded object-contain" />
+                    }
+                    {{ p.providerName }}
+                  </span>
+                  } @else {
+                  <span class="text-sx-text-3">—</span>
+                  }
+                  @if (missingExternalTariff(p)) {
+                  <span class="inline-flex items-center gap-1 px-1.75 py-0.5 rounded-lg text-[10px] font-bold bg-[#FEF3C7] text-[#B45309]"
+                    title="Este producto no tiene tarifa de Gana asignada — los suministros con este producto no se podrán enviar">
+                    <app-icon name="exclamation-triangle" svgClass="w-2.75 h-2.75" /> Falta tarifa
+                  </span>
+                  }
+                </div>
+              </td>
               <td class="py-2.5 px-5 border-b border-sx-border align-middle">
                 <div class="flex justify-end gap-1">
                   <button
