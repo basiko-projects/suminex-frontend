@@ -15,7 +15,7 @@
 }
 
 <!-- Shared table -->
-<app-data-table title="Proveedores" subtitle="Gestiona las compañías proveedoras de servicios energéticos"
+<app-data-table title="Proveedores" subtitle="Gestiona las compañías proveedoras cuyas tarifas comercializamos"
   [columns]="tableColumns" [rows]="pagedRows()" [total]="filteredTotal()" [page]="page()" [pageSize]="pageSize()"
   [loading]="loading()" [rowTemplate]="rowTpl" emptyMessage="No hay proveedores registrados"
   (searchChange)="onSearchChange($event)" (pageChange)="onPageChange($event)"
@@ -25,26 +25,26 @@
 
 <!-- Row template -->
 <ng-template #rowTpl let-p>
-  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-sx-primary-bg border border-sx-border-2 text-sx-primary-text text-sm font-bold flex items-center justify-center shrink-0">{{ p.name.charAt(0) }}</div>
-      <span class="font-semibold">{{ p.name }}</span>
+  <td class="py-3.5 px-6 pl-12 align-middle">
+    <div class="w-9 h-9 rounded-lg bg-sx-surface-2 border border-sx-border-2 overflow-hidden flex items-center justify-center shrink-0">
+      <img [src]="p.logoUrl" [alt]="p.name" class="w-full h-full object-contain" />
     </div>
   </td>
-  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12"><code>{{ p.cif }}</code></td>
-  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
-    <span class="inline-flex items-center justify-center bg-sx-surface-2 border border-sx-border text-sx-text-2 text-xs font-semibold min-w-7 px-2 py-0.5 rounded-lg">{{ p.serviceCount }}</span>
+  <td class="py-3.5 px-6 align-middle"><span class="font-semibold">{{ p.name }}</span></td>
+  <td class="py-3.5 px-6 align-middle text-center">
+    @if (p.externalIntegrationCode) {
+    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-sx-primary-bg text-sx-primary-text">{{ p.externalIntegrationCode }}</span>
+    } @else {
+    <span class="text-xs text-sx-text-3">—</span>
+    }
   </td>
-  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-sx-text-2 text-[0.82rem]">{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
-  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
-    <p-tag [value]="p.isActive ? 'Activo' : 'Inactivo'" [severity]="p.isActive ? 'success' : 'danger'" />
-  </td>
-  <td class="py-3.5 px-6 align-middle first:pl-12 last:pr-12 text-center">
+  <td class="py-3.5 px-6 align-middle text-sx-text-2 text-[0.82rem]">{{ p.createdAt | date:'dd/MM/yyyy' }}</td>
+  <td class="py-3.5 px-6 pr-12 align-middle text-center">
     <div class="flex justify-center gap-1">
-      <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2 [&_.pi]:text-[0.8rem]" (click)="edit(p)" title="Editar">
+      <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-surface-2 hover:text-sx-text hover:border-sx-border-2" (click)="edit(p)" title="Editar">
         <app-icon name="pencil" svgClass="w-4 h-4" />
       </button>
-      <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red [&_.pi]:text-[0.8rem]" (click)="confirmDelete(p)" title="Desactivar">
+      <button class="w-8 h-8 rounded-lg border border-sx-border bg-transparent text-sx-text-2 flex items-center justify-center cursor-pointer transition-all hover:bg-sx-red-bg hover:text-sx-red hover:border-sx-red" (click)="confirmDelete(p)" title="Eliminar">
         <app-icon name="trash" svgClass="w-4 h-4" />
       </button>
     </div>
@@ -57,25 +57,43 @@
   <div class="flex flex-col gap-5 py-1">
     <div class="flex flex-col gap-2">
       <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Nombre *</label>
-      <input pInputText [(ngModel)]="form.name" class="w-full" placeholder="Ej: Iberdrola" />
+      <input pInputText [(ngModel)]="name" class="w-full" placeholder="Ej: Apolo Energies" [class.field-error]="submitted && !name" />
+      @if (submitted && !name) { <span class="text-[0.76rem] text-sx-red">Obligatorio</span> }
     </div>
+
     <div class="flex flex-col gap-2">
-      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">CIF *</label>
-      <input pInputText [(ngModel)]="form.cif" class="w-full" placeholder="A12345678" />
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">
+        Logo {{ isEdit ? '' : '*' }}
+        @if (isEdit) { <span class="font-normal text-xs text-sx-text-3 ml-1 normal-case">(deja vacío para conservar el actual)</span> }
+      </label>
+      <div class="flex items-center gap-3">
+        <div class="w-16 h-16 rounded-lg bg-sx-surface-2 border border-sx-border-2 overflow-hidden flex items-center justify-center shrink-0">
+          @if (logoPreviewUrl) {
+          <img [src]="logoPreviewUrl" alt="Logo" class="w-full h-full object-contain" />
+          } @else {
+          <app-icon name="photo" svgClass="w-6 h-6 text-sx-text-3" />
+          }
+        </div>
+        <button type="button"
+          class="py-2 px-3.5 rounded-lg border border-sx-border-2 bg-transparent text-sx-text-2 text-[0.82rem] font-semibold cursor-pointer hover:bg-sx-surface-2"
+          (click)="logoInput.click()">Elegir archivo</button>
+        <input #logoInput type="file" accept="image/*" hidden (change)="onLogoSelected($event)" />
+      </div>
+      @if (submitted && !isEdit && !logoFile) { <span class="text-[0.76rem] text-sx-red">El logo es obligatorio</span> }
     </div>
-    @if (isEdit) {
-    <div class="flex items-center justify-between py-1">
-      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Estado activo</label>
-      <p-toggleswitch [(ngModel)]="form.isActive" />
+
+    <div class="flex flex-col gap-2">
+      <label class="text-[0.78rem] font-semibold text-sx-text-2 uppercase tracking-wide">Integración externa</label>
+      <p-select [options]="integrationOpts" [(ngModel)]="externalIntegrationCode" optionLabel="label" optionValue="value"
+        [appendTo]="'body'" class="w-full" />
     </div>
-    }
   </div>
   <ng-template pTemplate="footer">
     <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="dialogVisible = false" />
     <p-button [label]="isEdit ? 'Guardar cambios' : 'Crear proveedor'" icon="pi pi-check" [loading]="saving()"
       (onClick)="save()">
       <ng-template pTemplate="loadingicon">
-        <app-suminex-loader [size]="14" [onColor]="true" />
+        <app-basiko-loader [size]="14" [onColor]="true" />
       </ng-template>
     </p-button>
   </ng-template>

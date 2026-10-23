@@ -1,12 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { ServicesService } from '../../../core/services/services.service';
-import { ServiceGroup, ServiceTariff } from '../../../core/models/service.model';
+import { ProvidersService } from '../../../core/services/providers.service';
+import { ServiceGroup, ServiceTariff, ServiceTariffProduct, GanaSyncResult } from '../../../core/models/service.model';
 import { TarifaFormComponent } from '../modals/tarifa-form/tarifa-form';
 import { ProductoLuzFormComponent } from '../modals/producto-luz-form/producto-luz-form';
 import { BoeLuzFormComponent } from '../modals/boe-luz-form/boe-luz-form';
 import { OmieLuzFormComponent } from '../modals/omie-luz-form/omie-luz-form';
-import { SuminexLoader } from '../../../shared/components/suminex-loader/suminex-loader';
+import { NuevoServicioFormComponent } from '../modals/nuevo-servicio-form/nuevo-servicio-form';
+import { BasikoLoader } from '../../../shared/components/basiko-loader/basiko-loader';
 import { ButtonModule } from 'primeng/button';
 import { DataTableComponent, DataTableColumn } from '../../../shared/components/data-table/data-table';
 import { Icon } from '../../../shared/components/icon/icon';
@@ -15,14 +17,18 @@ import { Icon } from '../../../shared/components/icon/icon';
   selector: 'app-services-shell',
   standalone: true,
   imports: [
-    TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, SuminexLoader,
-    ButtonModule, DataTableComponent, Icon,
+    TarifaFormComponent, ProductoLuzFormComponent, BoeLuzFormComponent, OmieLuzFormComponent, NuevoServicioFormComponent,
+    BasikoLoader, ButtonModule, DataTableComponent, Icon,
   ],
   templateUrl: './services-shell.html',
   host: { class: 'block' },
 })
 export class ServicesShellComponent implements OnInit {
-  private svc = inject(ServicesService);
+  private svc         = inject(ServicesService);
+  private providersSvc = inject(ProvidersService);
+
+  /** Ids de proveedores con integración externa activa (ej. Gana) — para el aviso "Falta tarifa de Gana" */
+  integratedProviderIds = signal<Set<string>>(new Set());
 
   serviceGroups    = signal<ServiceGroup[]>([]);
   activeGroupId    = signal<string | null>(null);
@@ -31,16 +37,19 @@ export class ServicesShellComponent implements OnInit {
   loadingTarifas   = signal(false);
 
   productColumns: DataTableColumn[] = [
-    { key: 'name',    label: 'Nombre' },
-    { key: 'type',    label: 'Tipo',     align: 'center' },
-    { key: 'status',  label: 'Estado',   align: 'center' },
-    { key: 'actions', label: 'Acciones', align: 'center', width: '110px' },
+    { key: 'name',       label: 'Nombre' },
+    { key: 'type',       label: 'Tipo',       align: 'center' },
+    { key: 'commission', label: 'Comisión',   align: 'center' },
+    { key: 'provider',   label: 'Proveedor',  align: 'center' },
+    { key: 'status',     label: 'Estado',     align: 'center' },
+    { key: 'actions',    label: 'Acciones',   align: 'center', width: '110px' },
   ];
 
-  showNewTarifaForm = false;
-  showProductoLuz   = false;
-  showBoe           = false;
-  showOmie          = false;
+  showNewTarifaForm     = false;
+  showNewServiceForm    = false;
+  showProductoLuz       = false;
+  showBoe               = false;
+  showOmie              = false;
   editingBoeData: { periods: { period: string; priceKwDay: number }[]; validFrom: string; validUntil?: string | null } | null = null;
   editingOmieData: any = null;
 
@@ -49,6 +58,10 @@ export class ServicesShellComponent implements OnInit {
   editingProduct   = signal<any>(null);
   deleteConfirmId       = signal<number | null>(null);
   deleting              = signal(false);
+
+  syncingGana    = signal(false);
+  ganaSyncResult = signal<GanaSyncResult | null>(null);
+  ganaSyncError  = signal('');
 
   private detailCache = new Map<string, any>();
 
@@ -80,7 +93,42 @@ export class ServicesShellComponent implements OnInit {
     return ({ LUZ:'rgba(217,119,6,0.12)', GAS:'rgba(5,150,105,0.12)', MOBILE:'rgba(124,58,237,0.12)', INTERNET:'rgba(2,132,199,0.12)' } as any)[t] ?? 'rgba(34,124,255,0.12)';
   }
 
-  ngOnInit() { this.loadServices(); }
+  ngOnInit() {
+    this.loadServices();
+    this.providersSvc.getAll().subscribe({
+      next: providers => {
+        this.integratedProviderIds.set(new Set(providers.filter(p => p.externalIntegrationCode).map(p => p.id)));
+      },
+    });
+  }
+
+  missingExternalTariff(p: ServiceTariffProduct): boolean {
+    return !!p.providerId && this.integratedProviderIds().has(p.providerId) && !p.externalTariffId;
+  }
+
+  /** POST /api/admin/gana-tariffs/sync — siempre 200; warnings[] no vacío significa que algo no se sincronizó bien */
+  syncGana() {
+    if (this.syncingGana()) return;
+    this.syncingGana.set(true);
+    this.ganaSyncResult.set(null);
+    this.ganaSyncError.set('');
+    this.svc.syncGanaTariffs().subscribe({
+      next: res => {
+        this.syncingGana.set(false);
+        this.ganaSyncResult.set(res);
+        this.loadServices();
+      },
+      error: (e: any) => {
+        this.syncingGana.set(false);
+        this.ganaSyncError.set(e?.error?.message ?? 'No se pudo sincronizar con Gana. Inténtalo de nuevo.');
+      },
+    });
+  }
+
+  closeGanaSyncResult() {
+    this.ganaSyncResult.set(null);
+    this.ganaSyncError.set('');
+  }
 
   loadServices() {
     const prevTarifaId = this.activeTarifa()?.id;
@@ -171,6 +219,11 @@ export class ServicesShellComponent implements OnInit {
     this.loadServices();
   }
 
+  onServiceSaved() {
+    this.showNewServiceForm = false;
+    this.loadServices();
+  }
+
   buildEditBoe() {
     const boe = this.activeTarifa()!.boePeriods!;
     return {
@@ -227,13 +280,13 @@ export class ServicesShellComponent implements OnInit {
       : `${base} text-sx-text bg-sx-surface border border-sx-border`;
   }
 
-  commissionLabel(pct: number | null | undefined): string {
-    return pct !== null && pct !== undefined ? `Comisión: ${pct}%` : 'Comisión: —';
+  commissionLabel(amount: number | null | undefined): string {
+    return amount !== null && amount !== undefined ? `Comisión: ${amount} €` : 'Comisión: —';
   }
 
-  commissionBadgeClasses(pct: number | null | undefined): string {
-    const base = 'ml-auto inline-block py-0.5 px-2 rounded-lg text-[10px] font-bold tracking-wide';
-    return pct !== null && pct !== undefined
+  commissionBadgeClasses(amount: number | null | undefined): string {
+    const base = 'inline-block py-0.5 px-2 rounded-lg text-[10px] font-bold tracking-wide';
+    return amount !== null && amount !== undefined
       ? `${base} bg-sx-green-bg text-sx-green`
       : `${base} bg-sx-surface-2 text-sx-text-3`;
   }

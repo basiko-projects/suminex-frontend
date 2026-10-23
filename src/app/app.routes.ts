@@ -26,6 +26,7 @@ export const routes: Routes = [
       { path: 'new-supply', loadComponent: () => import('./features/new-supply/new-supply').then(m => m.NewSupplyComponent) },
       { path: 'comparator', loadComponent: () => import('./features/comparator/comparator').then(m => m.ComparatorComponent) },
       { path: 'users',    loadComponent: () => import('./features/users/users/users').then(m => m.UsersComponent) },
+      { path: 'providers', loadComponent: () => import('./features/providers/providers').then(m => m.ProvidersComponent), canActivate: [authGuard] },
       { path: 'billing',  loadComponent: () => import('./features/billing/billing').then(m => m.BillingComponent) },
     ]
   },

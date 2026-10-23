@@ -9,7 +9,7 @@ export class ThemeService {
   constructor() {
     // Remove any persisted dark class on startup
     document.documentElement.classList.remove('dark');
-    localStorage.removeItem('suminex-theme');
+    localStorage.removeItem('basiko-theme');
   }
 
   // Toggle kept for future dark mode — wire back getInitial() + CSS .dark block when ready

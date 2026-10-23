@@ -37,7 +37,7 @@
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.81rem] font-semibold text-sx-text-2">Rol <span class="text-sx-red">*</span></label>
         <p-select [options]="roleOpts" [(ngModel)]="role" optionLabel="label" optionValue="value"
-          placeholder="Seleccionar" class="w-full" [class.field-error]="submitted && !role" />
+          placeholder="Seleccionar" [appendTo]="'body'" class="w-full" [class.field-error]="submitted && !role" />
       </div>
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.81rem] font-semibold text-sx-text-2">Estado</label>
@@ -52,7 +52,7 @@
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.81rem] font-semibold text-sx-text-2">Rol <span class="text-sx-red">*</span></label>
         <p-select [options]="roleOpts" [(ngModel)]="role" optionLabel="label" optionValue="value"
-          placeholder="Seleccionar" class="w-full" [class.field-error]="submitted && !role" />
+          placeholder="Seleccionar" [appendTo]="'body'" class="w-full" [class.field-error]="submitted && !role" />
       </div>
     </div>
     }
@@ -81,7 +81,7 @@
     <p-button [label]="editUser ? 'Guardar cambios' : 'Crear usuario'" icon="pi pi-check" (onClick)="submit()"
       [loading]="saving()">
       <ng-template pTemplate="loadingicon">
-        <app-suminex-loader [size]="14" [onColor]="true" />
+        <app-basiko-loader [size]="14" [onColor]="true" />
       </ng-template>
     </p-button>
   </ng-template>

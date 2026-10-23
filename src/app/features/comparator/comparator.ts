@@ -7,7 +7,7 @@ import { LuzOcrResult } from '../../core/models/comparison.model';
 import { SupplyKind, SupplyOption } from '../../core/models/supply.model';
 import { computeSupplyComparison, SupplyComparisonResult } from '../../core/helpers/supply-comparison.helpers';
 import { ConfigureProduct } from '../../shared/components/configure-product/configure-product';
-import { SuminexLoader } from '../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loader';
 import { SupplyTypeStep } from '../../shared/components/supply-type-step/supply-type-step';
 import { Icon } from '../../shared/components/icon/icon';
 
@@ -16,7 +16,7 @@ type OcrStatus = 'idle' | 'uploading' | 'error' | 'done';
 @Component({
   selector: 'app-comparator',
   standalone: true,
-  imports: [DecimalPipe, ConfigureProduct, SuminexLoader, SupplyTypeStep, Icon],
+  imports: [DecimalPipe, ConfigureProduct, BasikoLoader, SupplyTypeStep, Icon],
   templateUrl: './comparator.html',
 })
 export class ComparatorComponent {
@@ -112,7 +112,7 @@ export class ComparatorComponent {
 
     if (!matchedTariff) {
       console.warn(
-        '[Comparator] No se encontró tarifa Suminex para el código OCR:', luz.tarifa,
+        '[Comparator] No se encontró tarifa Basiko para el código OCR:', luz.tarifa,
         '— códigos disponibles en catálogo LUZ:', luzGroup?.tariffs.map(t => t.code),
       );
       this.comparison.set(null);

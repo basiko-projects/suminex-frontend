@@ -40,7 +40,7 @@ export class InvoicesService {
   }
 
   /** GET /api/invoices/my — historial propio del colaborador logueado */
-  getMine(page = 1, pageSize = 20): Observable<InvoicesPagedResponse> {
+  getMine(page = 1, pageSize = 10): Observable<InvoicesPagedResponse> {
     const params = new HttpParams().set('page', page).set('pageSize', pageSize);
     return this.http.get<InvoicesPagedResponse>(`${this.url}/my`, { params });
   }

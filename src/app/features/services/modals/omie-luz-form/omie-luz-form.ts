@@ -6,13 +6,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ServicesService } from '../../../../core/services/services.service';
 import { CreateOmieDistributionDto } from '../../../../core/models/service.model';
-import { SuminexLoader } from '../../../../shared/components/suminex-loader/suminex-loader';
+import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko-loader';
 import { Icon } from '../../../../shared/components/icon/icon';
 
 @Component({
   selector: 'app-omie-luz-form',
   standalone: true,
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, ToggleSwitchModule, SuminexLoader, Icon],
+  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, ToggleSwitchModule, BasikoLoader, Icon],
   templateUrl: './omie-luz-form.html',
 })
 export class OmieLuzFormComponent implements OnInit {

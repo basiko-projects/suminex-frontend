@@ -17,7 +17,7 @@
 
   <div class="mb-8">
     <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Sube la factura</h1>
-    <p class="text-sm text-[#64748B] m-0">La analizamos y te mostramos cuánto pagaría con Suminex</p>
+    <p class="text-sm text-[#64748B] m-0">La analizamos y te mostramos cuánto pagaría con Basiko</p>
   </div>
 
   @if (ocrStatus() === 'idle') {
@@ -33,7 +33,7 @@
 
   @if (ocrStatus() === 'uploading') {
   <div class="flex items-center gap-2.5 py-8 text-[#64748B] text-[0.9rem]">
-    <app-suminex-loader [size]="28" />
+    <app-basiko-loader [size]="28" />
     <span>Leyendo la factura y calculando la comparativa...</span>
   </div>
   }
@@ -54,7 +54,7 @@
       <span class="text-2xl font-extrabold text-[#0F172A]">{{ comparison()?.currentTotal ?? 0 | number:'1.2-2' }} €</span>
     </div>
     <div class="bg-[#EAF2FF] border-[1.5px] border-[#227CFF] rounded-lg p-5 flex flex-col gap-1.5">
-      <span class="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Con Suminex</span>
+      <span class="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">Con Basiko</span>
       @if (comparison(); as c) {
       <span class="text-[0.85rem] font-semibold text-[#475569]">{{ c.bestTariffName }}</span>
       <span class="text-2xl font-extrabold text-[#0F172A]">{{ c.estimatedTotal | number:'1.2-2' }} €</span>
@@ -71,7 +71,7 @@
     Ahorra {{ c.savingsAmount | number:'1.2-2' }} € al mes ({{ c.savingsPercent | number:'1.0-1' }}%)
     } @else {
     <app-icon name="arrow-up" svgClass="w-4 h-4" />
-    Pagaría {{ -c.savingsAmount | number:'1.2-2' }} € más al mes con Suminex
+    Pagaría {{ -c.savingsAmount | number:'1.2-2' }} € más al mes con Basiko
     }
   </div>
   }

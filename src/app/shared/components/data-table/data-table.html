@@ -112,6 +112,17 @@
         <span class="whitespace-nowrap">por página</span>
       </div>
       <div class="flex-1 flex items-center justify-end gap-[0.3rem]">
+        @if (totalPages > 1) {
+        <div class="flex items-center gap-1.5 text-xs text-[#404B52] mr-1.5">
+          <span class="whitespace-nowrap">Ir a</span>
+          <input type="number" min="1" [max]="totalPages" [(ngModel)]="goToPageValue"
+            (keydown.enter)="onGoToPage()" placeholder="Pág."
+            class="w-13 h-[25.26px] px-1.5 border border-[#EEEEEE] rounded text-[#404B52] bg-[#F5F5F5] text-xs outline-none text-center hover:border-[#227CFF] focus:border-[#227CFF]" />
+          <button type="button"
+            class="h-[25.26px] px-2.5 rounded border border-[#EEEEEE] bg-[#F5F5F5] text-[#404B52] text-xs font-medium cursor-pointer inline-flex items-center justify-center transition-all shrink-0 disabled:opacity-[0.28] disabled:cursor-not-allowed enabled:hover:border-[#227CFF] enabled:hover:text-[#227CFF]"
+            (click)="onGoToPage()" [disabled]="!goToPageValue">Ir</button>
+        </div>
+        }
         <button [class]="pgNavClasses" (click)="prev()" [disabled]="page <= 1">‹</button>
         @for (p of pageList(); track p) {
         @if (p === '...') {

@@ -22,6 +22,8 @@ export interface DashboardStatsSummary {
   comparisons: DashboardKpi;
   /** Promedio del estimatedSavings de los suministros creados en el rango (KPI provisional, no es revenue real) */
   avgOrderValue: DashboardKpi;
+  /** Comisión total generada (suma de fixedCommissionAmount de los suministros facturados) en el rango */
+  commissionGenerated: DashboardKpi;
 }
 
 export interface DashboardTimeseriesPoint {
@@ -35,4 +37,6 @@ export interface DashboardTimeseriesPoint {
 export interface DashboardStatsResponse {
   summary: DashboardStatsSummary;
   timeseries: DashboardTimeseriesPoint[];
+  /** Total pendiente de facturar este mes (no varía por período activo — siempre es "este mes") */
+  availableToInvoiceThisMonth: number;
 }

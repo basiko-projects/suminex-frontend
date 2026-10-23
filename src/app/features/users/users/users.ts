@@ -45,7 +45,7 @@ export class UsersComponent implements OnInit {
   formVisible   = false;
   editingUser:  UserItem | null = null;
   page          = 1;
-  pageSize      = 20;
+  pageSize      = 10;
 
   get tableColumns(): DataTableColumn[] {
     return [
