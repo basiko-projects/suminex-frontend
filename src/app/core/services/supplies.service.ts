@@ -31,9 +31,9 @@ export class SuppliesService {
     return this.http.post<RegisterSupplyResponse>(`${this.url}/register-direct`, formData);
   }
 
-  /** POST /api/supplies/verify-identity — para verificar identidad más tarde, sobre un suministro que ya quedó
-   *  en PendingIdentityVerification. Ya no se usa en el alta (ver registerDirect).
-   *  holderDni: el DNI que el titular confirmó en el formulario — el backend lo compara contra el OCR de DniFront y falla si no coincide. */
+  /** POST /api/supplies/verify-identity — para subir los documentos más tarde, sobre un suministro que ya quedó
+   *  en PendingIdentityVerification. Ya no se usa en el alta (ver registerDirect). Ya NO coteja holderDni contra
+   *  el OCR de la foto — solo sube los archivos; nunca falla por "no coincide" o "foto ilegible". */
   verifyIdentity(dniFront: File, dniBack: File, holderDni: string): Observable<VerifyIdentityResponse> {
     const formData = new FormData();
     formData.append('DniFront', dniFront);

@@ -96,8 +96,11 @@ export interface SupplyListResponse {
   hasPreviousPage: boolean;
 }
 
-/** Respuesta de POST /api/supplies/register-with-identity — único endpoint de alta; siempre 200 si los datos base
- *  son válidos, incluso cuando la identidad no se pudo verificar (verificationSuccess: false, supply igual creado). */
+/** Respuesta de POST /api/supplies/register-with-identity y register-direct — siempre 200 si los datos base son
+ *  válidos. verificationSuccess ya no coteja el DNI contra la foto (eso se quitó) — ahora es prácticamente
+ *  siempre true, solo false por un fallo real de subida (red/S3). verificationMessage, cuando viene, ya no trae
+ *  motivos de "no coincide"/"foto ilegible" — el manejo genérico existente (mostrar lo que mande el backend) sigue
+ *  siendo correcto sin cambios. */
 export interface RegisterSupplyResponse {
   id:                   string;
   status:               SupplyStatus;
@@ -108,9 +111,9 @@ export interface RegisterSupplyResponse {
   dniBackDocumentId:    string | null;
 }
 
-/** Respuesta de POST /api/supplies/verify-identity — coteja el OCR de las fotos del DNI contra holderDni; sin id de suministro.
- *  isVerified/message: solo los manda una versión más nueva del backend — el entorno actual todavía responde
- *  documentNumber/fullName/birthDate/expirationDate en su lugar, sin isVerified (un 200 OK ya implica éxito). */
+/** Respuesta de POST /api/supplies/verify-identity — ya NO coteja el DNI contra el OCR de la foto; solo sube los
+ *  documentos. documentNumber es ahora literal el DNI que vino en el form (no el leído de la imagen), y
+ *  fullName/birthDate/expirationDate ya SIEMPRE vienen null (antes a veces traían datos leídos del DNI). */
 export interface VerifyIdentityResponse {
   dniFrontDocumentId: string;
   dniBackDocumentId:  string;
