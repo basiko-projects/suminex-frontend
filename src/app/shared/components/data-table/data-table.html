@@ -38,12 +38,12 @@
   <!-- Table card -->
   <div
     class="bg-sx-surface border border-sx-border rounded-lg overflow-hidden shadow-[0_10px_60px_0_rgba(226,236,249,0.50)]">
-    <div class="overflow-x-auto">
+    <div class="overflow-auto max-h-[70vh]">
       <table class="dt-table w-full border-collapse min-w-140">
         <thead>
           <tr>
             @for (col of columns; track col.key; let isFirst = $first, isLast = $last) {
-            <th class="text-sm font-medium text-sx-text-3 text-left whitespace-nowrap border-b border-sx-border"
+            <th class="sticky top-0 z-10 bg-sx-surface text-sm font-medium text-sx-text-3 text-left whitespace-nowrap border-b border-sx-border"
               [class.sx-sticky-col]="isFirst && stickyFirstColumn" [style.textAlign]="col.align ?? 'left'"
               [style.width]="col.width ?? 'auto'" [style.paddingTop]="'0.85rem'" [style.paddingBottom]="'0.85rem'"
               [style.paddingLeft]="isFirst ? '3rem' : '1.5rem'" [style.paddingRight]="isLast ? '3rem' : '1.5rem'">
