@@ -30,6 +30,8 @@ export class SupplyPointStep implements OnInit {
 
   ngOnInit() {
     if (this.initialData) this.supplyPointData = { ...this.supplyPointData, ...this.initialData };
+    // El OCR a veces lee el CUPS con espacios entre bloques — se normaliza también acá, por si el usuario nunca toca el campo
+    this.supplyPointData.cups = this.supplyPointData.cups.toUpperCase().replace(/\s+/g, '');
   }
 
   get streetAddressError(): string | null {
@@ -89,6 +91,11 @@ export class SupplyPointStep implements OnInit {
   onBankAccountInput(value: string) {
     this.ibanServerError = null;
     this.supplyPointData.bankAccount = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 24);
+  }
+
+  /** El OCR a veces lee el CUPS con espacios entre bloques — nunca deben llegar al backend ni a la validación */
+  onCupsInput(value: string) {
+    this.supplyPointData.cups = value.toUpperCase().replace(/\s+/g, '');
   }
 
   requiresCups(): boolean {

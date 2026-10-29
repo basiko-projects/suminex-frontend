@@ -63,7 +63,12 @@
   @if (status === 'success') {
   <a routerLink="/supplies" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] no-underline mb-3 max-w-[320px]">Ver suministros</a>
   }
+  @if (status === 'error') {
+  <button class="w-full py-3.5 px-4 mb-3 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] max-w-[320px]" (click)="correct.emit()">
+    {{ correctFieldLabel ? 'Corregir ' + correctFieldLabel : 'Revisar formulario' }}
+  </button>
+  }
   <button class="bg-transparent border-[1.5px] border-black/12 rounded-lg py-3.5 px-4 w-full max-w-[320px] text-[0.9rem] font-semibold text-[#475569] cursor-pointer transition-all hover:border-[#227CFF] hover:text-[#227CFF] hover:bg-[#EAF2FF]" (click)="retry.emit()">
-    {{ status === 'success' ? 'Dar de alta otro suministro' : 'Volver a intentarlo' }}
+    {{ status === 'success' ? 'Dar de alta otro suministro' : 'Empezar de nuevo (resubir factura)' }}
   </button>
 </div>

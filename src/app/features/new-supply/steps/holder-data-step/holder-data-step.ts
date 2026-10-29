@@ -12,12 +12,17 @@ import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko
 })
 export class HolderDataStep implements OnInit {
   @Input() initialData: Partial<HolderData> | null = null;
+  /** true = hay cambio de titularidad → se exige PreviousHolderDni si el titular no es empresa */
+  @Input() isHolderChange = false;
   /** No se llama "submit": colisiona con el evento nativo del <form> interno y hace bubbling hacia el padre */
   @Output() submitted = new EventEmitter<HolderData>();
 
   private suppliesSvc = inject(SuppliesService);
 
-  holderData: HolderData = { fullName: '', nationalId: '', phoneCountry: '+34', phoneNumber: '', email: '' };
+  holderData: HolderData = {
+    fullName: '', nationalId: '', phoneCountry: '+34', phoneNumber: '', email: '',
+    isCompanyHolder: false, tradeName: '', contactName: '', contactDni: '', cnae: '', previousHolderDni: '',
+  };
   holderSubmitted = false;
   validatingPhone = signal(false);
   private phoneServerError: string | null = null;
@@ -40,8 +45,36 @@ export class HolderDataStep implements OnInit {
   get dniError(): string | null {
     if (!this.holderSubmitted) return null;
     if (!this.holderData.nationalId.trim()) return 'Este campo es obligatorio';
+    if (this.holderData.isCompanyHolder) {
+      return /^[A-HJNPQRSUVW]\d{7}[0-9A-J]$/i.test(this.holderData.nationalId.trim())
+        ? null : 'Introduce un CIF válido';
+    }
     return /^\d{8}[A-Za-z]$/.test(this.holderData.nationalId.trim())
       ? null : 'Introduce un DNI válido (8 dígitos y una letra)';
+  }
+
+  get contactNameError(): string | null {
+    if (!this.holderSubmitted || !this.holderData.isCompanyHolder) return null;
+    return this.holderData.contactName.trim() ? null : 'Este campo es obligatorio';
+  }
+
+  get contactDniError(): string | null {
+    if (!this.holderSubmitted || !this.holderData.isCompanyHolder) return null;
+    const dni = this.holderData.contactDni.trim();
+    if (!dni) return 'Este campo es obligatorio';
+    return /^(\d{8}|[XYZ]\d{7})[A-Za-z]$/i.test(dni) ? null : 'Introduce un DNI/NIE válido';
+  }
+
+  get cnaeError(): string | null {
+    if (!this.holderSubmitted || !this.holderData.isCompanyHolder) return null;
+    return this.holderData.cnae.trim() ? null : 'Este campo es obligatorio';
+  }
+
+  get previousHolderDniError(): string | null {
+    if (!this.holderSubmitted || !this.isHolderChange || this.holderData.isCompanyHolder) return null;
+    const dni = this.holderData.previousHolderDni.trim();
+    if (!dni) return 'Este campo es obligatorio';
+    return /^\d{8}[A-Za-z]$/.test(dni) ? null : 'Introduce un DNI válido (8 dígitos y una letra)';
   }
 
   get phoneError(): string | null {
@@ -79,7 +112,8 @@ export class HolderDataStep implements OnInit {
 
   submitForm() {
     this.holderSubmitted = true;
-    if (this.fullNameError || this.dniError || this.phoneError || this.emailError) return;
+    if (this.fullNameError || this.dniError || this.phoneError || this.emailError
+      || this.contactNameError || this.contactDniError || this.cnaeError || this.previousHolderDniError) return;
     if (this.validatingPhone()) return;
 
     this.validatingPhone.set(true);

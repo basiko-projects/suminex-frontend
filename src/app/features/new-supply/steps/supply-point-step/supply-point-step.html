@@ -2,13 +2,13 @@
   <div class="grid grid-cols-[1fr_140px] gap-4 max-[480px]:grid-cols-1">
     <div class="flex flex-col gap-[0.45rem]">
       <label class="text-[0.82rem] font-bold text-[#0F172A]">Dirección del punto de suministro *</label>
-      <input type="text" [class]="formInputClasses(!!streetAddressError)" [(ngModel)]="supplyPointData.streetAddress" name="streetAddress"
+      <input id="sp-street" type="text" [class]="formInputClasses(!!streetAddressError)" [(ngModel)]="supplyPointData.streetAddress" name="streetAddress"
         placeholder="Calle" />
       @if (streetAddressError) { <span class="text-[0.76rem] text-[#DC2626]">{{ streetAddressError }}</span> }
     </div>
     <div class="flex flex-col gap-[0.45rem]">
       <label class="text-[0.82rem] font-bold text-[#0F172A]">Número *</label>
-      <input type="text" [class]="formInputClasses(!!numberError)" [(ngModel)]="supplyPointData.number" name="number"
+      <input id="sp-number" type="text" [class]="formInputClasses(!!numberError)" [(ngModel)]="supplyPointData.number" name="number"
         placeholder="Nº" />
       @if (numberError) { <span class="text-[0.76rem] text-[#DC2626]">{{ numberError }}</span> }
     </div>
@@ -23,24 +23,24 @@
   </div>
   <div class="grid grid-cols-2 gap-4 max-[480px]:grid-cols-1">
     <div class="flex flex-col gap-[0.45rem]">
-      <input type="text" [class]="formInputClasses(!!postalCodeError)" [(ngModel)]="supplyPointData.postalCode" name="postalCode"
+      <input id="sp-postal-code" type="text" [class]="formInputClasses(!!postalCodeError)" [(ngModel)]="supplyPointData.postalCode" name="postalCode"
         placeholder="Código Postal" maxlength="5" />
       @if (postalCodeError) { <span class="text-[0.76rem] text-[#DC2626]">{{ postalCodeError }}</span> }
     </div>
     <div class="flex flex-col gap-[0.45rem]">
-      <input type="text" [class]="formInputClasses(!!provinceError)" [(ngModel)]="supplyPointData.province" name="province"
+      <input id="sp-province" type="text" [class]="formInputClasses(!!provinceError)" [(ngModel)]="supplyPointData.province" name="province"
         placeholder="Provincia" />
       @if (provinceError) { <span class="text-[0.76rem] text-[#DC2626]">{{ provinceError }}</span> }
     </div>
   </div>
   <div class="flex flex-col gap-[0.45rem]">
-    <input type="text" [class]="formInputClasses(!!cityError)" [(ngModel)]="supplyPointData.city" name="city" placeholder="Localidad" />
+    <input id="sp-city" type="text" [class]="formInputClasses(!!cityError)" [(ngModel)]="supplyPointData.city" name="city" placeholder="Localidad" />
     @if (cityError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cityError }}</span> }
   </div>
   @if (requiresCups()) {
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">CUPS *</label>
-    <input type="text" [class]="formInputClasses(!!cupsError)" [(ngModel)]="supplyPointData.cups" name="cups"
+    <input id="sp-cups" type="text" [class]="formInputClasses(!!cupsError)" [ngModel]="supplyPointData.cups" (ngModelChange)="onCupsInput($event)" name="cups"
       placeholder="ES0021309584339948938JN0F" maxlength="22" />
     @if (cupsError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cupsError }}</span> }
   </div>
@@ -54,7 +54,7 @@
   }
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Cuenta bancaria (IBAN) *</label>
-    <input type="text" [class]="formInputClasses(!!bankAccountError)" [ngModel]="supplyPointData.bankAccount" (ngModelChange)="onBankAccountInput($event)"
+    <input id="sp-iban" type="text" [class]="formInputClasses(!!bankAccountError)" [ngModel]="supplyPointData.bankAccount" (ngModelChange)="onBankAccountInput($event)"
       name="bankAccount" placeholder="ES35 3454 6753 2435 4434" />
     @if (bankAccountError) { <span class="text-[0.76rem] text-[#DC2626]">{{ bankAccountError }}</span> }
   </div>
