@@ -4,6 +4,33 @@ import { HolderData } from '../../new-supply.types';
 import { SuppliesService } from '../../../../core/services/supplies.service';
 import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko-loader';
 
+const DNI_CONTROL_LETTERS = 'TRWAGMYFPDXBNJZSQVHLCKE';
+const NIE_PREFIX_DIGIT: Record<string, string> = { X: '0', Y: '1', Z: '2' };
+const CIF_RE = /^[A-HJNPQRSUVW]\d{7}[0-9A-J]$/i;
+
+/** Valida el dígito de control del DNI/NIE español (resto de dividir el número entre 23) — no solo el formato,
+ *  así se detecta una letra mal tipeada o inventada aunque el formato "parezca" correcto. */
+function isValidSpanishDni(value: string, allowNie = false): boolean {
+  const v = value.trim().toUpperCase();
+  const pattern = allowNie ? /^([0-9XYZ])(\d{7})([A-Z])$/ : /^(\d)(\d{7})([A-Z])$/;
+  const m = pattern.exec(v);
+  if (!m) return false;
+  const [, first, rest, letter] = m;
+  const digits = (NIE_PREFIX_DIGIT[first] ?? first) + rest;
+  return DNI_CONTROL_LETTERS[Number(digits) % 23] === letter;
+}
+
+/** El titular anterior no siempre fue un particular — puede haber sido una empresa (CIF), independientemente
+ *  de si el nuevo titular lo es. Acepta DNI o NIE (con dígito de control verificado) o CIF (solo formato, el
+ *  dígito de control de un CIF depende del tipo de sociedad y no se valida acá). */
+function isValidSpanishIdDocument(value: string): boolean {
+  const v = value.trim();
+  if (CIF_RE.test(v)) return true;
+  if (/^\d{8}[A-Za-z]$/.test(v)) return isValidSpanishDni(v);
+  if (/^[XYZ]\d{7}[A-Za-z]$/i.test(v)) return isValidSpanishDni(v, true);
+  return false;
+}
+
 @Component({
   selector: 'app-holder-data-step',
   standalone: true,
@@ -49,8 +76,12 @@ export class HolderDataStep implements OnInit {
       return /^[A-HJNPQRSUVW]\d{7}[0-9A-J]$/i.test(this.holderData.nationalId.trim())
         ? null : 'Introduce un CIF válido';
     }
-    return /^\d{8}[A-Za-z]$/.test(this.holderData.nationalId.trim())
-      ? null : 'Introduce un DNI válido (8 dígitos y una letra)';
+    const dni = this.holderData.nationalId.trim();
+    if (/^\d{8}[A-Za-z]$/.test(dni)) return isValidSpanishDni(dni) ? null : 'La letra del DNI no coincide con el número';
+    if (/^[XYZ]\d{7}[A-Za-z]$/i.test(dni)) return isValidSpanishDni(dni, true) ? null : 'La letra del NIE no coincide con el número';
+    // Un particular a veces se identifica con el CIF de su autónomo/sociedad — se acepta igual, sin checksum (ver isValidSpanishIdDocument)
+    if (CIF_RE.test(dni)) return null;
+    return 'Introduce un DNI, NIE o CIF válido';
   }
 
   get contactNameError(): string | null {
@@ -62,7 +93,12 @@ export class HolderDataStep implements OnInit {
     if (!this.holderSubmitted || !this.holderData.isCompanyHolder) return null;
     const dni = this.holderData.contactDni.trim();
     if (!dni) return 'Este campo es obligatorio';
-    return /^(\d{8}|[XYZ]\d{7})[A-Za-z]$/i.test(dni) ? null : 'Introduce un DNI/NIE válido';
+    if (/^(\d{8}|[XYZ]\d{7})[A-Za-z]$/i.test(dni)) {
+      return isValidSpanishDni(dni, true) ? null : 'La letra del DNI/NIE no coincide con el número';
+    }
+    // El contacto a veces se identifica con el CIF de su propia sociedad — se acepta igual, sin checksum
+    if (CIF_RE.test(dni)) return null;
+    return 'Introduce un DNI, NIE o CIF válido';
   }
 
   get cnaeError(): string | null {
@@ -74,7 +110,7 @@ export class HolderDataStep implements OnInit {
     if (!this.holderSubmitted || !this.isHolderChange || this.holderData.isCompanyHolder) return null;
     const dni = this.holderData.previousHolderDni.trim();
     if (!dni) return 'Este campo es obligatorio';
-    return /^\d{8}[A-Za-z]$/.test(dni) ? null : 'Introduce un DNI válido (8 dígitos y una letra)';
+    return isValidSpanishIdDocument(dni) ? null : 'Introduce un DNI, NIE o CIF válido';
   }
 
   get phoneError(): string | null {
