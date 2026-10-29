@@ -44,28 +44,28 @@
     </p>
   </div>
 
-  <app-holder-data-step [initialData]="holderPrefill()" (submitted)="onHolderSubmit($event)" />
+  <app-holder-data-step [initialData]="holderPrefill()" [isHolderChange]="ownershipType() === 'with-change'" (submitted)="onHolderSubmit($event)" />
   }
   }
 
-  <!-- ─── STEP 3: Documents ─── -->
+  <!-- ─── STEP 3: Supply point data ─── -->
   @if (step() === 3) {
-  <div class="mb-8">
-    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Documentación necesaria</h1>
-    <p class="text-sm text-[#64748B] m-0">Adjunta los documentos requeridos para completar el alta</p>
-  </div>
-
-  <app-documents-step (submitted)="onDocumentsSubmit($event)" />
-  }
-
-  <!-- ─── STEP 4: Supply point data ─── -->
-  @if (step() === 4) {
   <div class="mb-8">
     <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Datos del punto de suministro</h1>
     <p class="text-sm text-[#64748B] m-0">Revisa los datos leídos de tu factura y corrígelos si es necesario</p>
   </div>
 
   <app-supply-point-step [selectedSupply]="selectedSupply()" [initialData]="supplyPointPrefill()" (submitted)="onSupplyPointSubmit($event)" />
+  }
+
+  <!-- ─── STEP 4: Documents ─── -->
+  @if (step() === 4) {
+  <div class="mb-8">
+    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Documentación necesaria</h1>
+    <p class="text-sm text-[#64748B] m-0">Adjunta los documentos requeridos para completar el alta</p>
+  </div>
+
+  <app-documents-step (submitted)="onDocumentsSubmit($event)" />
   }
 
   } <!-- end @if (status() === 'idle' && !registering()) -->
@@ -149,7 +149,8 @@
 
   <!-- ─── RESULT SCREEN ─── -->
   @if (status() !== 'idle') {
-  <app-result-step [status]="status()" [submitError]="submitError()" [verificationWarning]="verificationWarning()" (retry)="reset()" />
+  <app-result-step [status]="status()" [submitError]="submitError()" [verificationWarning]="verificationWarning()"
+    [correctFieldLabel]="errorFieldInfo()?.label ?? null" (retry)="reset()" (correct)="correctError()" />
   }
 
 </div>

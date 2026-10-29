@@ -1,16 +1,63 @@
 <form class="flex flex-col gap-4.5" (submit)="$event.preventDefault(); submitForm()">
+  <div class="flex items-center justify-between gap-3 py-3 px-4 bg-[#F8FAFC] border-[1.5px] border-black/10 rounded-lg">
+    <div>
+      <p class="text-[0.86rem] font-bold text-[#0F172A] m-0">¿El titular es una empresa?</p>
+      <p class="text-[0.76rem] text-[#64748B] m-0 mt-0.5">Activa esta opción si el contrato se da de alta a nombre de una empresa</p>
+    </div>
+    <button type="button" role="switch" [attr.aria-checked]="holderData.isCompanyHolder"
+      (click)="holderData.isCompanyHolder = !holderData.isCompanyHolder"
+      [class]="'relative w-11 h-6 rounded-full transition-colors shrink-0 border-none cursor-pointer ' + (holderData.isCompanyHolder ? 'bg-[#227CFF]' : 'bg-[#CBD5E1]')">
+      <span [class]="'absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ' + (holderData.isCompanyHolder ? 'left-[1.375rem]' : 'left-0.5')"></span>
+    </button>
+  </div>
+
   <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre del titular *</label>
-    <input type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
-      placeholder="Javier Vayá Sifre" />
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">{{ holderData.isCompanyHolder ? 'Razón social *' : 'Nombre del titular *' }}</label>
+    <input id="holder-name" type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
+      [placeholder]="holderData.isCompanyHolder ? 'Suminex Energía S.L.' : 'Javier Vayá Sifre'" />
     @if (fullNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ fullNameError }}</span> }
   </div>
+  @if (holderData.isCompanyHolder) {
   <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular *</label>
-    <input type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
-      placeholder="12345678A" maxlength="9" />
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre comercial</label>
+    <input id="holder-trade-name" type="text" [class]="formInputClasses(false)" [(ngModel)]="holderData.tradeName" name="tradeName"
+      placeholder="Opcional, si es distinto de la razón social" />
+  </div>
+  }
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">{{ holderData.isCompanyHolder ? 'CIF *' : 'DNI del titular *' }}</label>
+    <input id="holder-dni" type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
+      [placeholder]="holderData.isCompanyHolder ? 'B12345678' : '12345678A'" maxlength="9" />
     @if (dniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ dniError }}</span> }
   </div>
+  @if (holderData.isCompanyHolder) {
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre de contacto *</label>
+    <input id="holder-contact-name" type="text" [class]="formInputClasses(!!contactNameError)" [(ngModel)]="holderData.contactName" name="contactName"
+      placeholder="Persona de contacto en la empresa" />
+    @if (contactNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactNameError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del contacto *</label>
+    <input id="holder-contact-dni" type="text" [class]="formInputClasses(!!contactDniError)" [(ngModel)]="holderData.contactDni" name="contactDni"
+      placeholder="12345678A" maxlength="9" />
+    @if (contactDniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactDniError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">CNAE *</label>
+    <input id="holder-cnae" type="text" [class]="formInputClasses(!!cnaeError)" [(ngModel)]="holderData.cnae" name="cnae"
+      placeholder="4321" />
+    @if (cnaeError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cnaeError }}</span> }
+  </div>
+  }
+  @if (isHolderChange && !holderData.isCompanyHolder) {
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular anterior *</label>
+    <input id="holder-previous-dni" type="text" [class]="formInputClasses(!!previousHolderDniError)" [(ngModel)]="holderData.previousHolderDni" name="previousHolderDni"
+      placeholder="12345678A" maxlength="9" />
+    @if (previousHolderDniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ previousHolderDniError }}</span> }
+  </div>
+  }
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Teléfono de contacto *</label>
     <div class="grid grid-cols-[150px_1fr] gap-2.5 max-[480px]:grid-cols-1">
@@ -19,14 +66,14 @@
         <option [value]="c.dial">{{ c.name }} ({{ c.dial }})</option>
         }
       </select>
-      <input type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
+      <input id="holder-phone" type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
         name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" />
     </div>
     @if (phoneError) { <span class="text-[0.76rem] text-[#DC2626]">{{ phoneError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Correo electrónico *</label>
-    <input type="email" [class]="formInputClasses(!!emailError)" [(ngModel)]="holderData.email" name="email"
+    <input id="holder-email" type="email" [class]="formInputClasses(!!emailError)" [(ngModel)]="holderData.email" name="email"
       placeholder="titular@ejemplo.es" />
     @if (emailError) { <span class="text-[0.76rem] text-[#DC2626]">{{ emailError }}</span> }
   </div>
