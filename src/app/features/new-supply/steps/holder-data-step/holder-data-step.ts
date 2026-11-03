@@ -54,6 +54,10 @@ export class HolderDataStep implements OnInit {
   validatingPhone = signal(false);
   private phoneServerError: string | null = null;
 
+  /** Cuando es empresa, el formulario se parte en 2 pasos (identificación → contacto) para no amontonar campos */
+  companyStep = signal<1 | 2>(1);
+  private companyStep1Submitted = false;
+
   ngOnInit() {
     if (this.initialData) this.holderData = { ...this.holderData, ...this.initialData };
   }
@@ -65,12 +69,12 @@ export class HolderDataStep implements OnInit {
   ];
 
   get fullNameError(): string | null {
-    if (!this.holderSubmitted) return null;
+    if (!this.holderSubmitted && !this.companyStep1Submitted) return null;
     return this.holderData.fullName.trim() ? null : 'Este campo es obligatorio';
   }
 
   get dniError(): string | null {
-    if (!this.holderSubmitted) return null;
+    if (!this.holderSubmitted && !this.companyStep1Submitted) return null;
     if (!this.holderData.nationalId.trim()) return 'Este campo es obligatorio';
     if (this.holderData.isCompanyHolder) {
       return /^[A-HJNPQRSUVW]\d{7}[0-9A-J]$/i.test(this.holderData.nationalId.trim())
@@ -144,6 +148,39 @@ export class HolderDataStep implements OnInit {
     return invalid
       ? `${base} border-[#EF4444]`
       : `${base} border-black/12 focus:border-[#227CFF] focus:shadow-[0_0_0_3px_rgba(34,124,255,0.10)]`;
+  }
+
+  toggleCompanyHolder() {
+    this.holderData.isCompanyHolder = !this.holderData.isCompanyHolder;
+    this.companyStep.set(1);
+    this.companyStep1Submitted = false;
+  }
+
+  /** El <form> tiene un solo (submit) para los 3 sub-vistas: si es empresa y está en el paso 1, ese submit
+   *  solo avanza al paso 2; en cualquier otro caso (particular, o empresa en el paso 2) es el envío final. */
+  onFormSubmit() {
+    if (this.holderData.isCompanyHolder && this.companyStep() === 1) {
+      this.goToCompanyStep1Next();
+    } else {
+      this.submitForm();
+    }
+  }
+
+  private goToCompanyStep1Next() {
+    this.companyStep1Submitted = true;
+    if (this.fullNameError || this.dniError) return;
+    this.companyStep.set(2);
+  }
+
+  backToCompanyStep1() {
+    this.companyStep.set(1);
+  }
+
+  /** Stepper clickeable: volver al paso 1 siempre se permite libremente; saltar al paso 2 valida primero
+   *  (no tiene sentido "navegar libre" hacia adelante sin los datos mínimos del paso 1). */
+  goToCompanyStep(step: 1 | 2) {
+    if (step === 1) { this.companyStep.set(1); return; }
+    this.goToCompanyStep1Next();
   }
 
   submitForm() {

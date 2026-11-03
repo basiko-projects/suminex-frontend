@@ -15,18 +15,40 @@
     su lugar.</span>
 </div>
 } @else {
-<div class="flex flex-col gap-2.5 max-w-170">
-  @for (p of products; track p.id) {
-  <button type="button"
-    class="flex items-center justify-between gap-3 py-3.5 px-4.5 rounded-lg border-[1.5px] border-black/10 bg-white text-left cursor-pointer transition-all hover:border-[#227CFF] hover:shadow-[0_0_0_3px_rgba(34,124,255,0.10)]"
-    (click)="select.emit(p.id)">
-    <div class="flex flex-col gap-0.5 min-w-0">
-      <span class="text-[0.95rem] font-bold text-[#0F172A]">{{ p.name }}</span>
-      <span class="text-[0.78rem] text-[#64748B]">{{ p.tariffName }}{{ p.providerName ? ' · ' + p.providerName : ''
-        }}</span>
+<div class="flex flex-col gap-4 max-w-170">
+  @if (tariffOptions.length > 1) {
+  <div class="flex items-center gap-2 flex-wrap">
+    <button type="button"
+      [class]="selectedTariff() === null ? 'py-1.5 px-3.5 rounded-full text-[0.8rem] font-semibold cursor-pointer border-none bg-[#227CFF] text-white' : 'py-1.5 px-3.5 rounded-full text-[0.8rem] font-semibold cursor-pointer border-[1.5px] border-black/10 bg-white text-[#64748B] hover:border-[#227CFF] hover:text-[#227CFF]'"
+      (click)="selectedTariff.set(null)">
+      Todas
+    </button>
+    @for (t of tariffOptions; track t) {
+    <button type="button"
+      [class]="selectedTariff() === t ? 'py-1.5 px-3.5 rounded-full text-[0.8rem] font-semibold cursor-pointer border-none bg-[#227CFF] text-white' : 'py-1.5 px-3.5 rounded-full text-[0.8rem] font-semibold cursor-pointer border-[1.5px] border-black/10 bg-white text-[#64748B] hover:border-[#227CFF] hover:text-[#227CFF]'"
+      (click)="selectedTariff.set(t)">
+      {{ t }}
+    </button>
+    }
+  </div>
+  }
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  @for (p of filteredProducts; track p.id) {
+  <button type="button" [class]="cardClasses(pendingProductId() === p.id)" (click)="pendingProductId.set(p.id)">
+    <div class="flex flex-col gap-1">
+      <span class="text-[1rem] font-bold text-[#0F172A] leading-snug">{{ p.name }}</span>
+      <span class="text-[0.8rem] text-[#64748B]">Tarifa <span class="font-semibold text-[#227CFF]">{{ p.tariffName }}</span></span>
     </div>
-    <span class="text-[0.82rem] font-bold text-[#16A34A] shrink-0">{{ p.fixedCommissionAmount }} €</span>
+    <div class="flex items-center justify-between pt-3 mt-auto border-t border-black/5">
+      <span class="text-[0.78rem] font-semibold text-[#64748B] truncate">{{ p.providerName || '—' }}</span>
+      <span class="text-[0.85rem] font-bold text-[#16A34A] shrink-0">{{ p.fixedCommissionAmount }} €</span>
+    </div>
   </button>
   }
+  </div>
+  <button type="button" class="w-full py-3 rounded-lg bg-[#227CFF] text-white text-sm font-bold border-none cursor-pointer transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+    [disabled]="pendingProductId() === null" (click)="confirm()">
+    Continuar
+  </button>
 </div>
 }

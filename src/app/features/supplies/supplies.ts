@@ -62,7 +62,6 @@ export class SuppliesComponent implements OnInit {
       { key: 'commercial', label: 'Comercial' },
       { key: 'type',    label: 'Tipo',       align: 'center', filterIcon: true, filterActive: this.filterCategory !== null },
       { key: 'tariff',  label: 'Tarifa' },
-      { key: 'savings', label: 'Ahorro est.' },
       { key: 'status',  label: 'Estado',     align: 'center', filterIcon: true, filterActive: this.filterStatus !== null },
       { key: 'detail',  label: '',           align: 'center', width: '60px' },
     ];
