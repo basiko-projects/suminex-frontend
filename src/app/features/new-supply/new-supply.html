@@ -111,7 +111,7 @@
         </p>
       </div>
 
-      <div class="overflow-y-auto pr-1">
+      <div class="overflow-y-auto px-1">
         <app-holder-data-step [initialData]="holderPrefill()" [isHolderChange]="ownershipType() === 'with-change'" (submitted)="onHolderSubmit($event)" />
       </div>
     </div>
@@ -130,7 +130,7 @@
         <p class="text-sm text-[#64748B] m-0">Revisa los datos leídos de tu factura y corrígelos si es necesario</p>
       </div>
 
-      <div class="overflow-y-auto pr-1">
+      <div class="overflow-y-auto px-1">
         <app-supply-point-step [selectedSupply]="selectedSupply()" [initialData]="supplyPointPrefill()" (submitted)="onSupplyPointSubmit($event)" />
       </div>
     </div>
@@ -149,7 +149,7 @@
         <p class="text-sm text-[#64748B] m-0">Solo se pueden dar de alta directa productos con comisión fija</p>
       </div>
 
-      <div class="overflow-y-auto pr-1">
+      <div class="overflow-y-auto px-1">
         <app-product-select-step [products]="eligibleProducts()" [loading]="loadingProducts()" [error]="productsError()"
           (select)="onProductSelected($event)" />
       </div>
@@ -169,7 +169,7 @@
         <p class="text-sm text-[#64748B] m-0">Adjunta los documentos requeridos para completar el alta</p>
       </div>
 
-      <div class="overflow-y-auto pr-1">
+      <div class="overflow-y-auto px-1">
         <app-documents-step (submitted)="onDocumentsSubmit($event)" />
       </div>
     </div>
