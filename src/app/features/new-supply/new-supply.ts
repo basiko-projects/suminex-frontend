@@ -11,14 +11,13 @@ import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loade
 import { SupplyTypeStep } from '../../shared/components/supply-type-step/supply-type-step';
 import { HolderData, OwnershipChange, SupplyPointData } from './new-supply.types';
 import { ProductSelectStep, EligibleProduct } from './steps/product-select-step/product-select-step';
-import { OwnershipStep } from './steps/ownership-step/ownership-step';
 import { HolderDataStep } from './steps/holder-data-step/holder-data-step';
 import { SupplyPointStep } from './steps/supply-point-step/supply-point-step';
 import { DocumentsStep, SupplyDocuments } from './steps/documents-step/documents-step';
 import { ResultStep } from './steps/result-step/result-step';
 import { Icon } from '../../shared/components/icon/icon';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3 | 4 | 5;
 
 const GENERIC_ERROR = 'Ocurrió un error inesperado. Por favor intenta de nuevo más tarde.';
 
@@ -90,7 +89,7 @@ function detectErrorField(message: string): ErrorFieldInfo | null {
   selector: 'app-new-supply',
   standalone: true,
   imports: [
-    BasikoLoader, SupplyTypeStep, ProductSelectStep, OwnershipStep, HolderDataStep, SupplyPointStep, DocumentsStep,
+    BasikoLoader, SupplyTypeStep, ProductSelectStep, HolderDataStep, SupplyPointStep, DocumentsStep,
     ResultStep, Icon,
   ],
   templateUrl: './new-supply.html',
@@ -109,7 +108,15 @@ export class NewSupplyComponent implements OnDestroy {
 
   step = signal<Step>(1);
   selectedSupply = signal<SupplyKind>(null);
+  /** Elegido en el modal "¿Cómo quieres dar el alta?" — determina si se abre el modal de factura (OCR) o se
+   *  va directo al formulario manual. Los pasos/validaciones son los mismos en ambos casos. */
+  altaMode = signal<'automatica' | 'manual' | null>(null);
+  showModeModal = signal(false);
+  /** Selección dentro del modal, antes de confirmar con "Continuar" — altaMode recién se fija al confirmar */
+  pendingAltaMode = signal<'automatica' | 'manual' | null>(null);
   ownershipType = signal<OwnershipChange>(null);
+  /** Selección dentro del modal de titularidad, antes de confirmar con "Continuar" */
+  pendingOwnership = signal<OwnershipChange>(null);
   status = signal<'idle' | 'success' | 'error'>('idle');
   submitError = signal('');
   errorFieldInfo = signal<ErrorFieldInfo | null>(null);
@@ -138,7 +145,7 @@ export class NewSupplyComponent implements OnDestroy {
   supplyOptions: SupplyOption[] = [
     { id: 'electricity', label: 'Suministro de luz',      description: 'Dar de alta nuevo suministro de luz',      icon: 'bolt',      available: true  },
     { id: 'gas',         label: 'Suministro de gas',      description: 'Dar de alta nuevo suministro de gas',      icon: 'cloud',     available: true  },
-    { id: 'internet',    label: 'Suministro de Internet', description: 'Dar de alta nuevo suministro de internet', icon: 'wifi',      available: true  },
+    { id: null,          label: 'Suministro de Internet', description: 'Dar de alta nuevo suministro de internet', icon: 'wifi',      available: false },
     { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'no-symbol', available: false },
     { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'no-symbol', available: false },
     { id: null,          label: 'Próximamente',            description: 'Dar de alta nuevo suministro',             icon: 'no-symbol', available: false },
@@ -153,16 +160,50 @@ export class NewSupplyComponent implements OnDestroy {
     return this.selectedSupply() === 'electricity' || this.selectedSupply() === 'gas';
   }
 
-  /** Al elegir el tipo de suministro se abre el modal de factura encima del Step 1 — recién se avanza
-   *  al Step 2 cuando el OCR termina con éxito (ver submitInvoice). Si se cierra el modal sin subir nada,
-   *  el usuario simplemente se queda en el Step 1, que nunca llegó a abandonarse. */
+  /** Al elegir el tipo de suministro se abre el modal "¿Cómo quieres dar el alta?" — recién se avanza al Step 2
+   *  cuando se elige un modo (ver chooseAltaMode). Si se cierra el modal sin elegir, el usuario se queda en el
+   *  Step 1, que nunca llegó a abandonarse. */
   selectSupply(kind: SupplyKind) {
     if (kind === null) return;
     this.selectedSupply.set(kind);
-    this.invoiceSubmitted = false;
-    this.comparisonError.set('');
-    this.revokeInvoicePreview();
-    this.showInvoiceModal.set(true);
+    this.altaMode.set(null);
+    this.pendingAltaMode.set(null);
+    this.showModeModal.set(true);
+  }
+
+  closeModeModal() {
+    this.showModeModal.set(false);
+  }
+
+  /** "Automatizada" abre el modal de factura (OCR autocompleta los pasos siguientes); "Manual" va directo al
+   *  Step 2 con los mismos formularios, vacíos. Los productos elegibles se cargan ya mismo en el caso manual
+   *  (sin filtrar por tarifa, porque no hay OCR) para que estén listos cuando se llegue al paso de producto. */
+  chooseAltaMode(mode: 'automatica' | 'manual') {
+    this.altaMode.set(mode);
+    this.showModeModal.set(false);
+    if (mode === 'automatica') {
+      this.invoiceSubmitted = false;
+      this.comparisonError.set('');
+      this.revokeInvoicePreview();
+      this.showInvoiceModal.set(true);
+    } else {
+      this.loadEligibleProducts(this.selectedSupply());
+      this.step.set(2);
+    }
+  }
+
+  /** Click en "Continuar" dentro del modal — recién ahí se confirma la selección hecha con las tarjetas */
+  confirmAltaMode() {
+    const mode = this.pendingAltaMode();
+    if (!mode) return;
+    this.chooseAltaMode(mode);
+  }
+
+  modeCardClasses(selected: boolean): string {
+    const base = 'text-left flex flex-col items-start p-6 rounded-lg border-[1.5px] bg-white cursor-pointer transition-all';
+    return selected
+      ? `${base} border-[#227CFF] shadow-[0_0_0_3px_rgba(34,124,255,0.10)]`
+      : `${base} border-black/10 hover:border-[#227CFF] hover:shadow-[0_0_0_3px_rgba(34,124,255,0.10)] hover:-translate-y-0.5`;
   }
 
   /** Se llama tras leer la factura por OCR — filtra el selector de producto a la tarifa real leída (ej. 2.0TD/3.0TD).
@@ -201,6 +242,7 @@ export class NewSupplyComponent implements OnDestroy {
 
   onProductSelected(productId: number) {
     this.selectedProductId.set(productId);
+    this.step.set(5);
   }
 
   closeInvoiceModal() {
@@ -213,6 +255,14 @@ export class NewSupplyComponent implements OnDestroy {
   selectOwnership(type: OwnershipChange) {
     this.ownershipType.set(type);
     if (type === 'with-change') this.holderPrefill.set(null);
+  }
+
+  /** Click en "Continuar" dentro del modal de titularidad — confirma la selección hecha con las tarjetas */
+  confirmOwnership() {
+    const type = this.pendingOwnership();
+    if (!type) return;
+    this.selectOwnership(type);
+    this.pendingOwnership.set(null);
   }
 
   onInvoiceFileSelect(event: Event) {
@@ -308,13 +358,10 @@ export class NewSupplyComponent implements OnDestroy {
 
   goBack() {
     const s = this.step();
-    /** Dentro del paso 2, "volver" retrocede de a un sub-paso: titular → titularidad → producto → tipo de suministro */
+    /** Dentro del paso 2, "volver" retrocede de a un sub-paso: titular → titularidad → tipo de suministro */
     if (s === 2 && this.ownershipType()) {
+      this.pendingOwnership.set(this.ownershipType());
       this.ownershipType.set(null);
-      return;
-    }
-    if (s === 2 && this.selectedProductId()) {
-      this.selectedProductId.set(null);
       return;
     }
     if (s > 1) this.step.set((s - 1) as Step);
@@ -428,7 +475,11 @@ export class NewSupplyComponent implements OnDestroy {
     this.status.set('idle');
     this.step.set(1);
     this.selectedSupply.set(null);
+    this.altaMode.set(null);
+    this.pendingAltaMode.set(null);
+    this.showModeModal.set(false);
     this.ownershipType.set(null);
+    this.pendingOwnership.set(null);
     this.submitError.set('');
     this.errorFieldInfo.set(null);
     this.verificationWarning.set(null);

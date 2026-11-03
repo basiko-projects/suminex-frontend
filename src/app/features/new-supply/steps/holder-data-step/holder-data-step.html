@@ -1,56 +1,31 @@
-<form class="flex flex-col gap-4.5" (submit)="$event.preventDefault(); submitForm()">
+<form class="flex flex-col gap-4.5" (submit)="$event.preventDefault(); onFormSubmit()">
+
+  @if (!holderData.isCompanyHolder) {
+  <!-- ─── Particular: un solo paso ─── -->
   <div class="flex items-center justify-between gap-3 py-3 px-4 bg-[#F8FAFC] border-[1.5px] border-black/10 rounded-lg">
     <div>
       <p class="text-[0.86rem] font-bold text-[#0F172A] m-0">¿El titular es una empresa?</p>
       <p class="text-[0.76rem] text-[#64748B] m-0 mt-0.5">Activa esta opción si el contrato se da de alta a nombre de una empresa</p>
     </div>
-    <button type="button" role="switch" [attr.aria-checked]="holderData.isCompanyHolder"
-      (click)="holderData.isCompanyHolder = !holderData.isCompanyHolder"
+    <button type="button" role="switch" [attr.aria-checked]="holderData.isCompanyHolder" (click)="toggleCompanyHolder()"
       [class]="'relative w-11 h-6 rounded-full transition-colors shrink-0 border-none cursor-pointer ' + (holderData.isCompanyHolder ? 'bg-[#227CFF]' : 'bg-[#CBD5E1]')">
       <span [class]="'absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ' + (holderData.isCompanyHolder ? 'left-[1.375rem]' : 'left-0.5')"></span>
     </button>
   </div>
 
   <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">{{ holderData.isCompanyHolder ? 'Razón social *' : 'Nombre del titular *' }}</label>
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre del titular *</label>
     <input id="holder-name" type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
-      [placeholder]="holderData.isCompanyHolder ? 'Suminex Energía S.L.' : 'Javier Vayá Sifre'" />
+      placeholder="Javier Vayá Sifre" />
     @if (fullNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ fullNameError }}</span> }
   </div>
-  @if (holderData.isCompanyHolder) {
   <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre comercial</label>
-    <input id="holder-trade-name" type="text" [class]="formInputClasses(false)" [(ngModel)]="holderData.tradeName" name="tradeName"
-      placeholder="Opcional, si es distinto de la razón social" />
-  </div>
-  }
-  <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">{{ holderData.isCompanyHolder ? 'CIF *' : 'DNI del titular *' }}</label>
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular *</label>
     <input id="holder-dni" type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
-      [placeholder]="holderData.isCompanyHolder ? 'B12345678' : '12345678A'" maxlength="9" />
+      placeholder="12345678A" maxlength="9" />
     @if (dniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ dniError }}</span> }
   </div>
-  @if (holderData.isCompanyHolder) {
-  <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre de contacto *</label>
-    <input id="holder-contact-name" type="text" [class]="formInputClasses(!!contactNameError)" [(ngModel)]="holderData.contactName" name="contactName"
-      placeholder="Persona de contacto en la empresa" />
-    @if (contactNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactNameError }}</span> }
-  </div>
-  <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del contacto *</label>
-    <input id="holder-contact-dni" type="text" [class]="formInputClasses(!!contactDniError)" [(ngModel)]="holderData.contactDni" name="contactDni"
-      placeholder="12345678A" maxlength="9" />
-    @if (contactDniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactDniError }}</span> }
-  </div>
-  <div class="flex flex-col gap-[0.45rem]">
-    <label class="text-[0.82rem] font-bold text-[#0F172A]">CNAE *</label>
-    <input id="holder-cnae" type="text" [class]="formInputClasses(!!cnaeError)" [(ngModel)]="holderData.cnae" name="cnae"
-      placeholder="4321" />
-    @if (cnaeError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cnaeError }}</span> }
-  </div>
-  }
-  @if (isHolderChange && !holderData.isCompanyHolder) {
+  @if (isHolderChange) {
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular anterior *</label>
     <input id="holder-previous-dni" type="text" [class]="formInputClasses(!!previousHolderDniError)" [(ngModel)]="holderData.previousHolderDni" name="previousHolderDni"
@@ -85,4 +60,110 @@
     Siguiente
     }
   </button>
+
+  } @else if (companyStep() === 1) {
+  <!-- ─── Empresa, paso 1: identificación ─── -->
+  <div class="flex flex-col gap-1.5 mb-1">
+    <div class="flex items-center gap-1.5">
+      <button type="button" class="h-1 flex-1 rounded-full bg-[#227CFF] border-none cursor-pointer p-0" (click)="goToCompanyStep(1)" aria-label="Ir al paso 1"></button>
+      <button type="button" class="h-1 flex-1 rounded-full bg-[#E2E8F0] border-none cursor-pointer p-0" (click)="goToCompanyStep(2)" aria-label="Ir al paso 2"></button>
+    </div>
+    <span class="text-[0.72rem] font-semibold text-[#227CFF]">Paso 1 de 2 · Identificación</span>
+  </div>
+
+  <div class="flex items-center justify-between gap-3 py-3 px-4 bg-[#F8FAFC] border-[1.5px] border-black/10 rounded-lg">
+    <div>
+      <p class="text-[0.86rem] font-bold text-[#0F172A] m-0">¿El titular es una empresa?</p>
+      <p class="text-[0.76rem] text-[#64748B] m-0 mt-0.5">Activa esta opción si el contrato se da de alta a nombre de una empresa</p>
+    </div>
+    <button type="button" role="switch" [attr.aria-checked]="holderData.isCompanyHolder" (click)="toggleCompanyHolder()"
+      [class]="'relative w-11 h-6 rounded-full transition-colors shrink-0 border-none cursor-pointer ' + (holderData.isCompanyHolder ? 'bg-[#227CFF]' : 'bg-[#CBD5E1]')">
+      <span [class]="'absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all ' + (holderData.isCompanyHolder ? 'left-[1.375rem]' : 'left-0.5')"></span>
+    </button>
+  </div>
+
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Razón social *</label>
+    <input id="holder-name" type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
+      placeholder="Suminex Energía S.L." />
+    @if (fullNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ fullNameError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">CIF *</label>
+    <input id="holder-dni" type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
+      placeholder="B12345678" maxlength="9" />
+    @if (dniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ dniError }}</span> }
+  </div>
+  <button type="submit" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]">
+    Siguiente
+  </button>
+
+  } @else {
+  <!-- ─── Empresa, paso 2: datos de contacto ─── -->
+  <div class="flex flex-col gap-1.5 mb-1">
+    <div class="flex items-center gap-1.5">
+      <button type="button" class="h-1 flex-1 rounded-full bg-[#227CFF] border-none cursor-pointer p-0" (click)="goToCompanyStep(1)" aria-label="Ir al paso 1"></button>
+      <button type="button" class="h-1 flex-1 rounded-full bg-[#227CFF] border-none cursor-pointer p-0" (click)="goToCompanyStep(2)" aria-label="Ir al paso 2"></button>
+    </div>
+    <span class="text-[0.72rem] font-semibold text-[#227CFF]">Paso 2 de 2 · Contacto</span>
+  </div>
+
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre comercial</label>
+    <input id="holder-trade-name" type="text" [class]="formInputClasses(false)" [(ngModel)]="holderData.tradeName" name="tradeName"
+      placeholder="Opcional, si es distinto de la razón social" />
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre de contacto *</label>
+    <input id="holder-contact-name" type="text" [class]="formInputClasses(!!contactNameError)" [(ngModel)]="holderData.contactName" name="contactName"
+      placeholder="Persona de contacto en la empresa" />
+    @if (contactNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactNameError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del contacto *</label>
+    <input id="holder-contact-dni" type="text" [class]="formInputClasses(!!contactDniError)" [(ngModel)]="holderData.contactDni" name="contactDni"
+      placeholder="12345678A" maxlength="9" />
+    @if (contactDniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactDniError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">CNAE *</label>
+    <input id="holder-cnae" type="text" [class]="formInputClasses(!!cnaeError)" [(ngModel)]="holderData.cnae" name="cnae"
+      placeholder="4321" />
+    @if (cnaeError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cnaeError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Teléfono de contacto *</label>
+    <div class="grid grid-cols-[150px_1fr] gap-2.5 max-[480px]:grid-cols-1">
+      <select [class]="formInputClasses(!!phoneError) + ' cursor-pointer'" [(ngModel)]="holderData.phoneCountry" name="phoneCountry">
+        @for (c of countryOptions; track c.dial) {
+        <option [value]="c.dial">{{ c.name }} ({{ c.dial }})</option>
+        }
+      </select>
+      <input id="holder-phone" type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
+        name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" />
+    </div>
+    @if (phoneError) { <span class="text-[0.76rem] text-[#DC2626]">{{ phoneError }}</span> }
+  </div>
+  <div class="flex flex-col gap-[0.45rem]">
+    <label class="text-[0.82rem] font-bold text-[#0F172A]">Correo electrónico *</label>
+    <input id="holder-email" type="email" [class]="formInputClasses(!!emailError)" [(ngModel)]="holderData.email" name="email"
+      placeholder="titular@ejemplo.es" />
+    @if (emailError) { <span class="text-[0.76rem] text-[#DC2626]">{{ emailError }}</span> }
+  </div>
+  <div class="flex gap-3 mt-2">
+    <button type="button" (click)="backToCompanyStep1()"
+      class="py-3.5 px-4 bg-transparent border-[1.5px] border-black/12 rounded-lg text-[0.95rem] font-semibold text-[#475569] cursor-pointer transition-all hover:border-[#227CFF] hover:text-[#227CFF]">
+      Volver
+    </button>
+    <button type="submit" [disabled]="validatingPhone()"
+      class="flex-1 py-3.5 px-4 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+      @if (validatingPhone()) {
+      <app-basiko-loader [size]="18" [onColor]="true" /> Validando teléfono...
+      } @else {
+      Siguiente
+      }
+    </button>
+  </div>
+  }
+
 </form>

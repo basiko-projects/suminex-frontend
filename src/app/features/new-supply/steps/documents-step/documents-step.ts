@@ -30,7 +30,7 @@ export class DocumentsStep {
   }
 
   uploadAreaClasses(done: unknown, error: boolean): string {
-    const base = 'border-2 rounded-lg py-8 px-6 flex flex-col items-center text-center cursor-pointer transition-all hover:border-[#227CFF] hover:bg-[#EAF2FF]';
+    const base = 'border-2 rounded-lg py-8 px-5 min-h-[160px] flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:border-[#227CFF] hover:bg-[#EAF2FF]';
     if (done) return `${base} border-solid border-[#22C55E] bg-[#22C55E]/4`;
     if (error) return `${base} border-dashed border-[#EF4444] bg-[#FAFAFA]`;
     return `${base} border-dashed border-black/14 bg-[#FAFAFA]`;
