@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject, signal } from '@angular/core';
 import { ServiceTariffProduct } from '../../../../core/models/service.model';
+import { ServicesService } from '../../../../core/services/services.service';
 import { BasikoLoader } from '../../../../shared/components/basiko-loader/basiko-loader';
 import { Icon } from '../../../../shared/components/icon/icon';
 
-export type EligibleProduct = ServiceTariffProduct & { tariffName: string };
+export type EligibleProduct = ServiceTariffProduct & { tariffName: string; tariffId: number };
 
 @Component({
   selector: 'app-product-select-step',
@@ -12,6 +13,8 @@ export type EligibleProduct = ServiceTariffProduct & { tariffName: string };
   templateUrl: './product-select-step.html',
 })
 export class ProductSelectStep implements OnChanges {
+  private svc = inject(ServicesService);
+
   @Input() products: EligibleProduct[] = [];
   @Input() loading = false;
   @Input() error = '';
@@ -23,6 +26,11 @@ export class ProductSelectStep implements OnChanges {
 
   /** Selección pendiente dentro de las cards — se confirma con el botón "Continuar", no al primer click. */
   pendingProductId = signal<number | null>(null);
+
+  /** Producto cuyo desglose de precios (energyPeriods/powerPeriods) se está mostrando en el modal "Ver precios". */
+  viewingPrices = signal<EligibleProduct | null>(null);
+  loadingPrices = signal<number | null>(null);
+  pricesError = signal('');
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['products']) {
@@ -51,5 +59,25 @@ export class ProductSelectStep implements OnChanges {
     const id = this.pendingProductId();
     if (id === null) return;
     this.select.emit(id);
+  }
+
+  showPrices(event: Event, p: EligibleProduct) {
+    event.stopPropagation();
+    this.pricesError.set('');
+    this.loadingPrices.set(p.id);
+    this.svc.getProductById(p.tariffId, p.id).subscribe({
+      next: detail => {
+        this.loadingPrices.set(null);
+        this.viewingPrices.set({ ...p, ...detail });
+      },
+      error: () => {
+        this.loadingPrices.set(null);
+        this.pricesError.set('No se pudo cargar el desglose de precios.');
+      },
+    });
+  }
+
+  closePrices() {
+    this.viewingPrices.set(null);
   }
 }
