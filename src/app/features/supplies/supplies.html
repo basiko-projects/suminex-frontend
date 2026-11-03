@@ -79,10 +79,6 @@
     </span>
   </td>
   <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]">{{ s.tariffCode || s.serviceName }}</td>
-  <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32]">
-    <span class="text-[0.85rem] font-bold text-[#059669]">{{ s.estimatedSavings | currency:'EUR':'symbol':'1.2-2'
-      }}</span>
-  </td>
   <td class="py-3.5 px-6 align-middle text-sm font-medium text-[#292D32] text-center">
     <select [class]="statusBadgeClasses(s.status)" [ngModel]="s.status"
       [disabled]="s.status === 'Cancelled' || completingId() === s.id || cancellingId() === s.id"

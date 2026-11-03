@@ -2,12 +2,6 @@
 
   @if (status() === 'idle' && !registering()) {
 
-  @if (step() > 1) {
-  <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 transition-colors hover:text-[#0F172A]" (click)="goBack()">
-    <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
-  </button>
-  }
-
   <!-- ─── STEP 1: Supply type ─── -->
   @if (step() === 1) {
   <div class="mb-8">
@@ -18,57 +12,169 @@
   <app-supply-type-step [options]="supplyOptions" (select)="selectSupply($event)" />
   }
 
-  <!-- ─── STEP 2: Producto → titularidad → datos del nuevo titular — la factura se pide en modal apenas se elige el producto ─── -->
-  @if (step() === 2) {
-  @if (!selectedProductId()) {
-  <div class="mb-8">
-    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">¿Qué producto contrató?</h1>
-    <p class="text-sm text-[#64748B] m-0">Solo se pueden dar de alta directa productos con comisión fija</p>
-  </div>
+  <!-- ─── STEPS 2-5: no tienen contenido de página — todo se pide en modales, ver abajo ─── -->
 
-  <app-product-select-step [products]="eligibleProducts()" [loading]="loadingProducts()" [error]="productsError()"
-    (select)="onProductSelected($event)" />
-  } @else if (!ownershipType()) {
-  <div class="mb-8">
-    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">¿Con o sin cambio de titularidad?</h1>
-    <p class="text-sm text-[#64748B] m-0">Selecciona cómo deseas realizar el alta del suministro</p>
-  </div>
+  <!-- ─── Mode modal — se abre apenas se elige el tipo de suministro, decide si se abre el modal de factura o se va directo al formulario manual ─── -->
+  @if (showModeModal()) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4" (click)="closeModeModal()">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,800px)] flex flex-col" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">¿Cómo quieres dar el alta?</h2>
+          <p class="text-sm text-[#64748B] m-0">Elige cómo vas a completar los datos del suministro</p>
+        </div>
+        <button class="w-8 h-8 rounded-lg border border-black/10 bg-transparent text-[#94A3B8] flex items-center justify-center cursor-pointer transition-all shrink-0 hover:bg-red-50 hover:text-red-500 hover:border-red-500"
+          (click)="closeModeModal()">
+          <app-icon name="x-mark" svgClass="w-4 h-4" />
+        </button>
+      </div>
 
-  <app-ownership-step (select)="selectOwnership($event)" />
-  } @else {
-  <div class="mb-8">
-    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Datos del nuevo titular</h1>
-    <p class="text-sm text-[#64748B] m-0">
-      @if (ownershipType() === 'without-change') { Revisa los datos leídos de tu factura y corrígelos si es necesario }
-      @else { Completa los datos del nuevo titular }
-    </p>
-  </div>
+      <div class="grid grid-cols-2 gap-5 max-[560px]:grid-cols-1 mb-6">
+        <button type="button"
+          [class]="modeCardClasses(pendingAltaMode() === 'automatica')"
+          (click)="pendingAltaMode.set('automatica')">
+          <p class="text-[1.2rem] font-bold text-[#0F172A] m-0 leading-[1.25]">Carga de contrato<br><span class="text-[#227CFF]">automatizada</span></p>
+          <p class="text-[0.8rem] text-[#64748B] m-0 mt-2 mb-4 leading-[1.5]">Tarda menos en cargar los contratos, sube la documentación y nuestra IA escribirá la mayoría de datos por ti.</p>
+          <div class="w-full">
+            <img src="/image_auto.webp" alt="Carga automatizada" draggable="false" class="w-full h-auto block pointer-events-none select-none" />
+          </div>
+        </button>
+        <button type="button"
+          [class]="modeCardClasses(pendingAltaMode() === 'manual')"
+          (click)="pendingAltaMode.set('manual')">
+          <p class="text-[1.2rem] font-bold text-[#0F172A] m-0 leading-[1.25]">Carga de contrato<br><span class="text-[#227CFF]">manual</span></p>
+          <p class="text-[0.8rem] text-[#64748B] m-0 mt-2 mb-4 leading-[1.5]">Obtén el control de todos los datos que introduces, un poco más lento pero más seguro.</p>
+          <div class="w-full">
+            <img src="/image_manual.webp" alt="Carga manual" draggable="false" class="w-full h-auto block pointer-events-none select-none" />
+          </div>
+        </button>
+      </div>
 
-  <app-holder-data-step [initialData]="holderPrefill()" [isHolderChange]="ownershipType() === 'with-change'" (submitted)="onHolderSubmit($event)" />
+      <button type="button" class="w-full py-3.5 px-4 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-[#1A6FE8]"
+        [disabled]="!pendingAltaMode()" (click)="confirmAltaMode()">
+        Continuar
+      </button>
+    </div>
+  </div>
   }
+
+  <!-- ─── Ownership modal — bloqueante: se abre apenas se entra al Step 2 sin titularidad elegida aún, encima de "Datos del nuevo titular" ─── -->
+  @if (step() === 2 && !ownershipType()) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,800px)] flex flex-col">
+      <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start transition-colors hover:text-[#0F172A]" (click)="goBack()">
+        <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
+      </button>
+      <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-6 text-center">¿Con o sin cambio de titularidad?</h2>
+
+      <div class="grid grid-cols-2 gap-5 max-[560px]:grid-cols-1 mb-6">
+        <button type="button"
+          [class]="modeCardClasses(pendingOwnership() === 'with-change')"
+          (click)="pendingOwnership.set('with-change')">
+          <p class="text-[1.2rem] font-bold text-[#0F172A] m-0 leading-[1.25]"><span class="text-[#227CFF]">Con</span> cambio de titularidad</p>
+          <p class="text-[0.8rem] text-[#64748B] m-0 mt-2 mb-4 leading-[1.5]">El nuevo titular es una persona distinta a la que figura en la factura actual.</p>
+          <div class="w-full">
+            <img src="/image_cct.webp" alt="Con cambio de titularidad" draggable="false" class="w-full h-auto block pointer-events-none select-none" />
+          </div>
+        </button>
+        <button type="button"
+          [class]="modeCardClasses(pendingOwnership() === 'without-change')"
+          (click)="pendingOwnership.set('without-change')">
+          <p class="text-[1.2rem] font-bold text-[#0F172A] m-0 leading-[1.25]"><span class="text-[#227CFF]">Sin</span> cambio de titularidad</p>
+          <p class="text-[0.8rem] text-[#64748B] m-0 mt-2 mb-4 leading-[1.5]">El titular sigue siendo la misma persona que ya figura en la factura.</p>
+          <div class="w-full">
+            <img src="/image_sct.webp" alt="Sin cambio de titularidad" draggable="false" class="w-full h-auto block pointer-events-none select-none" />
+          </div>
+        </button>
+      </div>
+
+      <button type="button" class="w-full py-3.5 px-4 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-[#1A6FE8]"
+        [disabled]="!pendingOwnership()" (click)="confirmOwnership()">
+        Continuar
+      </button>
+    </div>
+  </div>
   }
 
-  <!-- ─── STEP 3: Supply point data ─── -->
+  <!-- ─── Holder data modal — se abre apenas se elige la titularidad, encima del Step 2 ─── -->
+  @if (step() === 2 && ownershipType()) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,640px)] max-h-[90vh] flex flex-col">
+      <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start shrink-0 transition-colors hover:text-[#0F172A]" (click)="goBack()">
+        <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
+      </button>
+      <div class="mb-6 shrink-0">
+        <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">Datos del nuevo titular</h2>
+        <p class="text-sm text-[#64748B] m-0">
+          @if (ownershipType() === 'without-change') { Revisa los datos leídos de tu factura y corrígelos si es necesario }
+          @else { Completa los datos del nuevo titular }
+        </p>
+      </div>
+
+      <div class="overflow-y-auto pr-1">
+        <app-holder-data-step [initialData]="holderPrefill()" [isHolderChange]="ownershipType() === 'with-change'" (submitted)="onHolderSubmit($event)" />
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ─── Supply point modal — Step 3 ─── -->
   @if (step() === 3) {
-  <div class="mb-8">
-    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Datos del punto de suministro</h1>
-    <p class="text-sm text-[#64748B] m-0">Revisa los datos leídos de tu factura y corrígelos si es necesario</p>
-  </div>
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,640px)] max-h-[90vh] flex flex-col">
+      <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start shrink-0 transition-colors hover:text-[#0F172A]" (click)="goBack()">
+        <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
+      </button>
+      <div class="mb-6 shrink-0">
+        <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">Datos del punto de suministro</h2>
+        <p class="text-sm text-[#64748B] m-0">Revisa los datos leídos de tu factura y corrígelos si es necesario</p>
+      </div>
 
-  <app-supply-point-step [selectedSupply]="selectedSupply()" [initialData]="supplyPointPrefill()" (submitted)="onSupplyPointSubmit($event)" />
+      <div class="overflow-y-auto pr-1">
+        <app-supply-point-step [selectedSupply]="selectedSupply()" [initialData]="supplyPointPrefill()" (submitted)="onSupplyPointSubmit($event)" />
+      </div>
+    </div>
+  </div>
   }
 
-  <!-- ─── STEP 4: Documents ─── -->
+  <!-- ─── Product modal — Step 4 ─── -->
   @if (step() === 4) {
-  <div class="mb-8">
-    <h1 class="text-[1.75rem] font-bold text-[#0F172A] mb-1.5 tracking-tight leading-[1.2]">Documentación necesaria</h1>
-    <p class="text-sm text-[#64748B] m-0">Adjunta los documentos requeridos para completar el alta</p>
-  </div>
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,640px)] max-h-[90vh] flex flex-col">
+      <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start shrink-0 transition-colors hover:text-[#0F172A]" (click)="goBack()">
+        <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
+      </button>
+      <div class="mb-6 shrink-0">
+        <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">¿Qué producto contrató?</h2>
+        <p class="text-sm text-[#64748B] m-0">Solo se pueden dar de alta directa productos con comisión fija</p>
+      </div>
 
-  <app-documents-step (submitted)="onDocumentsSubmit($event)" />
+      <div class="overflow-y-auto pr-1">
+        <app-product-select-step [products]="eligibleProducts()" [loading]="loadingProducts()" [error]="productsError()"
+          (select)="onProductSelected($event)" />
+      </div>
+    </div>
+  </div>
   }
 
-  } <!-- end @if (status() === 'idle' && !registering()) -->
+  <!-- ─── Documents modal — Step 5 ─── -->
+  @if (step() === 5) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,640px)] max-h-[90vh] flex flex-col">
+      <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start shrink-0 transition-colors hover:text-[#0F172A]" (click)="goBack()">
+        <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
+      </button>
+      <div class="mb-6 shrink-0">
+        <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">Documentación necesaria</h2>
+        <p class="text-sm text-[#64748B] m-0">Adjunta los documentos requeridos para completar el alta</p>
+      </div>
+
+      <div class="overflow-y-auto pr-1">
+        <app-documents-step (submitted)="onDocumentsSubmit($event)" />
+      </div>
+    </div>
+  </div>
+  }
 
   <!-- ─── Invoice modal — se abre apenas se elige el tipo de suministro ─── -->
   @if (showInvoiceModal()) {
@@ -138,6 +244,8 @@
     </div>
   </div>
   }
+
+  } <!-- end @if (status() === 'idle' && !registering()) -->
 
   <!-- ─── Dando de alta el suministro ─── -->
   @if (registering()) {
