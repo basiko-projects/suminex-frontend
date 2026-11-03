@@ -16,20 +16,20 @@
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre del titular *</label>
     <input id="holder-name" type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
-      placeholder="Javier Vayá Sifre" />
+      placeholder="Javier Vayá Sifre" autocomplete="nope" />
     @if (fullNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ fullNameError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular *</label>
     <input id="holder-dni" type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
-      placeholder="12345678A" maxlength="9" />
+      placeholder="12345678A" maxlength="9" autocomplete="nope" />
     @if (dniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ dniError }}</span> }
   </div>
   @if (isHolderChange) {
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del titular anterior *</label>
     <input id="holder-previous-dni" type="text" [class]="formInputClasses(!!previousHolderDniError)" [(ngModel)]="holderData.previousHolderDni" name="previousHolderDni"
-      placeholder="12345678A" maxlength="9" />
+      placeholder="12345678A" maxlength="9" autocomplete="nope" />
     @if (previousHolderDniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ previousHolderDniError }}</span> }
   </div>
   }
@@ -42,14 +42,14 @@
         }
       </select>
       <input id="holder-phone" type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
-        name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" />
+        name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" autocomplete="nope" />
     </div>
     @if (phoneError) { <span class="text-[0.76rem] text-[#DC2626]">{{ phoneError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Correo electrónico *</label>
     <input id="holder-email" type="email" [class]="formInputClasses(!!emailError)" [(ngModel)]="holderData.email" name="email"
-      placeholder="titular@ejemplo.es" />
+      placeholder="titular@ejemplo.es" autocomplete="nope" />
     @if (emailError) { <span class="text-[0.76rem] text-[#DC2626]">{{ emailError }}</span> }
   </div>
   <button type="submit" [disabled]="validatingPhone()"
@@ -85,13 +85,13 @@
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Razón social *</label>
     <input id="holder-name" type="text" [class]="formInputClasses(!!fullNameError)" [(ngModel)]="holderData.fullName" name="fullName"
-      placeholder="Suminex Energía S.L." />
+      placeholder="Suminex Energía S.L." autocomplete="nope" />
     @if (fullNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ fullNameError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">CIF *</label>
     <input id="holder-dni" type="text" [class]="formInputClasses(!!dniError)" [(ngModel)]="holderData.nationalId" name="nationalId"
-      placeholder="B12345678" maxlength="9" />
+      placeholder="B12345678" maxlength="9" autocomplete="nope" />
     @if (dniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ dniError }}</span> }
   </div>
   <button type="submit" class="w-full py-3.5 px-4 mt-2 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors hover:bg-[#1A6FE8]">
@@ -111,24 +111,24 @@
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre comercial</label>
     <input id="holder-trade-name" type="text" [class]="formInputClasses(false)" [(ngModel)]="holderData.tradeName" name="tradeName"
-      placeholder="Opcional, si es distinto de la razón social" />
+      placeholder="Opcional, si es distinto de la razón social" autocomplete="nope" />
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Nombre de contacto *</label>
     <input id="holder-contact-name" type="text" [class]="formInputClasses(!!contactNameError)" [(ngModel)]="holderData.contactName" name="contactName"
-      placeholder="Persona de contacto en la empresa" />
+      placeholder="Persona de contacto en la empresa" autocomplete="nope" />
     @if (contactNameError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactNameError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">DNI del contacto *</label>
     <input id="holder-contact-dni" type="text" [class]="formInputClasses(!!contactDniError)" [(ngModel)]="holderData.contactDni" name="contactDni"
-      placeholder="12345678A" maxlength="9" />
+      placeholder="12345678A" maxlength="9" autocomplete="nope" />
     @if (contactDniError) { <span class="text-[0.76rem] text-[#DC2626]">{{ contactDniError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">CNAE *</label>
     <input id="holder-cnae" type="text" [class]="formInputClasses(!!cnaeError)" [(ngModel)]="holderData.cnae" name="cnae"
-      placeholder="4321" />
+      placeholder="4321" autocomplete="nope" />
     @if (cnaeError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cnaeError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
@@ -140,14 +140,14 @@
         }
       </select>
       <input id="holder-phone" type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
-        name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" />
+        name="phoneNumber" placeholder="600 000 000" [attr.maxlength]="holderData.phoneCountry === '+34' ? 9 : 15" autocomplete="nope" />
     </div>
     @if (phoneError) { <span class="text-[0.76rem] text-[#DC2626]">{{ phoneError }}</span> }
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Correo electrónico *</label>
     <input id="holder-email" type="email" [class]="formInputClasses(!!emailError)" [(ngModel)]="holderData.email" name="email"
-      placeholder="titular@ejemplo.es" />
+      placeholder="titular@ejemplo.es" autocomplete="nope" />
     @if (emailError) { <span class="text-[0.76rem] text-[#DC2626]">{{ emailError }}</span> }
   </div>
   <div class="flex gap-3 mt-2">

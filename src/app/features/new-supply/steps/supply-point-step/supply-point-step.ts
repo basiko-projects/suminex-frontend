@@ -103,7 +103,7 @@ export class SupplyPointStep implements OnInit {
   }
 
   formInputClasses(invalid: boolean): string {
-    const base = 'w-full py-3.5 px-4 bg-white border-[1.5px] rounded-lg text-[0.9rem] text-[#0F172A] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94A3B8]';
+    const base = 'w-full py-3.5 px-4 bg-white border-2 rounded-lg text-[0.9rem] text-[#0F172A] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-[#94A3B8]';
     return invalid
       ? `${base} border-[#EF4444]`
       : `${base} border-black/12 focus:border-[#227CFF] focus:shadow-[0_0_0_3px_rgba(34,124,255,0.10)]`;
