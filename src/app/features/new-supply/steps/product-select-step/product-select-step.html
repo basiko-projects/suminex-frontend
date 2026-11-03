@@ -16,6 +16,11 @@
 </div>
 } @else {
 <div class="flex flex-col gap-4 max-w-170">
+  @if (pricesError()) {
+  <div class="flex items-center gap-2 py-2 px-3.5 rounded-lg bg-[#EF4444]/8 border border-[#EF4444]/30 text-[#DC2626] text-[0.8rem]">
+    <app-icon name="exclamation-circle" svgClass="w-4 h-4" />{{ pricesError() }}
+  </div>
+  }
   @if (tariffOptions.length > 1) {
   <div class="flex items-center gap-2 flex-wrap">
     <button type="button"
@@ -40,8 +45,15 @@
       <span class="text-[0.8rem] text-[#64748B]">Tarifa <span class="font-semibold text-[#227CFF]">{{ p.tariffName }}</span></span>
     </div>
     <div class="flex items-center justify-between pt-3 mt-auto border-t border-black/5">
-      <span class="text-[0.78rem] font-semibold text-[#64748B] truncate">{{ p.providerName || '—' }}</span>
-      <span class="text-[0.85rem] font-bold text-[#16A34A] shrink-0">{{ p.fixedCommissionAmount }} €</span>
+      <span class="flex items-center gap-1.5 min-w-0 text-[0.78rem] font-semibold text-[#64748B]">
+        @if (p.providerLogoUrl) {
+        <img [src]="p.providerLogoUrl" [alt]="p.providerName" class="w-4 h-4 rounded object-contain shrink-0" />
+        }
+        <span class="truncate">{{ p.providerName || '—' }}</span>
+      </span>
+      <span class="text-[0.76rem] font-bold text-[#227CFF] hover:underline cursor-pointer shrink-0" (click)="showPrices($event, p)">
+        {{ loadingPrices() === p.id ? 'Cargando...' : 'Ver precios' }}
+      </span>
     </div>
   </button>
   }
@@ -51,4 +63,56 @@
     Continuar
   </button>
 </div>
+
+@if (viewingPrices(); as vp) {
+<div class="fixed inset-0 bg-black/45 flex items-center justify-center z-700 p-4" (click)="closePrices()">
+  <div class="bg-white rounded-lg p-6 w-[min(94vw,480px)] max-h-[85vh] overflow-y-auto flex flex-col gap-4" (click)="$event.stopPropagation()">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex flex-col gap-1">
+        <span class="text-base font-bold text-[#0F172A]">{{ vp.name }}</span>
+        <span class="text-[0.8rem] text-[#64748B]">Tarifa <span class="font-semibold text-[#227CFF]">{{ vp.tariffName }}</span></span>
+      </div>
+      <button type="button" class="w-7 h-7 rounded-lg border border-black/10 bg-transparent text-[#64748B] cursor-pointer flex items-center justify-center shrink-0 hover:text-[#DC2626] hover:border-[#FECACA] hover:bg-[#FEF2F2]" (click)="closePrices()">
+        <app-icon name="x-mark" svgClass="w-3.5 h-3.5" />
+      </button>
+    </div>
+
+    @if (vp.energyPeriods?.length) {
+    <div class="flex flex-col gap-2.5">
+      <div class="flex items-center gap-1.5 text-[0.8rem] font-bold text-[#64748B]">
+        <app-icon name="bolt" svgClass="w-3 h-3" style="color:#FACC15" /> Energía (€/kWh)
+      </div>
+      <div class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(72px,1fr))]">
+        @for (ep of vp.energyPeriods; track ep.period) {
+        <div class="flex flex-col items-center gap-0.75">
+          <span class="text-[10px] font-bold text-[#94A3B8] uppercase">{{ ep.period }}</span>
+          <span class="text-xs font-semibold tabular-nums text-[#0F172A] bg-white border border-black/10 rounded-lg py-1.25 px-2 w-full text-center">{{ ep.priceKwh ?? '—' }}</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    @if (vp.powerPeriods?.length) {
+    <div class="flex flex-col gap-2.5">
+      <div class="flex items-center gap-1.5 text-[0.8rem] font-bold text-[#64748B]">
+        <span class="w-2 h-2 rounded-full shrink-0" style="background-color:#60A5FA"></span> Potencia (€/kW·día)
+      </div>
+      <div class="grid gap-2 grid-cols-[repeat(auto-fill,minmax(72px,1fr))]">
+        @for (pp of vp.powerPeriods; track pp.period) {
+        <div class="flex flex-col items-center gap-0.75">
+          <span class="text-[10px] font-bold text-[#94A3B8] uppercase">{{ pp.period }}</span>
+          <span class="text-xs font-semibold tabular-nums text-[#0F172A] bg-white border border-black/10 rounded-lg py-1.25 px-2 w-full text-center">{{ pp.priceKwDay ?? 'BOE' }}</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    @if (!vp.energyPeriods?.length && !vp.powerPeriods?.length) {
+    <span class="text-[0.8rem] text-[#94A3B8] text-center py-4">No hay datos de precio disponibles para este producto.</span>
+    }
+  </div>
+</div>
+}
 }

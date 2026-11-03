@@ -3,38 +3,38 @@
     <div class="flex flex-col gap-[0.45rem]">
       <label class="text-[0.82rem] font-bold text-[#0F172A]">Dirección del punto de suministro *</label>
       <input id="sp-street" type="text" [class]="formInputClasses(!!streetAddressError)" [(ngModel)]="supplyPointData.streetAddress" name="streetAddress"
-        placeholder="Calle" />
+        placeholder="Calle" autocomplete="off" />
       @if (streetAddressError) { <span class="text-[0.76rem] text-[#DC2626]">{{ streetAddressError }}</span> }
     </div>
     <div class="flex flex-col gap-[0.45rem]">
       <label class="text-[0.82rem] font-bold text-[#0F172A]">Número *</label>
       <input id="sp-number" type="text" [class]="formInputClasses(!!numberError)" [(ngModel)]="supplyPointData.number" name="number"
-        placeholder="Nº" />
+        placeholder="Nº" autocomplete="off" />
       @if (numberError) { <span class="text-[0.76rem] text-[#DC2626]">{{ numberError }}</span> }
     </div>
   </div>
   <div class="grid grid-cols-2 gap-4 max-[480px]:grid-cols-1">
     <div class="flex flex-col gap-[0.45rem]">
-      <input type="text" [class]="formInputClasses(false)" [(ngModel)]="supplyPointData.floor" name="floor" placeholder="Piso" />
+      <input type="text" [class]="formInputClasses(false)" [(ngModel)]="supplyPointData.floor" name="floor" placeholder="Piso" autocomplete="off" />
     </div>
     <div class="flex flex-col gap-[0.45rem]">
-      <input type="text" [class]="formInputClasses(false)" [(ngModel)]="supplyPointData.door" name="door" placeholder="Puerta" />
+      <input type="text" [class]="formInputClasses(false)" [(ngModel)]="supplyPointData.door" name="door" placeholder="Puerta" autocomplete="off" />
     </div>
   </div>
   <div class="grid grid-cols-2 gap-4 max-[480px]:grid-cols-1">
     <div class="flex flex-col gap-[0.45rem]">
       <input id="sp-postal-code" type="text" [class]="formInputClasses(!!postalCodeError)" [(ngModel)]="supplyPointData.postalCode" name="postalCode"
-        placeholder="Código Postal" maxlength="5" />
+        placeholder="Código Postal" maxlength="5" autocomplete="off" />
       @if (postalCodeError) { <span class="text-[0.76rem] text-[#DC2626]">{{ postalCodeError }}</span> }
     </div>
     <div class="flex flex-col gap-[0.45rem]">
       <input id="sp-province" type="text" [class]="formInputClasses(!!provinceError)" [(ngModel)]="supplyPointData.province" name="province"
-        placeholder="Provincia" />
+        placeholder="Provincia" autocomplete="off" />
       @if (provinceError) { <span class="text-[0.76rem] text-[#DC2626]">{{ provinceError }}</span> }
     </div>
   </div>
   <div class="flex flex-col gap-[0.45rem]">
-    <input id="sp-city" type="text" [class]="formInputClasses(!!cityError)" [(ngModel)]="supplyPointData.city" name="city" placeholder="Localidad" />
+    <input id="sp-city" type="text" [class]="formInputClasses(!!cityError)" [(ngModel)]="supplyPointData.city" name="city" placeholder="Localidad" autocomplete="off" />
     @if (cityError) { <span class="text-[0.76rem] text-[#DC2626]">{{ cityError }}</span> }
   </div>
   @if (requiresCups()) {
