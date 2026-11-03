@@ -228,7 +228,7 @@ export class NewSupplyComponent implements OnDestroy {
         const eligible = pool.flatMap(t =>
           (t.products ?? [])
             .filter(p => p.isActive && p.fixedCommissionAmount != null)
-            .map(p => ({ ...p, tariffName: t.code ?? t.name }))
+            .map(p => ({ ...p, tariffName: t.code ?? t.name, tariffId: t.id }))
         );
         this.eligibleProducts.set(eligible);
         this.loadingProducts.set(false);
