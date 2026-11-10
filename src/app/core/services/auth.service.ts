@@ -73,6 +73,14 @@ export class AuthService {
       );
   }
 
+  /** POST /api/auth/set-password — usado por la pantalla pública /set-password (alta de usuario
+   *  o reset forzado por un Admin). El token viene tal cual en la URL, sin volver a encodear. */
+  setPassword(userId: string, token: string, newPassword: string, confirmPassword: string) {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/set-password`, {
+      userId, token, newPassword, confirmPassword,
+    });
+  }
+
   logout() {
     const refreshToken = this.getRefreshToken();
     const finish = () => {

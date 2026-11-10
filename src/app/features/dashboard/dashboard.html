@@ -25,6 +25,11 @@
       }}</button>
     }
     }
+
+    @if (isAdmin) {
+    <p-select [options]="collaboratorOptions" [(ngModel)]="selectedCollaboratorId" optionLabel="label"
+      optionValue="id" (onChange)="onCollaboratorChange()" [appendTo]="'body'" class="ml-auto" />
+    }
   </div>
 
   <p-popover #customPop>

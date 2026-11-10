@@ -6,10 +6,14 @@ import { finalize } from 'rxjs/operators';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DatePickerModule } from 'primeng/datepicker';
 import { PopoverModule } from 'primeng/popover';
+import { SelectModule } from 'primeng/select';
 import { AuthService } from '../../core/services/auth.service';
 import { StatsService } from '../../core/services/stats.service';
+import { UsersService } from '../../core/services/users.service';
 import { DashboardKpi, DashboardTimeseriesPoint, StatsGroupBy } from '../../core/models/stats.model';
 import { Icon, IconName } from '../../shared/components/icon/icon';
+
+interface CollaboratorOption { id: string | null; label: string; }
 
 interface KpiDisplay { hasData: boolean; pct: number; arrowUp: boolean; good: boolean; }
 
@@ -28,14 +32,20 @@ function pad2(n: number): string { return String(n).padStart(2, '0'); }
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, CurrencyPipe, SkeletonModule, FormsModule, DatePickerModule, PopoverModule, Icon],
+  imports: [RouterLink, CurrencyPipe, SkeletonModule, FormsModule, DatePickerModule, PopoverModule, SelectModule, Icon],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
   private auth  = inject(AuthService);
   private stats = inject(StatsService);
+  private users = inject(UsersService);
 
   userName = computed(() => this.auth.currentUser()?.name || 'Administrador');
+  isAdmin  = this.auth.isAdmin();
+
+  /** Solo se pueblan y se muestran para un Admin — un Collaborator siempre ve lo suyo */
+  collaboratorOptions: CollaboratorOption[] = [{ id: null, label: 'Todos los colaboradores' }];
+  selectedCollaboratorId: string | null = null;
 
   loading      = signal(true);
   activePeriod = signal<Period>('month');
@@ -68,12 +78,18 @@ export class DashboardComponent implements OnInit {
     { key: 'custom'  as Period, label: 'Personalizado' },
   ];
 
-  quickActions: QuickAction[] = [
+  private readonly allQuickActions: QuickAction[] = [
     { title: 'Nueva oferta',   subtitle: 'Crear tarifa de luz, gas o internet', icon: 'bolt',           route: '/services' },
     { title: 'Usuarios',       subtitle: 'Gestionar usuarios de la plataforma', icon: 'users',          route: '/users' },
     { title: 'Comparaciones',  subtitle: 'Ver actividad reciente de usuarios',  icon: 'chart-bar',      route: '/comparison-history' },
     { title: 'Suministros',    subtitle: 'Gestionar contratos activos',        icon: 'document-check', route: '/supplies' },
   ];
+
+  /** Admin ve las 4; el resto de roles solo "Nueva oferta" y "Suministros". */
+  get quickActions(): QuickAction[] {
+    if (this.auth.isAdmin()) return this.allQuickActions;
+    return this.allQuickActions.filter(a => a.title === 'Nueva oferta' || a.title === 'Suministros');
+  }
 
   get chartRangeLabel(): string {
     const [start, end] = this.currentRange();
@@ -126,7 +142,23 @@ export class DashboardComponent implements OnInit {
     };
   }
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    if (this.isAdmin) this.loadCollaborators();
+  }
+
+  private loadCollaborators() {
+    this.users.getAll({ role: 'Collaborator', isActive: true, pageSize: 100 }).subscribe({
+      next: res => {
+        this.collaboratorOptions = [
+          { id: null, label: 'Todos los colaboradores' },
+          ...res.items.map(u => ({ id: u.id, label: u.fullName })),
+        ];
+      },
+    });
+  }
+
+  onCollaboratorChange() { this.load(); }
 
   onPeriodChange(p: Period) {
     this.activePeriod.set(p);
@@ -196,7 +228,12 @@ export class DashboardComponent implements OnInit {
     const spanDays = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
     this.groupBy = this.groupByForSpan(spanDays);
 
-    this.stats.getDashboard({ from: toDateParam(start), to: toDateParam(end), groupBy: this.groupBy })
+    this.stats.getDashboard({
+      from: toDateParam(start),
+      to:   toDateParam(end),
+      groupBy: this.groupBy,
+      collaboratorId: this.selectedCollaboratorId ?? undefined,
+    })
       .pipe(finalize(() => this.loading.set(false))).subscribe({
         next: ({ summary, timeseries, availableToInvoiceThisMonth }) => {
           this.timeseries    = timeseries ?? [];

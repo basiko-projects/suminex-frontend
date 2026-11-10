@@ -63,9 +63,9 @@ export class HolderDataStep implements OnInit {
   }
 
   countryOptions = [
-    { dial: '+34',  name: 'España' },
-    { dial: '+351', name: 'Portugal' },
-    { dial: '+33',  name: 'Francia' },
+    { dial: '+34',  name: 'ES' },
+    { dial: '+351', name: 'PT' },
+    { dial: '+33',  name: 'FR' },
   ];
 
   get fullNameError(): string | null {

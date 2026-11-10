@@ -12,7 +12,8 @@ export class StatsService {
 
   getDashboard(filters: DashboardStatsFilters): Observable<DashboardStatsResponse> {
     let params = new HttpParams().set('from', filters.from).set('to', filters.to);
-    if (filters.groupBy) params = params.set('groupBy', filters.groupBy);
+    if (filters.groupBy)       params = params.set('groupBy', filters.groupBy);
+    if (filters.collaboratorId) params = params.set('collaboratorId', filters.collaboratorId);
     return this.http.get<DashboardStatsResponse>(this.url, { params });
   }
 }
