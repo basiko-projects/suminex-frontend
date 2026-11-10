@@ -4,6 +4,8 @@ export interface DashboardStatsFilters {
   from: string;
   to: string;
   groupBy?: StatsGroupBy;
+  /** Solo Admin — un Collaborator siempre ve lo suyo, el backend ignora este filtro para él */
+  collaboratorId?: string;
 }
 
 export interface DashboardKpi {

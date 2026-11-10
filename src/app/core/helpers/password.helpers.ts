@@ -15,3 +15,9 @@ export function generatePassword(length = 12): string {
   }
   return chars.join('');
 }
+
+/** Mismo criterio que valida el backend (ASP.NET Identity): mínimo 8 caracteres,
+ *  al menos una mayúscula, una minúscula y un dígito. */
+export function isValidPassword(pw: string): boolean {
+  return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw);
+}

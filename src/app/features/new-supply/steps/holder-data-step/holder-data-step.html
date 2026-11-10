@@ -35,10 +35,10 @@
   }
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Teléfono de contacto *</label>
-    <div class="grid grid-cols-[150px_1fr] gap-2.5 max-[480px]:grid-cols-1">
+    <div class="grid grid-cols-[92px_1fr] gap-2.5 max-[480px]:grid-cols-1">
       <select [class]="formInputClasses(!!phoneError) + ' cursor-pointer'" [(ngModel)]="holderData.phoneCountry" name="phoneCountry">
         @for (c of countryOptions; track c.dial) {
-        <option [value]="c.dial">{{ c.name }} ({{ c.dial }})</option>
+        <option [value]="c.dial">{{ c.name }} {{ c.dial }}</option>
         }
       </select>
       <input id="holder-phone" type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
@@ -133,10 +133,10 @@
   </div>
   <div class="flex flex-col gap-[0.45rem]">
     <label class="text-[0.82rem] font-bold text-[#0F172A]">Teléfono de contacto *</label>
-    <div class="grid grid-cols-[150px_1fr] gap-2.5 max-[480px]:grid-cols-1">
+    <div class="grid grid-cols-[92px_1fr] gap-2.5 max-[480px]:grid-cols-1">
       <select [class]="formInputClasses(!!phoneError) + ' cursor-pointer'" [(ngModel)]="holderData.phoneCountry" name="phoneCountry">
         @for (c of countryOptions; track c.dial) {
-        <option [value]="c.dial">{{ c.name }} ({{ c.dial }})</option>
+        <option [value]="c.dial">{{ c.name }} {{ c.dial }}</option>
         }
       </select>
       <input id="holder-phone" type="tel" [class]="formInputClasses(!!phoneError)" [ngModel]="holderData.phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"

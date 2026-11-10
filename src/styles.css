@@ -537,40 +537,57 @@ html, body {
   transform: translateY(-50%);
 }
 
-/* p-toast */
+/* p-toast — fondo tintado suave + acento superior + ícono circular, por tipo */
 .p-toast { z-index: 9999 !important; width: 26rem !important; }
 .p-toast-message {
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   border: none !important;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.16) !important;
+  border-top-width: 3px !important;
+  border-top-style: solid !important;
+  box-shadow: 0 12px 32px rgba(15,23,42,0.14) !important;
+  overflow: hidden !important;
 }
 .p-toast-message-content {
   padding: 1rem 1.15rem !important;
   gap: 0.75rem !important;
-  align-items: center !important;
+  align-items: flex-start !important;
 }
-.p-toast-summary { font-size: 0.9rem !important; font-weight: 700 !important; }
-.p-toast-detail { font-size: 0.8rem !important; font-weight: 500 !important; opacity: 0.92; margin-top: 0.15rem; }
-.p-toast-message-success { background: var(--sx-primary) !important; color: #fff !important; }
-.p-toast-message-error   { background: #EF4444 !important; color: #fff !important; }
-.p-toast-message-warn    { background: var(--sx-amber) !important; color: #fff !important; }
-.p-toast-message-success .p-toast-close-button,
-.p-toast-message-error   .p-toast-close-button,
-.p-toast-message-warn    .p-toast-close-button { color: #fff !important; }
-.p-toast-message-success .p-toast-close-button:hover,
-.p-toast-message-error   .p-toast-close-button:hover,
-.p-toast-message-warn    .p-toast-close-button:hover { background: rgba(255,255,255,0.2) !important; }
+.p-toast-summary { font-size: 0.88rem !important; font-weight: 700 !important; color: #0F172A !important; }
+.p-toast-detail  { font-size: 0.8rem !important; font-weight: 500 !important; color: #475569 !important; margin-top: 0.15rem !important; }
+
+.p-toast-message-icon {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  padding: 0.3rem !important;
+  box-sizing: border-box !important;
+  border: 1.5px solid currentColor !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+
+.p-toast-message-success { background: #ECFDF5 !important; border-top-color: #16A34A !important; }
+.p-toast-message-error   { background: #FEF2F2 !important; border-top-color: #EF4444 !important; }
+.p-toast-message-warn    { background: #FFFBEB !important; border-top-color: #D97706 !important; }
+
+.p-toast-message-success .p-toast-message-icon { color: #16A34A !important; }
+.p-toast-message-error   .p-toast-message-icon { color: #EF4444 !important; }
+.p-toast-message-warn    .p-toast-message-icon { color: #D97706 !important; }
+
+.p-toast-close-button { color: #94A3B8 !important; }
+.p-toast-close-button:hover { background: rgba(15,23,42,0.06) !important; color: #475569 !important; }
 
 /* p-confirmdialog */
 .p-confirmdialog .p-dialog-content { padding: 1.5rem 1.75rem !important; }
 
-/* p-select / p-password forced to fill their host's width when the host
-   carries .w-full — PrimeNG's internal wrapper doesn't inherit that
-   automatically. Shared globally so components don't repeat it. */
+/* p-select / p-password forced to fill their host's width when the host carries .w-full.
+   PrimeNG puts classes like .p-select/.p-password directly on the host element, not on an
+   inner wrapper — selectors with a descendant/child combinator here never match anything. */
 .w-full { width: 100% !important; }
 p-password { width: 100% !important; }
-p-password .p-password { width: 100% !important; }
-p-select.w-full > .p-select { width: 100% !important; }
+
+/* Compact phone-country select (ES +34, etc.) — overrides the 160px global min-width above.
+   PrimeNG puts the .p-select class on the <p-select> host itself, not a child, so no '>' here. */
+p-select.country-code-select.p-select { min-width: 108px !important; width: 108px !important; }
 
 /* p-slider — track/handle reimplemented explicitly so it doesn't depend on the theme */
 .p-slider {

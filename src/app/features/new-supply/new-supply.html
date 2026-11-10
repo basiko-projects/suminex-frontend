@@ -58,8 +58,40 @@
   </div>
   }
 
-  <!-- ─── Ownership modal — bloqueante: se abre apenas se entra al Step 2 sin titularidad elegida aún, encima de "Datos del nuevo titular" ─── -->
-  @if (step() === 2 && !ownershipType()) {
+  <!-- ─── Active-supply modal — bloqueante: primera pregunta del Step 2, decide si se pregunta titularidad o se va directo a "Datos del titular" (alta nueva, sin titular anterior) ─── -->
+  @if (step() === 2 && hasActiveSupply() === null) {
+  <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
+    <div class="bg-white rounded-lg p-8 w-[min(94vw,800px)] flex flex-col">
+      <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start transition-colors hover:text-[#0F172A]" (click)="goBack()">
+        <app-icon name="arrow-left" svgClass="w-3 h-3" /> Volver
+      </button>
+      <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-6 text-center">¿Este punto ya tiene luz/gas contratado actualmente?</h2>
+
+      <div class="grid grid-cols-2 gap-5 max-[560px]:grid-cols-1 mb-6">
+        <button type="button"
+          [class]="modeCardClasses(pendingHasActiveSupply() === true)"
+          (click)="pendingHasActiveSupply.set(true)">
+          <p class="text-[1.2rem] font-bold text-[#0F172A] m-0 leading-[1.25]"><span class="text-[#227CFF]">Sí</span>, ya tiene suministro</p>
+          <p class="text-[0.8rem] text-[#64748B] m-0 mt-2 leading-[1.5]">El punto ya tiene contratado este servicio con otra compañía.</p>
+        </button>
+        <button type="button"
+          [class]="modeCardClasses(pendingHasActiveSupply() === false)"
+          (click)="pendingHasActiveSupply.set(false)">
+          <p class="text-[1.2rem] font-bold text-[#0F172A] m-0 leading-[1.25]"><span class="text-[#227CFF]">No</span>, es un alta nueva</p>
+          <p class="text-[0.8rem] text-[#64748B] m-0 mt-2 leading-[1.5]">El punto no tiene hoy este servicio con ninguna compañía.</p>
+        </button>
+      </div>
+
+      <button type="button" class="w-full py-3.5 px-4 bg-[#227CFF] text-white border-none rounded-lg text-[0.95rem] font-bold cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-[#1A6FE8]"
+        [disabled]="pendingHasActiveSupply() === null" (click)="confirmHasActiveSupply()">
+        Continuar
+      </button>
+    </div>
+  </div>
+  }
+
+  <!-- ─── Ownership modal — bloqueante: se abre tras confirmar que el punto ya tiene suministro activo, encima de "Datos del nuevo titular" ─── -->
+  @if (step() === 2 && hasActiveSupply() === true && !ownershipType()) {
   <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-600 p-4">
     <div class="bg-white rounded-lg p-8 w-[min(94vw,800px)] flex flex-col">
       <button class="inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer text-[#64748B] text-[0.85rem] font-medium p-0 mb-5 self-start transition-colors hover:text-[#0F172A]" (click)="goBack()">
@@ -106,7 +138,8 @@
       <div class="mb-6 shrink-0">
         <h2 class="text-lg font-bold text-[#0F172A] m-0 mb-1">Datos del nuevo titular</h2>
         <p class="text-sm text-[#64748B] m-0">
-          @if (ownershipType() === 'without-change') { Revisa los datos leídos de tu factura y corrígelos si es necesario }
+          @if (hasActiveSupply() === false) { Completa los datos del titular del nuevo contrato }
+          @else if (ownershipType() === 'without-change') { Revisa los datos leídos de tu factura y corrígelos si es necesario }
           @else { Completa los datos del nuevo titular }
         </p>
       </div>
