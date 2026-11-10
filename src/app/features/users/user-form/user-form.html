@@ -19,16 +19,24 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 mb-[1.1rem]">
+    <div class="mb-[1.1rem]">
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.81rem] font-semibold text-sx-text-2">Correo electrónico <span
             class="text-sx-red">*</span></label>
         <input pInputText [(ngModel)]="email" type="email" placeholder="correo@ejemplo.com" class="w-full"
           [class.field-error]="submitted && !email" />
       </div>
+    </div>
+
+    <div class="mb-[1.1rem]">
       <div class="flex flex-col gap-1.5">
         <label class="text-[0.81rem] font-semibold text-sx-text-2">Teléfono</label>
-        <input pInputText [(ngModel)]="phone" placeholder="+34 600 000 000" class="w-full" />
+        <div class="flex gap-1.5">
+          <p-select [options]="countryOptions" [(ngModel)]="phoneCountry" optionLabel="label" optionValue="value"
+            [appendTo]="'body'" class="country-code-select shrink-0" />
+          <input pInputText type="tel" [ngModel]="phoneNumber" (ngModelChange)="onPhoneNumberInput($event)"
+            placeholder="600 000 000" [attr.maxlength]="phoneCountry === '+34' ? 9 : 15" class="w-full min-w-0 h-[38px]" />
+        </div>
       </div>
     </div>
 
@@ -64,8 +72,14 @@
           @if (!editUser) { <span class="text-sx-red">*</span> }
           @if (editUser) { <span class="font-normal text-xs text-sx-text-3 ml-1">(dejar vacío para no cambiar)</span> }
         </label>
-        <button type="button" class="text-xs font-semibold text-sx-primary-text bg-transparent border-none cursor-pointer p-0 hover:underline"
-          (click)="generatePassword()">Generar</button>
+        <div class="flex items-center gap-2.5">
+          @if (password) {
+          <button type="button" class="text-xs font-semibold text-sx-primary-text bg-transparent border-none cursor-pointer p-0 hover:underline"
+            (click)="copyPassword()">{{ copied() ? '¡Copiado!' : 'Copiar' }}</button>
+          }
+          <button type="button" class="text-xs font-semibold text-sx-primary-text bg-transparent border-none cursor-pointer p-0 hover:underline"
+            (click)="generatePassword()">Generar</button>
+        </div>
       </div>
       <div class="flex flex-col gap-1.5 mt-1.5">
         <p-password [(ngModel)]="password" [toggleMask]="true" [feedback]="false"

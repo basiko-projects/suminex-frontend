@@ -34,10 +34,11 @@ export class UserFormComponent implements OnInit {
   submitted = false;
   apiError  = '';
 
-  fullName = '';
-  email    = '';
-  phone    = '';
-  password = '';
+  fullName     = '';
+  email        = '';
+  phoneCountry = '+34';
+  phoneNumber  = '';
+  password     = '';
   role: 'Admin' | 'Collaborator' = 'Collaborator';
   isActive = true;
 
@@ -46,18 +47,43 @@ export class UserFormComponent implements OnInit {
     { label: 'Colaborador',   value: 'Collaborator' },
   ];
 
+  countryOptions = [
+    { label: 'ES +34',  value: '+34'  },
+    { label: 'PT +351', value: '+351' },
+    { label: 'FR +33',  value: '+33'  },
+  ];
+
   ngOnInit() {
     if (this.editUser) {
       this.fullName = this.editUser.fullName;
       this.email    = this.editUser.email;
-      this.phone    = this.editUser.phone ?? '';
       this.role     = (this.editUser.role === 'Admin' ? 'Admin' : 'Collaborator');
       this.isActive = this.editUser.isActive;
+
+      const rawPhone = this.editUser.phone ?? '';
+      const matchedCountry = this.countryOptions.find(c => rawPhone.startsWith(c.value));
+      this.phoneCountry = matchedCountry?.value ?? '+34';
+      this.phoneNumber  = (matchedCountry ? rawPhone.slice(matchedCountry.value.length) : rawPhone).replace(/\D/g, '');
     }
+  }
+
+  onPhoneNumberInput(value: string) {
+    const maxDigits = this.phoneCountry === '+34' ? 9 : 15;
+    this.phoneNumber = value.replace(/\D/g, '').slice(0, maxDigits);
   }
 
   generatePassword() {
     this.password = generatePassword();
+  }
+
+  copied = signal(false);
+
+  copyPassword() {
+    if (!this.password) return;
+    navigator.clipboard.writeText(this.password).then(() => {
+      this.copied.set(true);
+      setTimeout(() => this.copied.set(false), 1500);
+    });
   }
 
   submit() {
@@ -68,12 +94,13 @@ export class UserFormComponent implements OnInit {
     if (!this.editUser && !this.password) return;
 
     this.saving.set(true);
+    const phone = this.phoneNumber ? `${this.phoneCountry}${this.phoneNumber}` : '';
 
     const obs = this.editUser
       ? this.svc.update(this.editUser.id, {
           fullName: this.fullName,
           email:    this.email,
-          phone:    this.phone,
+          phone,
           role:     this.role,
           isActive: this.isActive,
           ...(this.password ? { password: this.password } : {}),
@@ -81,7 +108,7 @@ export class UserFormComponent implements OnInit {
       : this.svc.create({
           fullName: this.fullName,
           email:    this.email,
-          phone:    this.phone,
+          phone,
           password: this.password,
           role:     this.role,
         });

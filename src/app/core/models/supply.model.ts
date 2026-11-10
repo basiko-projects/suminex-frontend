@@ -24,8 +24,11 @@ export interface Supply {
   holderDni:            string;
   holderIban:           string;
   isUserTheHolder:      boolean;
-  /** true = con cambio de titularidad (manda codigo_cambio "MZ" a Gana), false = alta nueva (manda "CZ") */
+  /** true = con cambio de titularidad (manda codigo_cambio "MZ" a Gana), false = sin cambio (manda "CZ") —
+   *  solo aplica cuando hasActiveSupply es true; si hasActiveSupply es false, Gana manda "AZ" (alta nueva) sin importar este campo */
   isHolderChange:       boolean;
+  /** false = el punto no tiene hoy luz/gas con ninguna comercializadora (alta nueva, Gana manda "AZ") */
+  hasActiveSupply:      boolean;
   serviceType:          CategoryCode;
   serviceName:          string;
   tariffCode:           string;

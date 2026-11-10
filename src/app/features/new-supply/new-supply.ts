@@ -114,6 +114,12 @@ export class NewSupplyComponent implements OnDestroy {
   showModeModal = signal(false);
   /** Selección dentro del modal, antes de confirmar con "Continuar" — altaMode recién se fija al confirmar */
   pendingAltaMode = signal<'automatica' | 'manual' | null>(null);
+  /** null = sin responder todavía (bloquea el Step 2); false = el punto no tiene hoy luz/gas con ninguna
+   *  comercializadora (alta nueva, manda "AZ" a Gana) — en ese caso no hay titular anterior, se salta la modal
+   *  de titularidad y se fija ownershipType en 'without-change' (sin cambio, sin pedir DNI de titular anterior) */
+  hasActiveSupply = signal<boolean | null>(null);
+  /** Selección dentro del modal de "¿tiene suministro activo?", antes de confirmar con "Continuar" */
+  pendingHasActiveSupply = signal<boolean | null>(null);
   ownershipType = signal<OwnershipChange>(null);
   /** Selección dentro del modal de titularidad, antes de confirmar con "Continuar" */
   pendingOwnership = signal<OwnershipChange>(null);
@@ -265,6 +271,21 @@ export class NewSupplyComponent implements OnDestroy {
     this.pendingOwnership.set(null);
   }
 
+  /** Si no hay suministro activo (alta nueva) no existe un "titular anterior" con quien compararse — se salta la
+   *  modal de titularidad directamente y se fija 'without-change' (sin cambio, sin pedir DNI de titular anterior) */
+  selectHasActiveSupply(value: boolean) {
+    this.hasActiveSupply.set(value);
+    this.ownershipType.set(value ? null : 'without-change');
+  }
+
+  /** Click en "Continuar" dentro del modal de "¿tiene suministro activo?" — confirma la selección hecha con las tarjetas */
+  confirmHasActiveSupply() {
+    const value = this.pendingHasActiveSupply();
+    if (value === null) return;
+    this.selectHasActiveSupply(value);
+    this.pendingHasActiveSupply.set(null);
+  }
+
   onInvoiceFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files?.[0]) this.setInvoiceFile(input.files[0]);
@@ -356,13 +377,28 @@ export class NewSupplyComponent implements OnDestroy {
     this.step.set(3);
   }
 
+  /** Dentro del paso 2, "volver" retrocede de a un sub-paso: titular → titularidad → ¿suministro activo? → tipo
+   *  de suministro. Si no hay suministro activo, la titularidad se fijó sola (sin modal) — desde "Datos del
+   *  titular" se vuelve directo a la pregunta de suministro activo, no a una modal de titularidad que nunca se mostró. */
   goBack() {
     const s = this.step();
-    /** Dentro del paso 2, "volver" retrocede de a un sub-paso: titular → titularidad → tipo de suministro */
-    if (s === 2 && this.ownershipType()) {
-      this.pendingOwnership.set(this.ownershipType());
-      this.ownershipType.set(null);
-      return;
+    if (s === 2) {
+      if (this.ownershipType()) {
+        if (this.hasActiveSupply() === true) {
+          this.pendingOwnership.set(this.ownershipType());
+          this.ownershipType.set(null);
+          return;
+        }
+        this.pendingHasActiveSupply.set(false);
+        this.hasActiveSupply.set(null);
+        this.ownershipType.set(null);
+        return;
+      }
+      if (this.hasActiveSupply() === true) {
+        this.pendingHasActiveSupply.set(true);
+        this.hasActiveSupply.set(null);
+        return;
+      }
     }
     if (s > 1) this.step.set((s - 1) as Step);
   }
@@ -406,6 +442,7 @@ export class NewSupplyComponent implements OnDestroy {
     form.append('IsUserTheHolder', String(this.ownershipType() === 'without-change'));
     const isHolderChange = this.ownershipType() === 'with-change';
     form.append('IsHolderChange', String(isHolderChange));
+    form.append('HasActiveSupply', String(this.hasActiveSupply() ?? true));
     form.append('IsCompanyHolder', String(holderData.isCompanyHolder));
     if (holderData.isCompanyHolder) {
       if (holderData.tradeName.trim()) form.append('HolderTradeName', holderData.tradeName.trim());
@@ -478,6 +515,8 @@ export class NewSupplyComponent implements OnDestroy {
     this.altaMode.set(null);
     this.pendingAltaMode.set(null);
     this.showModeModal.set(false);
+    this.hasActiveSupply.set(null);
+    this.pendingHasActiveSupply.set(null);
     this.ownershipType.set(null);
     this.pendingOwnership.set(null);
     this.submitError.set('');
