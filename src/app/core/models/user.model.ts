@@ -43,10 +43,15 @@ export interface UpdateUserDto {
   phone:    string;
   role:     'Admin' | 'Collaborator';
   isActive: boolean;
-  password?: string;
 }
 
 export interface ChangeRoleResponse {
   userId: string;
   role:   UserRole;
+}
+
+/** Respuesta de POST /api/users/{id}/reset-password — el backend genera la contraseña y la manda por email,
+ *  no se puede elegir una propia desde el panel */
+export interface ResetPasswordResponse {
+  message: string;
 }

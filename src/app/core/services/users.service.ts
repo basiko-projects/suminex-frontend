@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { UserFilters, UsersPagedResponse, CreateUserDto, UpdateUserDto, UserRole, ChangeRoleResponse } from '../models/user.model';
+import { UserFilters, UsersPagedResponse, CreateUserDto, UpdateUserDto, UserRole, ChangeRoleResponse, ResetPasswordResponse } from '../models/user.model';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
@@ -35,5 +35,12 @@ export class UsersService {
   /** PATCH /api/users/{id}/role — Admin — único mecanismo para cambiar el rol de un usuario */
   changeRole(id: string, role: UserRole): Observable<ChangeRoleResponse> {
     return this.http.patch<ChangeRoleResponse>(`${this.url}/${id}/role`, { role });
+  }
+
+  /** POST /api/users/{id}/reset-password — fuerza el reseteo: el backend genera la contraseña y la manda por
+   *  email, no acepta una contraseña elegida desde el panel. Único mecanismo para cambiar la contraseña de un
+   *  usuario ya existente — update() nunca manda password. */
+  resetPassword(id: string): Observable<ResetPasswordResponse> {
+    return this.http.post<ResetPasswordResponse>(`${this.url}/${id}/reset-password`, null);
   }
 }

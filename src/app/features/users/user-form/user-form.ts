@@ -34,6 +34,12 @@ export class UserFormComponent implements OnInit {
   submitted = false;
   apiError  = '';
 
+  resetting     = signal(false);
+  /** Mensaje tal cual lo manda el backend — ya trae el email interpolado, ej. "Email de recuperación de
+   *  contraseña enviado a erwin@example.com." — nunca se reemplaza por un texto genérico propio */
+  resetMessage  = signal<string | null>(null);
+  resetError    = '';
+
   fullName     = '';
   email        = '';
   phoneCountry = '+34';
@@ -86,6 +92,22 @@ export class UserFormComponent implements OnInit {
     });
   }
 
+  /** POST /api/users/{id}/reset-password — el backend NO genera ni manda una contraseña: envía por email un
+   *  link de "elegir nueva contraseña" (válido 48h, un solo uso) con el flujo /set-password. No se manda
+   *  ninguna contraseña elegida acá, ni se envía desde submit()/update(). */
+  resetPassword() {
+    if (!this.editUser || this.resetting()) return;
+    this.resetting.set(true);
+    this.resetError = '';
+    this.svc.resetPassword(this.editUser.id).subscribe({
+      next: res => { this.resetting.set(false); this.resetMessage.set(res.message); },
+      error: e => {
+        this.resetting.set(false);
+        this.resetError = e?.error?.message ?? 'No se pudo resetear la contraseña.';
+      },
+    });
+  }
+
   submit() {
     this.submitted = true;
     this.apiError  = '';
@@ -103,7 +125,6 @@ export class UserFormComponent implements OnInit {
           phone,
           role:     this.role,
           isActive: this.isActive,
-          ...(this.password ? { password: this.password } : {}),
         })
       : this.svc.create({
           fullName: this.fullName,
