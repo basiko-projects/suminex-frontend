@@ -52,13 +52,13 @@ export class DashboardComponent implements OnInit {
   loadError    = '';
 
   totalSupplies         = 0;
-  avgOrderValue         = 0;
-  avgOrderDiffAbs       = 0;
+  pendingOrderValue     = 0;
+  pendingOrderDiffAbs   = 0;
   availableToInvoice    = 0;
 
   private readonly emptyTrend: KpiDisplay = { hasData: false, pct: 0, arrowUp: true, good: true };
   suppliesTrend: KpiDisplay = this.emptyTrend;
-  avgOrderTrend: KpiDisplay = this.emptyTrend;
+  pendingOrderTrend: KpiDisplay = this.emptyTrend;
 
   customFrom: Date | null = null;
   customTo:   Date | null = null;
@@ -238,12 +238,12 @@ export class DashboardComponent implements OnInit {
         next: ({ summary, timeseries, availableToInvoiceThisMonth }) => {
           this.timeseries    = timeseries ?? [];
           this.totalSupplies = summary.managedSupplies.value;
-          this.avgOrderValue = summary.avgOrderValue.value;
-          this.avgOrderDiffAbs = Math.abs(summary.avgOrderValue.value - summary.avgOrderValue.previousValue);
+          this.pendingOrderValue = summary.pendingOrderValue.value;
+          this.pendingOrderDiffAbs = Math.abs(summary.pendingOrderValue.value - summary.pendingOrderValue.previousValue);
           this.availableToInvoice = availableToInvoiceThisMonth ?? 0;
 
           this.suppliesTrend = this.kpiDisplay(summary.managedSupplies);
-          this.avgOrderTrend = this.kpiDisplay(summary.avgOrderValue);
+          this.pendingOrderTrend = this.kpiDisplay(summary.pendingOrderValue);
         },
         error: e => {
           this.loadError = e?.status === 403

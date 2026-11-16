@@ -22,8 +22,8 @@ export interface DashboardStatsSummary {
   pendingSupplies: DashboardKpi;
   /** Total de comparativas creadas en el rango */
   comparisons: DashboardKpi;
-  /** Promedio del estimatedSavings de los suministros creados en el rango (KPI provisional, no es revenue real) */
-  avgOrderValue: DashboardKpi;
+  /** Facturación pendiente en el rango */
+  pendingOrderValue: DashboardKpi;
   /** Comisión total generada (suma de fixedCommissionAmount de los suministros facturados) en el rango */
   commissionGenerated: DashboardKpi;
 }

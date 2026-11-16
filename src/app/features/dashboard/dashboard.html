@@ -71,13 +71,13 @@
     </div>
 
     <div class="bg-white border border-black/10 rounded-lg py-5 px-5.5 flex flex-col">
-      <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Avg. order value</span>
-      <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ avgOrderValue | currency:'EUR':'symbol':'1.2-2' }}</span>
+      <span class="text-[0.78rem] text-[#94A3B8] font-medium mb-2.5">Facturación pendiente</span>
+      <span class="text-[2.5rem] font-bold text-[#0F172A] leading-none mb-3 tracking-[-0.02em]">{{ pendingOrderValue | currency:'EUR':'symbol':'1.2-2' }}</span>
       <div class="flex items-center gap-2 mt-auto">
-        @if (avgOrderTrend.hasData) {
-        <span [class]="pillClasses(avgOrderTrend.good)">
-          <app-icon [name]="avgOrderTrend.arrowUp ? 'arrow-up' : 'arrow-down'" svgClass="w-2.5 h-2.5" />
-          {{ avgOrderDiffAbs | currency:'EUR':'symbol':'1.0-0' }}
+        @if (pendingOrderTrend.hasData) {
+        <span [class]="pillClasses(pendingOrderTrend.good)">
+          <app-icon [name]="pendingOrderTrend.arrowUp ? 'arrow-up' : 'arrow-down'" svgClass="w-2.5 h-2.5" />
+          {{ pendingOrderDiffAbs | currency:'EUR':'symbol':'1.0-0' }}
         </span>
         <span class="text-[0.72rem] text-[#94A3B8]">Vs. período anterior</span>
         } @else {
