@@ -7,8 +7,6 @@ export const IE_RATE = 0.0511269632;
 /** IVA general. Puede bajar a 0.10 temporalmente para potencias <=10kW — pásalo vía `rates`, no lo redespliegues. */
 export const IVA_RATE = 0.21;
 
-const COEFICIENTE_POTENCIA = 0.50;
-const SNAP_PRODUCTS = new Set(['Fijo Snap Mini', 'Fijo Snap', 'Fijo Snap Maxi']);
 export const ALL_PERIODS: Period[] = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
 
 function round(value: number, decimals: number): number {
@@ -75,10 +73,6 @@ function repartoOmie(tariff: ServiceTariff, period: Period, fecha: string): numb
   return dist?.periods?.find(p => p.period === period)?.factor ?? 0;
 }
 
-function feeEnPeriodo(global: number, byPeriod: number[] | undefined, mode: string, index: number): number {
-  return mode === 'Periods' ? (byPeriod?.[index] ?? global) : global;
-}
-
 export function computeComparison(
   tariff: ServiceTariff,
   form: ComparadorFormValue,
@@ -101,20 +95,18 @@ export function computeComparison(
   let totalEnergiaOferta = 0;
   let totalPotenciaOferta = 0;
 
-  ALL_PERIODS.forEach((periodo, index) => {
+  ALL_PERIODS.forEach((periodo) => {
     const kwh = energiaPorPeriodo.get(periodo)?.activa?.kwh ?? 0;
     const kw = potenciaPorPeriodo.get(periodo)?.contratada?.kw ?? 0;
     if (kwh <= 0 && kw <= 0) return;
 
     const valorTarifa = valorTarifaEnergia(productoBase, periodo);
     const reparto = repartoOmie(tariff, periodo, fecha);
-    const precioBase = tipoProducto === 'Indexed'
+    const precioEnergiaOferta = round6(tipoProducto === 'Indexed'
       ? valorTarifa + ((form.precioMedio + omieMargin) * reparto * atr) / 1000
-      : valorTarifa;
-    const precioEnergiaOferta = round6(precioBase + feeEnPeriodo(form.feeEnergia, form.feeEnergiaByPeriod, form.feeMode, index) / 1000);
+      : valorTarifa);
 
-    const potBase = potenciaBase(productoBase, periodo, tariff, fecha);
-    const precioPotenciaOferta = round6(potBase + feeEnPeriodo(form.feePotencia, form.feePotenciaByPeriod, form.feeMode, index) / 365);
+    const precioPotenciaOferta = round6(potenciaBase(productoBase, periodo, tariff, fecha));
 
     const costeEnergia = kwh > 0 ? round6(kwh * precioEnergiaOferta) : 0;
     const costePotencia = kw > 0 ? round6(kw * precioPotenciaOferta * diasFactura) : 0;
@@ -178,42 +170,8 @@ export function computeComparison(
   const ahorroXAnio = (deltaEnergia + deltaPotencia + deltaOtros) * (1 + rates.ieRate + rates.ivaRate);
 
   /* ── Comisión ── */
-  const consumoPeriodo = kwhTotal;
-  const potenciaContratada = Array.from(potenciaPorPeriodo.values()).reduce((s, p) => s + (p.contratada?.kw ?? 0), 0);
-
-  let feeEnergiaEfectivo = form.feeEnergia;
-  let feePotenciaEfectivo = form.feePotencia;
-  if (form.feeMode === 'Periods') {
-    const kwhByIndex = ALL_PERIODS.map(p => energiaPorPeriodo.get(p)?.activa?.kwh ?? 0);
-    const kwByIndex = ALL_PERIODS.map(p => potenciaPorPeriodo.get(p)?.contratada?.kw ?? 0);
-    const sumKwh = kwhByIndex.reduce((s, v) => s + v, 0);
-    const sumKw = kwByIndex.reduce((s, v) => s + v, 0);
-    if (sumKwh > 0 && form.feeEnergiaByPeriod) {
-      feeEnergiaEfectivo = kwhByIndex.reduce((s, v, i) => s + v * (form.feeEnergiaByPeriod![i] ?? 0), 0) / sumKwh;
-    }
-    if (sumKw > 0 && form.feePotenciaByPeriod) {
-      feePotenciaEfectivo = kwByIndex.reduce((s, v, i) => s + v * (form.feePotenciaByPeriod![i] ?? 0), 0) / sumKw;
-    }
-  }
-
-  let comision: number;
-  let comisionEnergiaEur: number;
-  let comisionPotenciaEur: number;
-  if (SNAP_PRODUCTS.has(form.producto)) {
-    comision = form.comisionEnergia;
-    comisionEnergiaEur = comision;
-    comisionPotenciaEur = 0;
-  } else if (form.producto === 'Promo 3M Pro') {
-    const consumoEnergiaPromo = (consumoPeriodo / 12) * 3;
-    comisionEnergiaEur = (feeEnergiaEfectivo / 100) * consumoEnergiaPromo * form.comisionEnergia;
-    comisionPotenciaEur = feePotenciaEfectivo * COEFICIENTE_POTENCIA * potenciaContratada * form.comisionEnergia;
-    comision = round3(comisionEnergiaEur + comisionPotenciaEur);
-  } else {
-    const consumoAnualComision = consumoPeriodo * (365 / diasFactura);
-    comisionEnergiaEur = (feeEnergiaEfectivo * form.comisionEnergia * consumoAnualComision) / 1000;
-    comisionPotenciaEur = feePotenciaEfectivo * COEFICIENTE_POTENCIA * potenciaContratada * form.comisionEnergia;
-    comision = round3(comisionEnergiaEur + comisionPotenciaEur);
-  }
+  // Ya no se calcula a partir del consumo/fees — viene fija del producto elegido (ver ServiceTariffProduct.fixedCommissionAmount)
+  const comision = round3(productoSeleccionado?.fixedCommissionAmount ?? 0);
 
   return {
     comision, ahorroEstudio, ahorroPorcent, ahorroXAnio, periodos,
@@ -226,11 +184,6 @@ export function computeComparison(
     producto: form.producto,
     tipoProducto,
     omieAveragePrice: tipoProducto === 'Indexed' ? form.precioMedio : null,
-    comisionFraccion: form.comisionEnergia,
-    comisionEnergiaEur: round3(comisionEnergiaEur),
-    comisionPotenciaEur: round3(comisionPotenciaEur),
-    feeEnergiaEfectivo,
-    feePotenciaEfectivo,
     annualConsumptionKwh: round2(consumoAnual),
     diasFactura,
   };

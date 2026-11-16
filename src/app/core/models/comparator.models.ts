@@ -1,17 +1,9 @@
 export type Period = 'P1' | 'P2' | 'P3' | 'P4' | 'P5' | 'P6';
 
-export type FeeMode = 'Global' | 'Periods';
-
 export interface ComparadorFormValue {
-  producto:             string;
-  precioMedio:          number;
-  feeEnergia:           number;
-  feePotencia:          number;
-  /** Fracción 0-1 (no porcentaje 0-100), igual que ProductDto.commissionEnergyPct */
-  comisionEnergia:      number;
-  feeMode:              FeeMode;
-  feeEnergiaByPeriod?:  number[];
-  feePotenciaByPeriod?: number[];
+  producto:    string;
+  /** Precio medio OMIE estimado (€/MWh) — solo aplica a productos Indexed; el usuario lo ajusta manualmente */
+  precioMedio: number;
 }
 
 export interface PeriodoResultado {
@@ -53,11 +45,6 @@ export interface ComparatorResult {
   producto:             string;
   tipoProducto:         'Fixed' | 'Indexed';
   omieAveragePrice:     number | null;
-  comisionFraccion:     number;
-  comisionEnergiaEur:   number;
-  comisionPotenciaEur:  number;
-  feeEnergiaEfectivo:   number;
-  feePotenciaEfectivo:  number;
   annualConsumptionKwh: number;
   diasFactura:          number;
 }

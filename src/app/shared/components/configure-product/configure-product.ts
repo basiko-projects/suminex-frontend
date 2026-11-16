@@ -4,19 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
-import { SliderModule } from 'primeng/slider';
+import { InputTextModule } from 'primeng/inputtext';
 import { ServiceTariff } from '../../../core/models/service.model';
 import { LuzOcrResult } from '../../../core/models/comparison.model';
-import { FeeMode, Period } from '../../../core/models/comparator.models';
-import { ALL_PERIODS, computeComparison } from '../../../core/helpers/calculator.helpers';
+import { computeComparison } from '../../../core/helpers/calculator.helpers';
 import { Icon } from '../icon/icon';
-
-/** El catálogo aún no expone commissionEnergyPct por producto — hardcodeado a 65% hasta que se añada en BD. */
-const DEFAULT_COMMISSION_PCT = 0.65;
 
 @Component({
   selector: 'app-configure-product',
-  imports: [DecimalPipe, FormsModule, ButtonModule, DialogModule, SelectModule, SliderModule, Icon],
+  imports: [DecimalPipe, FormsModule, ButtonModule, DialogModule, SelectModule, InputTextModule, Icon],
   templateUrl: './configure-product.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -26,69 +22,39 @@ export class ConfigureProduct implements OnInit {
   @Output() closed = new EventEmitter<void>();
 
   producto = signal('');
+  /** Precio medio OMIE estimado (€/MWh) — solo afecta a productos Indexed */
   precioMedio = signal(20);
-  feeEnergia = signal(10);
-  feePotencia = signal(2);
-  feeMode = signal<FeeMode>('Global');
-  feeEnergiaByPeriod = signal<number[]>(Array(6).fill(10));
-  feePotenciaByPeriod = signal<number[]>(Array(6).fill(2));
   showPrices = signal(true);
 
   productOpts: { label: string; value: string }[] = [];
 
+  /** Solo productos con comisión fija configurada — igual que el filtro de elegibilidad de Nuevo suministro.
+   *  GET /api/services ya trae energyPeriods/powerPeriods completos por producto, no hace falta otra llamada. */
   ngOnInit() {
-    this.productOpts = (this.tariff.products ?? []).map(p => ({ label: p.name, value: p.name }));
+    this.productOpts = (this.tariff.products ?? [])
+      .filter(p => p.isActive && p.fixedCommissionAmount != null)
+      .map(p => ({ label: p.name, value: p.name }));
     this.producto.set(this.productOpts[0]?.value ?? '');
   }
 
-  periodsPresent = computed<Period[]>(() => {
-    const ocr = this.ocr;
-    return ALL_PERIODS.filter(p => {
-      const kwh = ocr.energia?.find(e => `P${e.p}` === p)?.activa?.kwh ?? 0;
-      const kw = ocr.potencia?.find(x => `P${x.p}` === p)?.contratada?.kw ?? 0;
-      return kwh > 0 || kw > 0;
-    });
-  });
-
-  private commissionPct(): number {
+  /** true si el producto elegido es Indexed — solo entonces tiene sentido mostrar el campo de precio medio OMIE */
+  isIndexedSelected = computed(() => {
     const p = this.tariff.products?.find(p => p.name === this.producto());
-    return p?.commissionEnergyPct ?? DEFAULT_COMMISSION_PCT;
-  }
-
-  comisionEnergiaPct = computed<number>(() => this.commissionPct() * 100);
+    return (p?.type ?? '').toUpperCase() !== 'FIXED';
+  });
 
   result = computed(() => computeComparison(this.tariff, {
     producto: this.producto(),
     precioMedio: this.precioMedio(),
-    feeEnergia: this.feeEnergia(),
-    feePotencia: this.feePotencia(),
-    comisionEnergia: this.commissionPct(),
-    feeMode: this.feeMode(),
-    feeEnergiaByPeriod: this.feeEnergiaByPeriod(),
-    feePotenciaByPeriod: this.feePotenciaByPeriod(),
   }, this.ocr));
 
-  periodIndex(p: Period): number { return ALL_PERIODS.indexOf(p); }
-
-  onFeeEnergiaChange(value: number) {
-    this.feeEnergia.set(value);
-    this.feeEnergiaByPeriod.set(Array(6).fill(value));
+  ahorroCardClasses(negative: boolean): string {
+    const base = 'border rounded-lg p-4 flex flex-col gap-1';
+    return negative ? `${base} border-sx-red bg-sx-red-bg` : `${base} border-sx-green bg-sx-green-bg`;
   }
 
-  onFeePotenciaChange(value: number) {
-    this.feePotencia.set(value);
-    this.feePotenciaByPeriod.set(Array(6).fill(value));
-  }
-
-  setFeeEnergiaAt(index: number, value: number) {
-    const next = [...this.feeEnergiaByPeriod()];
-    next[index] = value;
-    this.feeEnergiaByPeriod.set(next);
-  }
-
-  setFeePotenciaAt(index: number, value: number) {
-    const next = [...this.feePotenciaByPeriod()];
-    next[index] = value;
-    this.feePotenciaByPeriod.set(next);
+  ahorroPercentClasses(negative: boolean): string {
+    const base = 'text-[0.78rem] font-semibold';
+    return negative ? `${base} text-sx-red` : `${base} text-sx-green`;
   }
 }
