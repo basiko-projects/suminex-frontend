@@ -1,5 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ComparisonsService } from '../../core/services/comparisons.service';
 import { ServicesService } from '../../core/services/services.service';
 import { ServiceType, ServiceTariff, ServiceGroup } from '../../core/models/service.model';
@@ -11,17 +12,16 @@ import { BasikoLoader } from '../../shared/components/basiko-loader/basiko-loade
 import { SupplyTypeStep } from '../../shared/components/supply-type-step/supply-type-step';
 import { Icon } from '../../shared/components/icon/icon';
 
-type OcrStatus = 'idle' | 'uploading' | 'error' | 'done';
-
 @Component({
   selector: 'app-comparator',
   standalone: true,
   imports: [DecimalPipe, ConfigureProduct, BasikoLoader, SupplyTypeStep, Icon],
   templateUrl: './comparator.html',
 })
-export class ComparatorComponent {
+export class ComparatorComponent implements OnDestroy {
   private comparisons = inject(ComparisonsService);
   private servicesSvc = inject(ServicesService);
+  private sanitizer = inject(DomSanitizer);
 
   private readonly supplyKindToServiceType: Record<'electricity' | 'gas' | 'internet', ServiceType> = {
     electricity: 'LUZ',
@@ -30,77 +30,120 @@ export class ComparatorComponent {
   };
 
   selectedSupply = signal<SupplyKind>(null);
-  ocrStatus = signal<OcrStatus>('idle');
-  ocrErrorMsg = signal('');
+
+  showInvoiceModal = signal(false);
+  invoiceFile = signal<File | null>(null);
+  invoicePreviewUrl = signal<SafeResourceUrl | null>(null);
+  invoicePreviewKind = signal<'image' | 'pdf' | 'other'>('other');
+  invoiceSubmitted = false;
+  private invoiceObjectUrl: string | null = null;
+
+  comparisonLoading = signal(false);
+  comparisonError = signal('');
+
   comparison = signal<SupplyComparisonResult | null>(null);
+  showResultModal = signal(false);
 
   matchedTariffDetail = signal<ServiceTariff | null>(null);
   luzOcrData = signal<LuzOcrResult | null>(null);
   showConfigureProduct = signal(false);
-  uploadedInvoiceName = signal<string | null>(null);
 
+  /** Internet bloqueado por lo pronto, igual que en el alta de suministro — solo hay tarifas de luz y gas */
   supplyOptions: SupplyOption[] = [
     { id: 'electricity', label: 'Comparar luz',      description: 'Compara una factura de luz con nuestras tarifas',      icon: 'bolt',   available: true  },
     { id: 'gas',         label: 'Comparar gas',       description: 'Compara una factura de gas con nuestras tarifas',      icon: 'cloud',  available: true  },
-    { id: 'internet',    label: 'Comparar internet',  description: 'Compara una factura de internet con nuestras tarifas', icon: 'wifi',   available: true  },
+    { id: null,          label: 'Comparar internet',  description: 'Compara una factura de internet con nuestras tarifas', icon: 'wifi',   available: false },
   ];
 
+  /** Abre el modal de "Sube la factura" apenas se elige el tipo — nunca se abandona esta pantalla, todo pasa en modales */
   selectSupply(kind: SupplyKind) {
+    if (kind === null) return;
     this.selectedSupply.set(kind);
-    this.ocrStatus.set('idle');
-    this.ocrErrorMsg.set('');
+    this.invoiceSubmitted = false;
+    this.comparisonError.set('');
+    this.revokeInvoicePreview();
     this.comparison.set(null);
     this.matchedTariffDetail.set(null);
     this.luzOcrData.set(null);
     this.showConfigureProduct.set(false);
-    this.uploadedInvoiceName.set(null);
+    this.showResultModal.set(false);
+    this.showInvoiceModal.set(true);
   }
 
-  goBack() {
-    this.selectedSupply.set(null);
+  closeInvoiceModal() {
+    if (this.comparisonLoading()) return;
+    this.showInvoiceModal.set(false);
   }
 
-  onInvoiceInputChange(event: Event) {
+  onInvoiceFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) this.uploadAndCompare(file);
+    if (input.files?.[0]) this.setInvoiceFile(input.files[0]);
   }
 
   onInvoiceDrop(event: DragEvent) {
     event.preventDefault();
     const file = event.dataTransfer?.files?.[0];
-    if (file) this.uploadAndCompare(file);
+    if (file) this.setInvoiceFile(file);
   }
 
-  private uploadAndCompare(file: File) {
+  private setInvoiceFile(file: File) {
+    this.revokeInvoicePreview();
+    this.comparisonError.set('');
+    this.invoiceObjectUrl = URL.createObjectURL(file);
+    this.invoicePreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.invoiceObjectUrl));
+    this.invoicePreviewKind.set(
+      file.type.startsWith('image/') ? 'image' : file.type === 'application/pdf' ? 'pdf' : 'other',
+    );
+    this.invoiceFile.set(file);
+  }
+
+  private revokeInvoicePreview() {
+    if (this.invoiceObjectUrl) {
+      URL.revokeObjectURL(this.invoiceObjectUrl);
+      this.invoiceObjectUrl = null;
+    }
+    this.invoiceFile.set(null);
+    this.invoicePreviewUrl.set(null);
+    this.invoicePreviewKind.set('other');
+  }
+
+  /** Procesa la factura y, al terminar, cierra este modal y abre el que corresponda: "Configura el producto"
+   *  para luz (con tarifa Basiko encontrada), o el modal de resultado (consumo actual vs. con Basiko) para gas
+   *  o cuando no se encuentra una tarifa equivalente. */
+  submitInvoice() {
+    this.invoiceSubmitted = true;
+    const file = this.invoiceFile();
     const kind = this.selectedSupply();
-    if (kind === null) return;
+    if (!file || kind === null) return;
     const serviceType = this.supplyKindToServiceType[kind];
 
-    this.uploadedInvoiceName.set(file.name);
-    this.ocrStatus.set('uploading');
-    this.ocrErrorMsg.set('');
+    this.comparisonError.set('');
+    this.comparisonLoading.set(true);
 
     this.comparisons.extract(file, serviceType).subscribe({
       next: ({ ocrData }) => {
         this.servicesSvc.getServices().subscribe({
           next: groups => {
+            this.comparisonLoading.set(false);
             if (serviceType === 'LUZ' && ocrData.luz) {
               this.resolveLuzTariff(ocrData.luz, groups);
             } else {
               this.comparison.set(computeSupplyComparison(ocrData, groups));
-              this.ocrStatus.set('done');
+              this.showInvoiceModal.set(false);
+              this.showResultModal.set(true);
             }
           },
           error: () => {
+            this.comparisonLoading.set(false);
             this.comparison.set(null);
-            this.ocrStatus.set('done');
+            this.showInvoiceModal.set(false);
+            this.showResultModal.set(true);
           },
         });
       },
       error: (e) => {
-        this.ocrErrorMsg.set(e?.error?.error ?? e?.error?.message ?? 'No se pudo leer la factura. Inténtalo de nuevo.');
-        this.ocrStatus.set('error');
+        this.comparisonLoading.set(false);
+        this.comparisonError.set(e?.error?.error ?? e?.error?.message ?? 'No se pudo leer la factura. Inténtalo de nuevo.');
       },
     });
   }
@@ -116,27 +159,36 @@ export class ComparatorComponent {
         '— códigos disponibles en catálogo LUZ:', luzGroup?.tariffs.map(t => t.code),
       );
       this.comparison.set(null);
-      this.ocrStatus.set('done');
+      this.showInvoiceModal.set(false);
+      this.showResultModal.set(true);
       return;
     }
 
     this.luzOcrData.set(luz);
     this.matchedTariffDetail.set(matchedTariff);
+    this.showInvoiceModal.set(false);
     this.showConfigureProduct.set(true);
-    this.ocrStatus.set('done');
   }
 
-  retryInvoice() {
-    this.ocrStatus.set('idle');
-    this.ocrErrorMsg.set('');
-    this.comparison.set(null);
-    this.matchedTariffDetail.set(null);
-    this.luzOcrData.set(null);
-    this.showConfigureProduct.set(false);
+  /** Desde el modal de resultado: vuelve a abrir el de subida, sin perder el tipo de suministro elegido */
+  changeInvoice() {
+    this.showResultModal.set(false);
+    this.invoiceSubmitted = false;
+    this.comparisonError.set('');
+    this.revokeInvoicePreview();
+    this.showInvoiceModal.set(true);
+  }
+
+  closeResultModal() {
+    this.showResultModal.set(false);
   }
 
   closeConfigureProduct() {
     this.showConfigureProduct.set(false);
+  }
+
+  ngOnDestroy() {
+    this.revokeInvoicePreview();
   }
 
   savingsClasses(negative: boolean): string {
